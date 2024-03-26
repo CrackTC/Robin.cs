@@ -7,7 +7,11 @@ using Robin.Abstractions.Event;
 
 namespace Robin.Services;
 
-public partial class BotFunctionService(ILogger<BotFunctionService> logger, BotLifetimeService lifetime, IBackend backend) : IHostedService
+public partial class BotFunctionService(
+    ILogger<BotFunctionService> logger,
+    BotLifetimeService lifetime,
+    IOperationProvider provider,
+    IBotEventInvoker invoker) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _functions = [];
 
@@ -23,7 +27,7 @@ public partial class BotFunctionService(ILogger<BotFunctionService> logger, BotL
             var info = type.GetCustomAttribute<BotFunctionInfoAttribute>()!;
             try
             {
-                if (Activator.CreateInstance(type, backend) is not BotFunction function)
+                if (Activator.CreateInstance(type, provider) is not BotFunction function)
                 {
                     LogFunctionNotRegistered(logger, info.Name);
                     continue;
@@ -67,13 +71,15 @@ public partial class BotFunctionService(ILogger<BotFunctionService> logger, BotL
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         await RegisterFunctions(cancellationToken);
-        backend.OnEvent += OnBotEvent;
+        invoker.OnEvent += OnBotEvent;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        backend.OnEvent -= OnBotEvent;
-        return Task.CompletedTask;
+        invoker.OnEvent -= OnBotEvent;
+        foreach (var (type, functions) in _functions)
+            foreach (var function in functions)
+                await function.StopAsync(cancellationToken);
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Function {Name} is enabled")]
