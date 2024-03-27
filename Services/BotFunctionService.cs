@@ -15,8 +15,8 @@ internal partial class BotFunctionService(
 
     private async Task RegisterFunctions(CancellationToken token)
     {
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        var types = assemblies.SelectMany(assembly => assembly.GetExportedTypes())
+        var types = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(assembly => assembly.GetExportedTypes())
             .Where(type => type.IsSubclassOf(typeof(BotFunction))
                 && type.GetCustomAttribute<BotFunctionInfoAttribute>() is not null);
 
