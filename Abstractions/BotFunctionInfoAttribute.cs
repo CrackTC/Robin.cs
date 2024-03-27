@@ -1,10 +1,9 @@
 namespace Robin.Abstractions;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class BotFunctionInfoAttribute(string name, Type? eventType = null, string description = "", bool enabled = true) : Attribute
+public class BotFunctionInfoAttribute(string name, string description = "", bool enabled = true, params Type[] eventTypes) : Attribute
 {
     public string Name => name;
-    public Type? EventType { get; } = eventType;
+    public Type[] EventTypes { get; } = eventTypes;
     public string Description => description;
-    public bool Enabled => enabled;
 }
