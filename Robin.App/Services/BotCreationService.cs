@@ -1,12 +1,16 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 
-namespace Robin.Services;
+namespace Robin.App.Services;
 
 // singleton, create bots on startup
-internal class BotCreationService(IServiceProvider service, IConfiguration config) : IHostedService
+internal partial class BotCreationService(
+    ILogger<BotCreationService> logger,
+    IServiceProvider service,
+    IConfiguration config) : IHostedService
 {
     private readonly List<(IServiceScope, BotFunctionService)> _scopedServices = [];
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -30,6 +34,8 @@ internal class BotCreationService(IServiceProvider service, IConfiguration confi
             var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
             await functionService.StartAsync(cancellationToken);
             _scopedServices.Add((scope, functionService));
+
+            LogBotStarted(logger, option.Uin);
         }
     }
 
@@ -38,7 +44,18 @@ internal class BotCreationService(IServiceProvider service, IConfiguration confi
         foreach (var (scope, functionService) in _scopedServices)
         {
             await functionService.StopAsync(cancellationToken);
+            LogBotStopped(logger, scope.ServiceProvider.GetRequiredService<BotContext>().Uin);
             scope.Dispose();
         }
     }
+
+    #region Log
+
+    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Bot {Uin} started")]
+    public static partial void LogBotStarted(ILogger logger, long uin);
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Bot {Uin} stopped")]
+    public static partial void LogBotStopped(ILogger logger, long uin);
+
+    #endregion
 }

@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 
-namespace Robin.Common;
+namespace Robin.Abstractions.Common;
 
 public class EquatableImmutableArray<T>(ImmutableArray<T> array) : IEnumerable<T>, IEquatable<EquatableImmutableArray<T>>
 {

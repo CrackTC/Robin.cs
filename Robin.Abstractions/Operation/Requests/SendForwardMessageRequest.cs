@@ -1,6 +1,6 @@
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
-using Robin.Common;
+using Robin.Abstractions.Common;
 
 namespace Robin.Abstractions.Operation.Requests;
 

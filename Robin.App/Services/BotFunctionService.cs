@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Event;
 
-namespace Robin.Services;
+namespace Robin.App.Services;
 
 // scoped, every bot has its own function, **DO NOT register it as IHostedService**
 internal partial class BotFunctionService(

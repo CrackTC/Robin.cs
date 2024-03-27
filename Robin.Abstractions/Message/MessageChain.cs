@@ -1,4 +1,4 @@
-using Robin.Common;
+using Robin.Abstractions.Common;
 
 namespace Robin.Abstractions.Message;
 

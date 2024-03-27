@@ -4,20 +4,20 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
-using Robin.Services;
+using Robin.App.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("config.json");
-
-builder.Services.AddHostedService<BotCreationService>()
-    .AddScoped<BotFunctionService>()
-    .AddScoped<BotContext>();
 
 builder.Logging.AddConsole();
 
 LoadAssemblies("Implementations");
 LoadAssemblies("Extensions");
 ConfigureBackend();
+
+builder.Services.AddHostedService<BotCreationService>()
+    .AddScoped<BotFunctionService>()
+    .AddScoped<BotContext>();
 
 await builder.Build().RunAsync();
 

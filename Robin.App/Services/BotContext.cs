@@ -1,6 +1,6 @@
 using Robin.Abstractions.Communication;
 
-namespace Robin.Services;
+namespace Robin.App.Services;
 
 // scoped, every bot has its own option
 internal class BotContext : IDisposable

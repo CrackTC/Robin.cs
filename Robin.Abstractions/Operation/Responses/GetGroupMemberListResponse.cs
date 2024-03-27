@@ -1,5 +1,5 @@
 using Robin.Abstractions.Operation.Entities;
-using Robin.Common;
+using Robin.Abstractions.Common;
 
 namespace Robin.Abstractions.Operation.Responses;
 
