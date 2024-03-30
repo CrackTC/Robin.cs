@@ -13,7 +13,7 @@ public partial class OneBotForwardWebSocketFactory(
 {
     private static readonly Dictionary<string, OneBotForwardWebSocketService> _services = [];
 
-    private OneBotForwardWebSocketService GetService(IConfiguration config)
+    private async Task<OneBotForwardWebSocketService> GetServiceAsync(IConfiguration config, CancellationToken token)
     {
         var option = new OneBotWebSocketOption();
         config.Bind(option);
@@ -24,20 +24,21 @@ public partial class OneBotForwardWebSocketFactory(
         }
 
         service = new OneBotForwardWebSocketService(provider, option);
+        await service.StartAsync(token);
         _services[option.Url] = service;
         return service;
     }
 
-    public IBotEventInvoker GetBotEventInvoker(IConfiguration config)
+    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token)
     {
         LogGetBotEventInvoker(logger);
-        return GetService(config);
+        return await GetServiceAsync(config, token);
     }
 
-    public IOperationProvider GetOperationProvider(IConfiguration config)
+    public async Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token)
     {
         LogGetOperationProvider(logger);
-        return GetService(config);
+        return await GetServiceAsync(config, token);
     }
 
     #region Log

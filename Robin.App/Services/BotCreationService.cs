@@ -13,7 +13,7 @@ internal partial class BotCreationService(
     IConfiguration config) : IHostedService
 {
     private readonly List<(IServiceScope, BotFunctionService)> _scopedServices = [];
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken token)
     {
         var botSections = config.GetSection("Bots").GetChildren();
         foreach (var section in botSections)
@@ -28,22 +28,22 @@ internal partial class BotCreationService(
             var operationProviderName = section["OperationProviderName"];
             var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
 
-            option.EventInvoker = eventInvokerFactory.GetBotEventInvoker(section.GetRequiredSection("EventInvokerConfig"));
-            option.OperationProvider = operationProviderFactory.GetOperationProvider(section.GetRequiredSection("OperationProviderConfig"));
+            option.EventInvoker = await eventInvokerFactory.GetBotEventInvokerAsync(section.GetRequiredSection("EventInvokerConfig"), token);
+            option.OperationProvider = await operationProviderFactory.GetOperationProviderAsync(section.GetRequiredSection("OperationProviderConfig"), token);
 
             var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
-            await functionService.StartAsync(cancellationToken);
+            await functionService.StartAsync(token);
             _scopedServices.Add((scope, functionService));
 
             LogBotStarted(logger, option.Uin);
         }
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken token)
     {
         foreach (var (scope, functionService) in _scopedServices)
         {
-            await functionService.StopAsync(cancellationToken);
+            await functionService.StopAsync(token);
             LogBotStopped(logger, scope.ServiceProvider.GetRequiredService<BotContext>().Uin);
             scope.Dispose();
         }

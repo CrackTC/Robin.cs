@@ -84,7 +84,7 @@ internal partial class OneBotForwardWebSocketService(
     private void DispatchMessage(string message)
     {
         var node = JsonNode.Parse(message);
-        if (node?["status"] is not null)
+        if (node?["post_type"] is null)
         {
             if (node.Deserialize<OneBotResponse>() is not { } response)
             {
