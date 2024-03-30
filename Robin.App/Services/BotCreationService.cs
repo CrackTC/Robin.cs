@@ -52,10 +52,10 @@ internal partial class BotCreationService(
     #region Log
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Bot {Uin} started")]
-    public static partial void LogBotStarted(ILogger logger, long uin);
+    private static partial void LogBotStarted(ILogger logger, long uin);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Bot {Uin} stopped")]
-    public static partial void LogBotStopped(ILogger logger, long uin);
+    private static partial void LogBotStopped(ILogger logger, long uin);
 
     #endregion
 }

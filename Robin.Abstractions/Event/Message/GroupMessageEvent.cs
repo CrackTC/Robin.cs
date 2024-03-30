@@ -1,5 +1,5 @@
+using Robin.Abstractions.Entities;
 using Robin.Abstractions.Message;
-using Robin.Abstractions.Operation.Entities;
 
 namespace Robin.Abstractions.Event.Message;
 

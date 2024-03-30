@@ -1,4 +1,4 @@
-namespace Robin.Abstractions.Message.Entities.Keyboard;   
+namespace Robin.Abstractions.Message.Entities.Keyboard;
 
 public enum KeyboardPermissionType : int
 {

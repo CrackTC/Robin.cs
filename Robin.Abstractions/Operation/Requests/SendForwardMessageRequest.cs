@@ -4,4 +4,4 @@ using Robin.Abstractions.Common;
 
 namespace Robin.Abstractions.Operation.Requests;
 
-public record SendForwardMessageRequest(EquatableImmutableArray<NodeData> Messages) : Request;
+public record SendForwardMessageRequest(EquatableImmutableArray<CustomNodeData> Messages) : Request;

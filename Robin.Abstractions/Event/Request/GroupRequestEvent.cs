@@ -1,6 +1,6 @@
 namespace Robin.Abstractions.Event.Request;
 
-public record GroupRequestEvent(
+public abstract record GroupRequestEvent(
     long Time,
     long UserId,
     long GroupId,

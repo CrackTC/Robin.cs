@@ -9,7 +9,8 @@ namespace Robin.App.Services;
 // scoped, every bot has its own function, **DO NOT register it as IHostedService**
 internal partial class BotFunctionService(
     ILogger<BotFunctionService> logger,
-    BotContext option) : IHostedService
+    IServiceProvider service,
+    BotContext context) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _eventToFunctions = [];
 
@@ -25,7 +26,7 @@ internal partial class BotFunctionService(
             var info = type.GetCustomAttribute<BotFunctionInfoAttribute>()!;
             try
             {
-                if (Activator.CreateInstance(type, option.OperationProvider) is not BotFunction function)
+                if (Activator.CreateInstance(type, service, context.OperationProvider) is not BotFunction function)
                 {
                     LogFunctionNotRegistered(logger, info.Name);
                     continue;
@@ -35,13 +36,11 @@ internal partial class BotFunctionService(
 
                 foreach (var eventType in info.EventTypes)
                 {
-                    if (eventType.IsSubclassOf(typeof(BotEvent)) || eventType == typeof(BotEvent))
-                    {
-                        if (_eventToFunctions.TryGetValue(eventType, out List<BotFunction>? functions))
-                            functions.Add(function);
-                        else
-                            _eventToFunctions[eventType] = [function];
-                    }
+                    if (!eventType.IsSubclassOf(typeof(BotEvent)) && eventType != typeof(BotEvent)) continue;
+                    if (_eventToFunctions.TryGetValue(eventType, out var functions))
+                        functions.Add(function);
+                    else
+                        _eventToFunctions[eventType] = [function];
                 }
             }
             catch (Exception e)
@@ -56,9 +55,9 @@ internal partial class BotFunctionService(
         var type = @event.GetType();
         while (type != typeof(object))
         {
-            if (_eventToFunctions.TryGetValue(type, out List<BotFunction>? functions))
+            if (_eventToFunctions.TryGetValue(type, out var functions))
                 foreach (var function in functions)
-                    function.OnEvent(option.Uin, @event);
+                    function.OnEvent(context.Uin, @event);
 
             type = type.BaseType!;
         }
@@ -66,25 +65,25 @@ internal partial class BotFunctionService(
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (option.OperationProvider is null)
+        if (context.OperationProvider is null)
         {
-            LogInvalidOption(logger, nameof(option.OperationProvider));
+            LogInvalidOption(logger, nameof(context.OperationProvider));
             return;
         }
-        if (option.EventInvoker is null)
+        if (context.EventInvoker is null)
         {
-            LogInvalidOption(logger, nameof(option.EventInvoker));
+            LogInvalidOption(logger, nameof(context.EventInvoker));
             return;
         }
 
         await RegisterFunctions(cancellationToken);
-        option.EventInvoker.OnEvent += OnBotEvent;
+        context.EventInvoker.OnEvent += OnBotEvent;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        option.EventInvoker!.OnEvent -= OnBotEvent;
-        foreach (var (type, functions) in _eventToFunctions)
+        context.EventInvoker!.OnEvent -= OnBotEvent;
+        foreach (var (_, functions) in _eventToFunctions)
             foreach (var function in functions)
                 await function.StopAsync(cancellationToken);
     }

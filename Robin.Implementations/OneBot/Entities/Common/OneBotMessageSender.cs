@@ -1,0 +1,12 @@
+using System.Text.Json.Serialization;
+
+namespace Robin.Implementations.OneBot.Entities.Common;
+
+[Serializable]
+public class OneBotMessageSender
+{
+    [JsonPropertyName("user_id")] public long UserId { get; set; }
+    [JsonPropertyName("nickname")] public required string Nickname { get; set; }
+    [JsonPropertyName("sex")] public required string Sex { get; set; }
+    [JsonPropertyName("age")] public int Age { get; set; }
+}

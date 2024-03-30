@@ -6,12 +6,14 @@ namespace Robin.App.Services;
 internal class BotContext : IDisposable
 {
     internal long Uin { get; set; }
-    internal IBotEventInvoker? EventInvoker { get; set; } = null;
-    internal IOperationProvider? OperationProvider { get; set; } = null;
+    internal IBotEventInvoker? EventInvoker { get; set; }
+    internal IOperationProvider? OperationProvider { get; set; }
 
     public void Dispose()
     {
         EventInvoker?.Dispose();
         OperationProvider?.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

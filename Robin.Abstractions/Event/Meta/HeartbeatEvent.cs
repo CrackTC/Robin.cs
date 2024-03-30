@@ -1,4 +1,4 @@
-using Robin.Abstractions.Operation.Entities;
+using Robin.Abstractions.Entities;
 
 namespace Robin.Abstractions.Event.Meta;
 

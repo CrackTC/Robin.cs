@@ -20,6 +20,7 @@ builder.Services.AddHostedService<BotCreationService>()
     .AddScoped<BotContext>();
 
 await builder.Build().RunAsync();
+return;
 
 void ConfigureBackend()
 {

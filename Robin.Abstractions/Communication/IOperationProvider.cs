@@ -4,5 +4,5 @@ namespace Robin.Abstractions.Communication;
 
 public interface IOperationProvider : IDisposable
 {
-    Task<Response> SendRequestAsync(Request request, CancellationToken cancellationToken = default);
+    Task<Response?> SendRequestAsync(Request request, CancellationToken token = default);
 }

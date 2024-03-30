@@ -4,5 +4,5 @@ namespace Robin.Abstractions.Communication;
 
 public interface IBotEventInvoker : IDisposable
 {
-    event Action<BotEvent> OnEvent;
+    event Action<BotEvent>? OnEvent;
 }
