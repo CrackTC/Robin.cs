@@ -30,7 +30,7 @@ internal partial class OneBotForwardWebSocketService(
     private readonly OneBotOperationConverter _operationConverter =
         new(service.GetRequiredService<ILogger<OneBotOperationConverter>>());
 
-    private readonly ClientWebSocket _websocket = new();
+    private ClientWebSocket? _websocket;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public event Action<BotEvent>? OnEvent;
@@ -121,7 +121,7 @@ internal partial class OneBotForwardWebSocketService(
         {
             while (true)
             {
-                var result = await _websocket.ReceiveAsync(buffer.AsMemory(received), cancellationToken);
+                var result = await _websocket!.ReceiveAsync(buffer.AsMemory(received), cancellationToken);
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     await _websocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close", cancellationToken);
@@ -161,6 +161,9 @@ internal partial class OneBotForwardWebSocketService(
         {
             try
             {
+                _websocket = new ClientWebSocket();
+                if (!string.IsNullOrEmpty(options.AccessToken))
+                    _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
                 await _websocket.ConnectAsync(uri, token);
                 await ReceiveLoop(token);
             }
