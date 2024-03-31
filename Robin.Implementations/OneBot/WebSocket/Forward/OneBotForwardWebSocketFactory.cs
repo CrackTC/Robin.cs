@@ -15,8 +15,7 @@ public partial class OneBotForwardWebSocketFactory(
 
     private async Task<OneBotForwardWebSocketService> GetServiceAsync(IConfiguration config, CancellationToken token)
     {
-        var option = new OneBotWebSocketOption();
-        config.Bind(option);
+        var option = config.Get<OneBotWebSocketOption>()!;
 
         if (_services.TryGetValue(option.Url, out var service))
         {
