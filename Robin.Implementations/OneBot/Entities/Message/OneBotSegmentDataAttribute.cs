@@ -1,4 +1,4 @@
-namespace Robin.Implementations.OneBot.Entities.Message.Data;
+namespace Robin.Implementations.OneBot.Entities.Message;
 
 [AttributeUsage(AttributeTargets.Class)]
 internal class OneBotSegmentDataAttribute(string typeName, params Type[] types) : Attribute
