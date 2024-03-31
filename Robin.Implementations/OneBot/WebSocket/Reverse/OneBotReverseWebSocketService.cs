@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -11,15 +12,15 @@ using Robin.Abstractions.Operation;
 using Robin.Implementations.OneBot.Converters;
 using Robin.Implementations.OneBot.Entities.Operations;
 
-namespace Robin.Implementations.OneBot.WebSocket.Forward;
+namespace Robin.Implementations.OneBot.WebSocket.Reverse;
 
-internal partial class OneBotForwardWebSocketService(
+internal partial class OneBotReverseWebSocketService(
     IServiceProvider service,
-    OneBotForwardWebSocketOption options
+    OneBotReverseWebSocketOption options
 ) : BackgroundService, IBotEventInvoker, IOperationProvider
 {
-    private readonly ILogger<OneBotForwardWebSocketService> _logger =
-        service.GetRequiredService<ILogger<OneBotForwardWebSocketService>>();
+    private readonly ILogger<OneBotReverseWebSocketService> _logger =
+        service.GetRequiredService<ILogger<OneBotReverseWebSocketService>>();
 
     private readonly OneBotMessageConverter _messageConverter =
         new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
@@ -30,7 +31,7 @@ internal partial class OneBotForwardWebSocketService(
     private readonly OneBotOperationConverter _operationConverter =
         new(service.GetRequiredService<ILogger<OneBotOperationConverter>>());
 
-    private ClientWebSocket? _websocket;
+    private System.Net.WebSockets.WebSocket? _websocket;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public event Action<BotEvent>? OnEvent;
@@ -151,39 +152,46 @@ internal partial class OneBotForwardWebSocketService(
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
-        if (!Uri.TryCreate(options.Url, UriKind.Absolute, out var uri))
-        {
-            LogInvalidUri(_logger, options.Url);
-            return;
-        }
+        var listener = new HttpListener();
+        listener.Prefixes.Add($"http://*:{options.Port}/");
+        listener.Start();
 
-        while (true)
+        while (!token.IsCancellationRequested)
         {
-            try
+            var context = await listener.GetContextAsync();
+
+            if (!string.IsNullOrEmpty(options.AccessToken) &&
+                context.Request.Headers["Authorization"] != $"Bearer {options.AccessToken}")
             {
-                _websocket = new ClientWebSocket();
-                if (!string.IsNullOrEmpty(options.AccessToken))
-                    _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
-                await _websocket.ConnectAsync(uri, token);
-                await ReceiveLoop(token);
+                context.Response.StatusCode = 401;
+                context.Response.Close();
             }
-            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            else if (context.Request.IsWebSocketRequest)
             {
-                break;
+                var wsContext = await context.AcceptWebSocketAsync(null);
+                _websocket = wsContext.WebSocket;
+                try
+                {
+                    await ReceiveLoop(token);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (WebSocketException e) when (e.InnerException is HttpRequestException)
+                {
+                    LogWebSocketException(_logger, e);
+                }
             }
-            catch (WebSocketException e) when (e.InnerException is HttpRequestException)
+            else
             {
-                LogReconnect(_logger, options.ReconnectInterval);
-                var interval = TimeSpan.FromSeconds(options.ReconnectInterval);
-                await Task.Delay(interval, token);
+                context.Response.StatusCode = 400;
+                context.Response.Close();
             }
         }
     }
 
     #region Log
-
-    [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Invalid URI: {Uri}")]
-    private static partial void LogInvalidUri(ILogger logger, string uri);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
@@ -195,8 +203,8 @@ internal partial class OneBotForwardWebSocketService(
     private static partial void LogInvalidRequest(ILogger logger, string request);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Warning,
-        Message = "Connection closed, reconnect after {Interval} seconds")]
-    private static partial void LogReconnect(ILogger logger, int interval);
+        Message = "Websocket throws an exception")]
+    private static partial void LogWebSocketException(ILogger logger, Exception e);
 
     [LoggerMessage(EventId = 5, Level = LogLevel.Trace, Message = "Send: {Data}")]
     private static partial void LogSendingData(ILogger logger, string data);

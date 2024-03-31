@@ -2,29 +2,29 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 
-namespace Robin.Implementations.OneBot.WebSocket.Forward;
+namespace Robin.Implementations.OneBot.WebSocket.Reverse;
 
-[Backend("OneBotForwardWebSocket")]
+[Backend("OneBotReverseWebSocket")]
 // ReSharper disable once UnusedType.Global
-public partial class OneBotForwardWebSocketFactory(
+public partial class OneBotReverseWebSocketFactory(
     IServiceProvider provider,
-    ILogger<OneBotForwardWebSocketFactory> logger
+    ILogger<OneBotReverseWebSocketFactory> logger
 ) : IBackendFactory
 {
-    private static readonly Dictionary<string, OneBotForwardWebSocketService> _services = [];
+    private static readonly Dictionary<int, OneBotReverseWebSocketService> _services = [];
 
-    private async Task<OneBotForwardWebSocketService> GetServiceAsync(IConfiguration config, CancellationToken token)
+    private async Task<OneBotReverseWebSocketService> GetServiceAsync(IConfiguration config, CancellationToken token)
     {
-        var option = config.Get<OneBotForwardWebSocketOption>()!;
+        var option = config.Get<OneBotReverseWebSocketOption>()!;
 
-        if (_services.TryGetValue(option.Url, out var service))
+        if (_services.TryGetValue(option.Port, out var service))
         {
             return service;
         }
 
-        service = new OneBotForwardWebSocketService(provider, option);
+        service = new OneBotReverseWebSocketService(provider, option);
         await service.StartAsync(token);
-        _services[option.Url] = service;
+        _services[option.Port] = service;
         return service;
     }
 

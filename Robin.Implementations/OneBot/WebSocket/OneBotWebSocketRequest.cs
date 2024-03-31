@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace Robin.Implementations.OneBot.WebSocket.Forward;
+namespace Robin.Implementations.OneBot.WebSocket;
 
 [Serializable]
-internal class OneBotForwardWebSocketRequest
+internal class OneBotWebSocketRequest
 {
     [JsonPropertyName("action")] public required string Action { get; set; }
     [JsonPropertyName("params")] public required JsonNode Params { get; set; }
