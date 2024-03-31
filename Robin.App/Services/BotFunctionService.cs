@@ -19,7 +19,7 @@ internal partial class BotFunctionService(
         var types = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(assembly => assembly.GetExportedTypes())
             .Where(type => type.IsSubclassOf(typeof(BotFunction))
-                && type.GetCustomAttribute<BotFunctionInfoAttribute>() is not null);
+                           && type.GetCustomAttribute<BotFunctionInfoAttribute>() is not null);
 
         foreach (var type in types)
         {
@@ -29,6 +29,7 @@ internal partial class BotFunctionService(
                 if (Activator.CreateInstance(
                         type,
                         service,
+                        context.Uin,
                         context.OperationProvider,
                         context.FunctionConfigurations![info.Name]
                     ) is not BotFunction function)
@@ -75,6 +76,7 @@ internal partial class BotFunctionService(
             LogInvalidOption(logger, nameof(context.OperationProvider));
             return;
         }
+
         if (context.EventInvoker is null)
         {
             LogInvalidOption(logger, nameof(context.EventInvoker));
@@ -89,8 +91,8 @@ internal partial class BotFunctionService(
     {
         context.EventInvoker!.OnEvent -= OnBotEvent;
         foreach (var (_, functions) in _eventToFunctions)
-            foreach (var function in functions)
-                await function.StopAsync(cancellationToken);
+        foreach (var function in functions)
+            await function.StopAsync(cancellationToken);
     }
 
     #region Log

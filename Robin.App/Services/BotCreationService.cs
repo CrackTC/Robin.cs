@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 
 namespace Robin.App.Services;
@@ -13,14 +14,15 @@ internal partial class BotCreationService(
     IConfiguration config) : IHostedService
 {
     private readonly List<(IServiceScope, BotFunctionService)> _scopedServices = [];
+
     public async Task StartAsync(CancellationToken token)
     {
         var botSections = config.GetSection("Bots").GetChildren();
         foreach (var section in botSections)
         {
             var scope = service.CreateScope();
-            var option = scope.ServiceProvider.GetRequiredService<BotContext>();
-            option.Uin = long.Parse(section["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
+            var context = scope.ServiceProvider.GetRequiredService<BotContext>();
+            context.Uin = long.Parse(section["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
 
             var eventInvokerName = section["EventInvokerName"];
             var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(eventInvokerName);
@@ -28,9 +30,13 @@ internal partial class BotCreationService(
             var operationProviderName = section["OperationProviderName"];
             var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
 
-            option.EventInvoker = await eventInvokerFactory.GetBotEventInvokerAsync(section.GetRequiredSection("EventInvokerConfig"), token);
-            option.OperationProvider = await operationProviderFactory.GetOperationProviderAsync(section.GetRequiredSection("OperationProviderConfig"), token);
-            option.FunctionConfigurations = section.GetSection("Configurations")
+            context.EventInvoker =
+                await eventInvokerFactory.GetBotEventInvokerAsync(section.GetRequiredSection("EventInvokerConfig"),
+                    token);
+            context.OperationProvider =
+                await operationProviderFactory.GetOperationProviderAsync(
+                    section.GetRequiredSection("OperationProviderConfig"), token);
+            context.FunctionConfigurations = section.GetSection("Configurations")
                 .GetChildren()
                 .ToDictionary(child => child["Name"]!);
 
@@ -38,7 +44,7 @@ internal partial class BotCreationService(
             await functionService.StartAsync(token);
             _scopedServices.Add((scope, functionService));
 
-            LogBotStarted(logger, option.Uin);
+            LogBotStarted(logger, context.Uin);
         }
     }
 

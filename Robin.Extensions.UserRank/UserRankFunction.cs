@@ -13,37 +13,39 @@ using Robin.Abstractions.Message.Entities;
 namespace Robin.Extensions.UserRank;
 
 [BotFunctionInfo("user_rank", "daily user rank", typeof(GroupMessageEvent))]
-public partial class UserRankFunction(
-    IServiceProvider service,
-    IOperationProvider operation,
-    IConfiguration configuration)
-    : BotFunction(service, operation, configuration)
+public partial class UserRankFunction : BotFunction
 {
     private IScheduler? _scheduler;
     private UserRankOption? _option;
-    private static readonly SqliteConnection _connection = new("Data Source=user_rank.db");
-    private readonly Logger<UserRankFunction> _logger = service.GetRequiredService<Logger<UserRankFunction>>();
-    private static readonly SqliteCommand _createTableCommand;
+    private readonly SqliteConnection _connection;
+    private readonly Logger<UserRankFunction> _logger;
+    private readonly SqliteCommand _createTableCommand;
 
     private const string CreateTableSql =
         "CREATE TABLE IF NOT EXISTS user_rank (group_id INTEGER NOT NULL, user_id INTEGER NOT NULL, message TEXT NOT NULL)";
 
-    private static readonly SqliteCommand _insertDataCommand;
+    private readonly SqliteCommand _insertDataCommand;
 
     private const string InsertDataSql =
         "INSERT INTO user_rank (group_id, user_id, message) VALUES ($group_id, $user_id, $message)";
-    
-    static UserRankFunction()
+
+    public UserRankFunction(IServiceProvider service,
+        long uin,
+        IOperationProvider operation,
+        IConfiguration configuration) : base(service, operation, configuration)
     {
+        _connection = new SqliteConnection($"Data Source=user_rank-{uin}.db");
+        _logger = service.GetRequiredService<Logger<UserRankFunction>>();
+        
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;
         _insertDataCommand = _connection.CreateCommand();
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private static void CreateTable() => _createTableCommand.ExecuteNonQuery();
+    private void CreateTable() => _createTableCommand.ExecuteNonQuery();
 
-    private static void InsertData(long groupId, long userId, string message)
+    private void InsertData(long groupId, long userId, string message)
     {
         _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
         _insertDataCommand.Parameters.AddWithValue("$user_id", userId);

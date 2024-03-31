@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
+using Robin.App;
 using Robin.App.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
