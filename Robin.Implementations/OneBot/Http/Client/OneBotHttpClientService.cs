@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,17 @@ internal partial class OneBotHttpClientService(
         var json = r.ToJsonString();
         LogSendingData(_logger, json);
 
-        var response = await _client.PostAsync($"{options.Url}/{endpoint}", new StringContent(json), token);
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/{endpoint}")
+        {
+            Content = new StringContent(json)
+        };
+
+        if (!string.IsNullOrEmpty(options.AccessToken))
+        {
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
+        }
+
+        var response = await _client.SendAsync(requestMessage, token);
         if (!response.IsSuccessStatusCode)
         {
             LogSendFailed(_logger);
@@ -50,7 +61,7 @@ internal partial class OneBotHttpClientService(
 
         if (oneBotResponse is not null)
             return _operationConverter.ParseResponse(type, oneBotResponse, _messageConverter);
-        
+
         LogInvalidResponse(_logger, await response.Content.ReadAsStringAsync(token));
         return null;
     }
