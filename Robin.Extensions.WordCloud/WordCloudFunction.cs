@@ -13,37 +13,37 @@ using Robin.Abstractions.Message.Entities;
 namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "daily word cloud", typeof(GroupMessageEvent))]
-public partial class WordCloudFunction : BotFunction
+public partial class WordCloudFunction(
+    IServiceProvider service,
+    IOperationProvider operation,
+    IConfiguration configuration)
+    : BotFunction(service, operation, configuration)
 {
     private IScheduler? _scheduler;
     private WordCloudOption? _option;
-    private readonly SqliteConnection _connection = new("Data Source=word_cloud.db");
-    private readonly Logger<WordCloudFunction> _logger;
-    private readonly SqliteCommand _createTableCommand;
+    private static readonly SqliteConnection _connection = new("Data Source=word_cloud.db");
+    private readonly Logger<WordCloudFunction> _logger = service.GetRequiredService<Logger<WordCloudFunction>>();
+    private static readonly SqliteCommand _createTableCommand;
 
     private const string CreateTableSql =
         "CREATE TABLE IF NOT EXISTS word_cloud (group_id INTEGER NOT NULL, message TEXT NOT NULL)";
 
-    private readonly SqliteCommand _insertDataCommand;
+    private static readonly SqliteCommand _insertDataCommand;
 
     private const string InsertDataSql =
         "INSERT INTO word_cloud (group_id, message) VALUES ($group_id, $message)";
 
-    public WordCloudFunction(
-        IServiceProvider service,
-        IOperationProvider operation,
-        IConfiguration configuration) : base(service, operation, configuration)
+    static WordCloudFunction()
     {
-        _logger = service.GetRequiredService<Logger<WordCloudFunction>>();
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;
         _insertDataCommand = _connection.CreateCommand();
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private void CreateTable() => _createTableCommand.ExecuteNonQuery();
+    private static void CreateTable() => _createTableCommand.ExecuteNonQuery();
 
-    private void InsertData(long groupId, string message)
+    private static void InsertData(long groupId, string message)
     {
         _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
         _insertDataCommand.Parameters.AddWithValue("$message", message);
