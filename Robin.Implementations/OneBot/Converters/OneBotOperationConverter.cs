@@ -45,6 +45,7 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
 
     public Response? ParseResponse(Type requestType, OneBotResponse response, OneBotMessageConverter converter)
     {
+        if (response.Status == "failed") return new Response(false, response.ReturnCode, null);
         var dataType = _requestTypeToResponseType[requestType];
         if (response.Data.Deserialize(dataType) is IOneBotResponseData data)
             return data.ToResponse(response, converter);
