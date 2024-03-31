@@ -31,7 +31,10 @@ void ConfigureBackend()
         .SelectMany(pair => pair.Attributes.Select(attribute => (attribute.Name, pair.Type)));
 
     foreach (var (name, type) in backends)
+    {
+        Console.WriteLine($"Found backend: {name} -> {type}");
         builder.Services.AddKeyedScoped(typeof(IBackendFactory), name, type);
+    }
 }
 
 void LoadAssemblies(string dir)
