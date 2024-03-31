@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.Abstractions", "Robin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.Implementations", "Robin.Implementations\Robin.Implementations.csproj", "{74B01597-DF9E-479A-958A-8A0BD51C6A4E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.WordCloud", "Robin.Extensions.WordCloud\Robin.Extensions.WordCloud.csproj", "{DC7F5817-7811-4E1E-88D9-99023707F150}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.UserRank", "Robin.Extensions.UserRank\Robin.Extensions.UserRank.csproj", "{A160A0D5-019C-48BD-B5A8-97E5B08F0580}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{74B01597-DF9E-479A-958A-8A0BD51C6A4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74B01597-DF9E-479A-958A-8A0BD51C6A4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74B01597-DF9E-479A-958A-8A0BD51C6A4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC7F5817-7811-4E1E-88D9-99023707F150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC7F5817-7811-4E1E-88D9-99023707F150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC7F5817-7811-4E1E-88D9-99023707F150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC7F5817-7811-4E1E-88D9-99023707F150}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
