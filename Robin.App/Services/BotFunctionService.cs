@@ -26,7 +26,12 @@ internal partial class BotFunctionService(
             var info = type.GetCustomAttribute<BotFunctionInfoAttribute>()!;
             try
             {
-                if (Activator.CreateInstance(type, service, context.OperationProvider) is not BotFunction function)
+                if (Activator.CreateInstance(
+                        type,
+                        service,
+                        context.OperationProvider,
+                        context.FunctionConfigurations![info.Name]
+                    ) is not BotFunction function)
                 {
                     LogFunctionNotRegistered(logger, info.Name);
                     continue;

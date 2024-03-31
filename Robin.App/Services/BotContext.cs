@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Robin.Abstractions.Communication;
 
 namespace Robin.App.Services;
@@ -8,6 +9,7 @@ internal class BotContext : IDisposable
     internal long Uin { get; set; }
     internal IBotEventInvoker? EventInvoker { get; set; }
     internal IOperationProvider? OperationProvider { get; set; }
+    internal Dictionary<string, IConfigurationSection>? FunctionConfigurations { get; set; }
 
     public void Dispose()
     {

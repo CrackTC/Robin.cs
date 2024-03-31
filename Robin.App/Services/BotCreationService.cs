@@ -30,6 +30,9 @@ internal partial class BotCreationService(
 
             option.EventInvoker = await eventInvokerFactory.GetBotEventInvokerAsync(section.GetRequiredSection("EventInvokerConfig"), token);
             option.OperationProvider = await operationProviderFactory.GetOperationProviderAsync(section.GetRequiredSection("OperationProviderConfig"), token);
+            option.FunctionConfigurations = section.GetSection("Configurations")
+                .GetChildren()
+                .ToDictionary(child => child["Name"]!);
 
             var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
             await functionService.StartAsync(token);
