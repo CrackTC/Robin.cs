@@ -94,7 +94,9 @@ internal partial class OneBotForwardWebSocketService(
     private void DispatchMessage(string message)
     {
         var node = JsonNode.Parse(message);
-        if (node?["post_type"] is null)
+        if (node is null) return;
+
+        if (node["post_type"] is null)
         {
             if (node.Deserialize<OneBotResponse>() is not { } response)
             {
@@ -104,12 +106,10 @@ internal partial class OneBotForwardWebSocketService(
 
             OnResponse?.Invoke(response);
         }
-        else if (node is not null)
-        {
-            if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
-                return;
-            OnEvent?.Invoke(@event);
-        }
+
+        if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
+            return;
+        OnEvent?.Invoke(@event);
     }
 
     private async Task ReceiveLoop(CancellationToken cancellationToken)
