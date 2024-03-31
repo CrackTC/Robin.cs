@@ -14,7 +14,8 @@ internal class OneBotGetGroupMemberListRequest : IOneBotRequest
         if (request is not GetGroupMemberListRequest r) return null;
         return JsonSerializer.SerializeToNode(new
         {
-            group_id = r.GroupId
+            group_id = r.GroupId,
+            no_cache = r.NoCache
         });
     }
 }
