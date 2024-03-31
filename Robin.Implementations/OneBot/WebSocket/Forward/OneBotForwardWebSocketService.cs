@@ -31,6 +31,7 @@ internal partial class OneBotForwardWebSocketService(
         new(service.GetRequiredService<ILogger<OneBotOperationConverter>>());
 
     private readonly ClientWebSocket _websocket = new();
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public event Action<BotEvent>? OnEvent;
 
@@ -57,7 +58,16 @@ internal partial class OneBotForwardWebSocketService(
 
         try
         {
-            await _websocket.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token);
+            try
+            {
+                await _semaphore.WaitAsync(token);
+                await _websocket!.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+
             var completionSource = new TaskCompletionSource<Response?>();
 
             Action<OneBotResponse> onResponse = null!;
