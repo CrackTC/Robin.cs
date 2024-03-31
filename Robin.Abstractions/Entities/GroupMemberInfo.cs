@@ -4,7 +4,7 @@ public record GroupMemberInfo(
     long GroupId,
     long UserId,
     string Nickname,
-    string Card,
+    string? Card,
     UserSex Sex,
     int Age,
     string Area,
