@@ -25,18 +25,20 @@ internal partial class OneBotHttpServerService(
     private readonly OneBotEventConverter _eventConverter =
         new(service.GetRequiredService<ILogger<OneBotEventConverter>>());
 
-    public event Action<BotEvent>? OnEvent;
+    public event Func<BotEvent, CancellationToken, Task>? OnEventAsync;
     
     private HMACSHA1? _sha1;
 
-    private void DispatchMessage(string message)
+    private async Task DispatchMessageAsync(string message, CancellationToken token)
     {
         var node = JsonNode.Parse(message);
         if (node is null) return;
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;
-        OnEvent?.Invoke(@event);
+        
+        if (OnEventAsync is not null)
+            await OnEventAsync.Invoke(@event, token);
     }
     
     private string ComputeSha1(string message)
@@ -80,8 +82,8 @@ internal partial class OneBotHttpServerService(
                     continue;
                 }
             }
-            
-            _ = Task.Run(() => DispatchMessage(message), token);
+
+            _ = DispatchMessageAsync(message, token);
         }
     }
 

@@ -28,9 +28,9 @@ public partial class WordCloudJob : IJob
         "DELETE FROM word_cloud WHERE group_id = $group_id";
 
     private readonly HttpClient _client = new();
-    
+
     private readonly WordCloudOption _option;
-    
+
     private readonly ILogger<WordCloudJob> _logger;
 
     private readonly IOperationProvider _operation;
@@ -64,7 +64,7 @@ public partial class WordCloudJob : IJob
         return groups;
     }
 
-    private List<string> GetGroupMessages(long groupId)
+    private IEnumerable<string> GetGroupMessages(long groupId)
     {
         _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
 
@@ -86,44 +86,49 @@ public partial class WordCloudJob : IJob
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
-    public async Task Execute(IJobExecutionContext context)
+    internal async Task SendWordCloudAsync(bool clear = false, CancellationToken token = default)
     {
         foreach (var group in GetGroups())
         {
             var messages = GetGroupMessages(group);
             var content = string.Join('\n', messages);
-            using var response = await _client.PostAsJsonAsync(_option.ApiAddress, _option.CloudOption with { Text = content });
+            using var response = await _client.PostAsJsonAsync(_option.ApiAddress,
+                _option.CloudOption with { Text = content }, cancellationToken: token);
             if (!response.IsSuccessStatusCode)
             {
                 LogApiRequestFailed(_logger, group);
                 continue;
             }
-            
-            ClearGroupMessages(group);
 
-            var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync());
-            
+            if (clear) ClearGroupMessages(group);
+
+            var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
+
             var builder = new MessageBuilder();
             builder.Add(new ImageData($"base64://{base64}"));
-            var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()));
+            var response1 =
+                await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()), token);
             if (!(response1?.Success ?? false))
             {
                 LogSendFailed(_logger, group);
                 continue;
             }
-            
+
             LogWordCloudSent(_logger, group);
         }
     }
 
+    public Task Execute(IJobExecutionContext context) => SendWordCloudAsync(true);
+
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Word cloud api request failed for group {GroupId}")]
+    [LoggerMessage(EventId = 0, Level = LogLevel.Warning,
+        Message = "Word cloud api request failed for group {GroupId}")]
     private static partial void LogApiRequestFailed(ILogger logger, long groupId);
-    
+
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
     private static partial void LogSendFailed(ILogger logger, long groupId);
-    
+
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Word cloud sent for group {GroupId}")]
     private static partial void LogWordCloudSent(ILogger logger, long groupId);
 

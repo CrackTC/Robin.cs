@@ -16,7 +16,7 @@ public abstract class BotFunction(
     protected readonly IConfiguration _configuration = configuration;
     protected readonly IEnumerable<BotFunction> _functions = functions;
 
-    public abstract void OnEvent(long selfId, BotEvent @event);
+    public abstract Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token);
 
     public abstract Task StartAsync(CancellationToken token);
 

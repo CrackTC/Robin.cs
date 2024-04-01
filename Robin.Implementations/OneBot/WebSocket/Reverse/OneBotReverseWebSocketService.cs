@@ -34,7 +34,7 @@ internal partial class OneBotReverseWebSocketService(
     private System.Net.WebSockets.WebSocket? _websocket;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    public event Action<BotEvent>? OnEvent;
+    public event Func<BotEvent, CancellationToken, Task>? OnEventAsync;
 
     public async Task<Response?> SendRequestAsync(Request request, CancellationToken token = default)
     {
@@ -92,7 +92,7 @@ internal partial class OneBotReverseWebSocketService(
 
     private event Action<OneBotResponse>? OnResponse;
 
-    private void DispatchMessage(string message)
+    private async Task DispatchMessageAsync(string message, CancellationToken token)
     {
         var node = JsonNode.Parse(message);
         if (node is null) return;
@@ -110,7 +110,8 @@ internal partial class OneBotReverseWebSocketService(
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;
-        OnEvent?.Invoke(@event);
+        
+        if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
     }
 
     private async Task ReceiveLoop(CancellationToken token)
@@ -134,7 +135,7 @@ internal partial class OneBotReverseWebSocketService(
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, received);
                     LogReceiveMessage(_logger, message);
-                    _ = Task.Run(() => DispatchMessage(message), token);
+                    _ = DispatchMessageAsync(message, token);
                     buffer = new byte[1024];
                     received = 0;
                 }

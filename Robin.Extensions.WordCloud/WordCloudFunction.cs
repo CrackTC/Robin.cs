@@ -9,13 +9,16 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Annotations.Command;
 
 namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "daily word cloud", typeof(GroupMessageEvent))]
-public partial class WordCloudFunction : BotFunction
+[OnCommand("word_cloud")]
+public partial class WordCloudFunction : BotFunction, ICommandHandler
 {
     private IScheduler? _scheduler;
+    private WordCloudJob? _job;
     private WordCloudOption? _option;
     private readonly SqliteConnection _connection;
     private readonly Logger<WordCloudFunction> _logger;
@@ -54,11 +57,12 @@ public partial class WordCloudFunction : BotFunction
         _insertDataCommand.Parameters.Clear();
     }
 
-    public override void OnEvent(long selfId, BotEvent @event)
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return Task.CompletedTask;
         InsertData(e.GroupId,
             string.Join(' ', e.Message.Segments.Where(s => s is TextData).Select(s => (s as TextData)!.Text)));
+        return Task.CompletedTask;
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -73,8 +77,9 @@ public partial class WordCloudFunction : BotFunction
 
         CreateTable();
 
+        _job = new WordCloudJob(_service, _operation, _connection, _option);
         _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
-        _scheduler.JobFactory = new WordCloudJobFactory(_service, _provider, _connection, _option);
+        _scheduler.JobFactory = new WordCloudJobFactory(_job);
 
         var job = JobBuilder.Create<WordCloudJob>()
             .WithIdentity("WordCloudJob", "WordCloud")
@@ -93,6 +98,9 @@ public partial class WordCloudFunction : BotFunction
 
     public override Task StopAsync(CancellationToken token)
         => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
+
+    public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
+        _job!.SendWordCloudAsync(token: token);
 
     #region Log
 

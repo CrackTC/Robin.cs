@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Microsoft.Extensions.Configuration;
 using Robin.Abstractions.Communication;
 
@@ -9,7 +10,7 @@ internal class BotContext : IDisposable
     public long Uin { get; set; }
     public IBotEventInvoker? EventInvoker { get; set; }
     public IOperationProvider? OperationProvider { get; set; }
-    public Dictionary<string, IConfigurationSection>? FunctionConfigurations { get; set; }
+    public FrozenDictionary<string, IConfigurationSection>? FunctionConfigurations { get; set; }
 
     public void Dispose()
     {

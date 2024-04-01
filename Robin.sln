@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.WordCloud"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.UserRank", "Robin.Extensions.UserRank\Robin.Extensions.UserRank.csproj", "{A160A0D5-019C-48BD-B5A8-97E5B08F0580}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Annotations", "Robin.Annotations\Robin.Annotations.csproj", "{814870D3-D58F-4BC4-80D5-F89D809A8DB6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A160A0D5-019C-48BD-B5A8-97E5B08F0580}.Release|Any CPU.Build.0 = Release|Any CPU
+		{814870D3-D58F-4BC4-80D5-F89D809A8DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{814870D3-D58F-4BC4-80D5-F89D809A8DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{814870D3-D58F-4BC4-80D5-F89D809A8DB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{814870D3-D58F-4BC4-80D5-F89D809A8DB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

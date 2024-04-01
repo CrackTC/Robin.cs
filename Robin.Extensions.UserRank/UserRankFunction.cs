@@ -9,13 +9,17 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Annotations.Command;
 
 namespace Robin.Extensions.UserRank;
 
 [BotFunctionInfo("user_rank", "daily user rank", typeof(GroupMessageEvent))]
-public partial class UserRankFunction : BotFunction
+[OnCommand("rank")]
+// ReSharper disable once UnusedType.Global
+public partial class UserRankFunction : BotFunction, ICommandHandler
 {
     private IScheduler? _scheduler;
+    private UserRankJob? _job;
     private UserRankOption? _option;
     private readonly SqliteConnection _connection;
     private readonly Logger<UserRankFunction> _logger;
@@ -56,11 +60,12 @@ public partial class UserRankFunction : BotFunction
         _insertDataCommand.Parameters.Clear();
     }
 
-    public override void OnEvent(long selfId, BotEvent @event)
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return Task.CompletedTask;
         InsertData(e.GroupId, e.UserId,
             string.Join(' ', e.Message.Segments.Where(s => s is TextData).Select(s => (s as TextData)!.Text)));
+        return Task.CompletedTask;
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -75,8 +80,9 @@ public partial class UserRankFunction : BotFunction
 
         CreateTable();
 
+        _job = new UserRankJob(_service, _operation, _connection, _option);
         _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
-        _scheduler.JobFactory = new UserRankJobFactory(_service, _provider, _connection, _option);
+        _scheduler.JobFactory = new UserRankJobFactory(_job);
 
         var job = JobBuilder.Create<UserRankJob>()
             .WithIdentity("UserRankJob", "UserRank")
@@ -95,6 +101,9 @@ public partial class UserRankFunction : BotFunction
 
     public override Task StopAsync(CancellationToken token)
         => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
+
+    public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
+        _job!.SendUserRankAsync(token: token);
 
     #region Log
 

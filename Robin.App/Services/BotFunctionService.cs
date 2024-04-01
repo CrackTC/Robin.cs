@@ -60,14 +60,14 @@ internal partial class BotFunctionService(
         await Task.WhenAll(_functions.Select(function => function.StartAsync(token)));
     }
 
-    private void OnBotEvent(BotEvent @event)
+    private async Task OnBotEventAsync(BotEvent @event, CancellationToken token)
     {
         var type = @event.GetType();
         while (type != typeof(object))
         {
             if (_eventToFunctions.TryGetValue(type, out var functions))
                 foreach (var function in functions)
-                    function.OnEvent(context.Uin, @event);
+                    await function.OnEventAsync(context.Uin, @event, token);
 
             type = type.BaseType!;
         }
@@ -88,12 +88,12 @@ internal partial class BotFunctionService(
         }
 
         await RegisterFunctions(cancellationToken);
-        context.EventInvoker.OnEvent += OnBotEvent;
+        context.EventInvoker.OnEventAsync += OnBotEventAsync;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        context.EventInvoker!.OnEvent -= OnBotEvent;
+        context.EventInvoker!.OnEventAsync -= OnBotEventAsync;
         foreach (var (_, functions) in _eventToFunctions)
         foreach (var function in functions)
             await function.StopAsync(cancellationToken);

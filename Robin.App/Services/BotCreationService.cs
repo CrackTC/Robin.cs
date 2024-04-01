@@ -1,8 +1,8 @@
+using System.Collections.Frozen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 
 namespace Robin.App.Services;
@@ -38,7 +38,7 @@ internal partial class BotCreationService(
                     section.GetRequiredSection("OperationProviderConfig"), token);
             context.FunctionConfigurations = section.GetSection("Configurations")
                 .GetChildren()
-                .ToDictionary(child => child["Name"]!);
+                .ToFrozenDictionary(child => child["Name"]!);
 
             var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
             await functionService.StartAsync(token);

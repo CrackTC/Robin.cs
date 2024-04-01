@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+using System.Collections.Frozen;
 using System.Text;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,8 +38,6 @@ public partial class UserRankJob : IJob
 
     private const string ClearGroupMessagesSql =
         "DELETE FROM user_rank WHERE group_id = $group_id";
-
-    private readonly HttpClient _client = new();
 
     private readonly UserRankOption _option;
 
@@ -96,7 +94,7 @@ public partial class UserRankJob : IJob
         return Convert.ToInt32(count);
     }
 
-    private List<(long Id, int Count)> GetGroupTopN(long groupId, int n)
+    private IEnumerable<(long Id, int Count)> GetGroupTopN(long groupId, int n)
     {
         _getGroupTopNCommand.Parameters.AddWithValue("$group_id", groupId);
         _getGroupTopNCommand.Parameters.AddWithValue("$n", n);
@@ -119,21 +117,21 @@ public partial class UserRankJob : IJob
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
-    public async Task Execute(IJobExecutionContext context)
+    internal async Task SendUserRankAsync(bool clear = false, CancellationToken token = default)
     {
         foreach (var group in GetGroups())
         {
             var peopleCount = GetGroupPeopleCount(group);
             var messageCount = GetGroupMessageCount(group);
             var top = GetGroupTopN(group, _option.TopN);
-            ClearGroupMessages(group);
+            if (clear) ClearGroupMessages(group);
 
             string message;
 
             if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
             else
             {
-                var memberList = await _operation.SendRequestAsync(new GetGroupMemberListRequest(group, true));
+                var memberList = await _operation.SendRequestAsync(new GetGroupMemberListRequest(group, true), token);
                 if (!(memberList?.Success ?? false))
                 {
                     LogGetGroupMemberListFailed(_logger, group);
@@ -142,16 +140,16 @@ public partial class UserRankJob : IJob
 
                 var dict = (memberList as GetGroupMemberListResponse)!.Members!
                     .Select(member => (member.UserId, Name: member.Card ?? member.Nickname))
-                    .ToDictionary(pair => pair.UserId);
+                    .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
                 var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");
-                stringBuilder.AppendJoin('\n', top.Select(pair => $"{dict[pair.Id].Name} 贡献：{pair.Count}"));
+                stringBuilder.AppendJoin('\n', top.Select(pair => $"{dict[pair.Id]} 贡献：{pair.Count}"));
                 message = stringBuilder.ToString();
             }
 
             var builder = new MessageBuilder();
             builder.Add(new TextData(message));
-            var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()));
+            var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()), token);
             if (!(response1?.Success ?? false))
             {
                 LogSendFailed(_logger, group);
@@ -161,6 +159,8 @@ public partial class UserRankJob : IJob
             LogUserRankSent(_logger, group);
         }
     }
+
+    public Task Execute(IJobExecutionContext context) => SendUserRankAsync(true);
 
     #region Log
 
