@@ -11,7 +11,7 @@ using Robin.Abstractions.Message.Entities;
 
 namespace Robin.Annotations.Command;
 
-[BotFunctionInfo("command_dispatch", "dispatch command to function", typeof(GroupMessageEvent))]
+[BotFunctionInfo("command_dispatch", "dispatch command to function", typeof(MessageEvent))]
 public class CommandDispatchFunction(
     IServiceProvider service,
     IOperationProvider operation,
