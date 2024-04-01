@@ -11,8 +11,7 @@ public class EquatableImmutableArray<T>(ImmutableArray<T> array) : IEnumerable<T
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        if (_array.Length != other._array.Length) return false;
-        return _array.SequenceEqual(other._array);
+        return _array.Length == other._array.Length && _array.SequenceEqual(other._array);
     }
 
     public override bool Equals(object? obj) => obj is EquatableImmutableArray<T> other && Equals(other);
