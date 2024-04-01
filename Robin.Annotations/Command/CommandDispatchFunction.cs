@@ -14,9 +14,10 @@ namespace Robin.Annotations.Command;
 [BotFunctionInfo("command_dispatch", "dispatch command to function", typeof(MessageEvent))]
 public class CommandDispatchFunction(
     IServiceProvider service,
+    long uin,
     IOperationProvider operation,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, operation, configuration, functions)
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
 {
     private readonly FrozenDictionary<string, (bool, ICommandHandler)> _functionMap = functions
         .Select(function =>

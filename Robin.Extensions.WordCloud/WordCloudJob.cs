@@ -52,11 +52,11 @@ public partial class WordCloudJob : IJob
         _clearGroupMessagesCommand.CommandText = ClearGroupMessagesSql;
     }
 
-    private List<long> GetGroups()
+    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
     {
         var groups = new List<long>();
-        using var reader = _getGroupsCommand.ExecuteReader();
-        while (reader.Read())
+        await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
+        while (await reader.ReadAsync(token))
         {
             groups.Add(reader.GetInt64(0));
         }
@@ -64,13 +64,13 @@ public partial class WordCloudJob : IJob
         return groups;
     }
 
-    private IEnumerable<string> GetGroupMessages(long groupId)
+    private async Task<IEnumerable<string>> GetGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
 
         var messages = new List<string>();
-        using var reader = _getGroupMessagesCommand.ExecuteReader();
-        while (reader.Read())
+        await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
+        while (await reader.ReadAsync(token))
         {
             messages.Add(reader.GetString(0));
         }
@@ -79,16 +79,16 @@ public partial class WordCloudJob : IJob
         return messages;
     }
 
-    private void ClearGroupMessages(long groupId)
+    private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-        _clearGroupMessagesCommand.ExecuteNonQuery();
+        await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
     internal async Task SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
     {
-        var messages = GetGroupMessages(groupId);
+        var messages = await GetGroupMessagesAsync(groupId, token);
         var content = string.Join('\n', messages);
         using var response = await _client.PostAsJsonAsync(_option.ApiAddress,
             _option.CloudOption with { Text = content }, cancellationToken: token);
@@ -98,7 +98,7 @@ public partial class WordCloudJob : IJob
             return;
         }
 
-        if (clear) ClearGroupMessages(groupId);
+        if (clear) await ClearGroupMessagesAsync(groupId, token);
 
         var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
 
@@ -113,8 +113,8 @@ public partial class WordCloudJob : IJob
         LogWordCloudSent(_logger, groupId);
     }
 
-    public Task Execute(IJobExecutionContext context) =>
-        Task.WhenAll(GetGroups().Select(group => SendWordCloudAsync(group, true)));
+    public async Task Execute(IJobExecutionContext context) =>
+        await Task.WhenAll((await GetGroupsAsync()).Select(group => SendWordCloudAsync(group, true)));
 
     #region Log
 

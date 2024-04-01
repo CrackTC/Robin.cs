@@ -16,9 +16,10 @@ namespace Robin.Extensions.ReplyAction;
 // ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(
     IServiceProvider service,
+    long uin,
     IOperationProvider operation,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, operation, configuration, functions)
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
 {
     private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<Logger<ReplyActionFunction>>();
 
@@ -28,8 +29,7 @@ public partial class ReplyActionFunction(
 
         var segments = e.Message.Segments.ToList();
 
-        var text = string.Join(' ',
-            segments.Where(segment => segment is TextData).Select(segment => (segment as TextData)!.Text.Trim()));
+        var text = string.Join(' ', segments.OfType<TextData>().Select(segment => segment.Text.Trim()));
 
         if (!text.StartsWith('/')) return;
 

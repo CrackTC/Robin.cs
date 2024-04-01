@@ -13,33 +13,33 @@ using Robin.Annotations.Command;
 
 namespace Robin.Extensions.Gray;
 
-[BotFunctionInfo("gray", "send gray avatar", typeof(GroupMessageEvent))]
+[BotFunctionInfo("gray", "send gray avatar")]
 [OnCommand("送走")]
-public partial class GrayFunction : BotFunction, ICommandHandler
+public partial class GrayFunction(
+    IServiceProvider service,
+    long uin,
+    IOperationProvider operation,
+    IConfiguration configuration,
+    IEnumerable<BotFunction> functions)
+    : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
 {
-    private readonly ILogger<GrayFunction> _logger;
-    private readonly GrayOption _option;
+    private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<Logger<GrayFunction>>();
+    private GrayOption? _option;
     private static readonly HttpClient _client = new();
-
-    public GrayFunction(
-        IServiceProvider service,
-        IOperationProvider operation,
-        IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
-    {
-        _logger = service.GetRequiredService<Logger<GrayFunction>>();
-        if (configuration.Get<GrayOption>() is not GrayOption option)
-        {
-            LogOptionBindingFailed(_logger);
-            return;
-        }
-
-        _option = option;
-    }
 
     public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
 
-    public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
+    public override Task StartAsync(CancellationToken token)
+    {
+        if (_configuration.Get<GrayOption>() is not { } option)
+        {
+            LogOptionBindingFailed(_logger);
+            return Task.CompletedTask;
+        }
+
+        _option = option;
+        return Task.CompletedTask;
+    }
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
@@ -48,9 +48,6 @@ public partial class GrayFunction : BotFunction, ICommandHandler
         if (@event is not GroupMessageEvent e) return;
 
         var segments = e.Message.Segments.ToList();
-
-        var text = string.Join(' ',
-            segments.Where(segment => segment is TextData).Select(segment => (segment as TextData)!.Text.Trim()));
 
         if (segments.FirstOrDefault(segment => segment is ReplyData) is not ReplyData reply) return;
 
@@ -67,7 +64,7 @@ public partial class GrayFunction : BotFunction, ICommandHandler
 
         try
         {
-            var image = await _client.GetByteArrayAsync($"{_option.ApiAddress}/?id={senderId}", token);
+            var image = await _client.GetByteArrayAsync($"{_option!.ApiAddress}/?id={senderId}", token);
             MessageBuilder builder = [new ImageData($"base64://{Convert.ToBase64String(image)}")];
             if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, builder.Build()), token) is not
                 { Success: true })

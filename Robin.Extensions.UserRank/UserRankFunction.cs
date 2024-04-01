@@ -38,9 +38,10 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         long uin,
         IOperationProvider operation,
         IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
+        IEnumerable<BotFunction> functions) : base(service, uin, operation, configuration, functions)
     {
         _connection = new SqliteConnection($"Data Source=user_rank-{uin}.db");
+
         _logger = service.GetRequiredService<Logger<UserRankFunction>>();
 
         _createTableCommand = _connection.CreateCommand();
@@ -49,23 +50,22 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private void CreateTable() => _createTableCommand.ExecuteNonQuery();
+    private Task CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
 
-    private void InsertData(long groupId, long userId, string message)
+    private async Task InsertDataAsync(long groupId, long userId, string message, CancellationToken token)
     {
         _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
         _insertDataCommand.Parameters.AddWithValue("$user_id", userId);
         _insertDataCommand.Parameters.AddWithValue("$message", message);
-        _insertDataCommand.ExecuteNonQuery();
+        await _insertDataCommand.ExecuteNonQueryAsync(token);
         _insertDataCommand.Parameters.Clear();
     }
 
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return Task.CompletedTask;
-        InsertData(e.GroupId, e.UserId,
-            string.Join(' ', e.Message.Segments.Where(s => s is TextData).Select(s => (s as TextData)!.Text)));
-        return Task.CompletedTask;
+        if (@event is not GroupMessageEvent e) return;
+        await InsertDataAsync(e.GroupId, e.UserId,
+            string.Join(' ', e.Message.Segments.OfType<TextData>().Select(s => s.Text)), token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -78,7 +78,8 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
 
         _option = option;
 
-        CreateTable();
+        await _connection.OpenAsync(token);
+        await CreateTableAsync(token);
 
         _job = new UserRankJob(_service, _operation, _connection, _option);
         _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
@@ -99,8 +100,11 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         LogUserRankJobScheduled(_logger);
     }
 
-    public override Task StopAsync(CancellationToken token)
-        => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
+    public override async Task StopAsync(CancellationToken token)
+    {
+        await (_scheduler?.Shutdown(token) ?? Task.CompletedTask);
+        await _connection.CloseAsync();
+    }
 
     public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
         @event is GroupMessageEvent e ? _job!.SendUserRankAsync(e.GroupId, token: token) : Task.CompletedTask;

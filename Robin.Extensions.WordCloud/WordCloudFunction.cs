@@ -15,6 +15,7 @@ namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "daily word cloud", typeof(GroupMessageEvent))]
 [OnCommand("word_cloud")]
+// ReSharper disable once UnusedType.Global
 public partial class WordCloudFunction : BotFunction, ICommandHandler
 {
     private IScheduler? _scheduler;
@@ -36,9 +37,10 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         long uin,
         IOperationProvider operation,
         IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
+        IEnumerable<BotFunction> functions) : base(service, uin, operation, configuration, functions)
     {
         _connection = new SqliteConnection($"Data Source=word_cloud-{uin}.db");
+
         _logger = service.GetRequiredService<Logger<WordCloudFunction>>();
 
         _createTableCommand = _connection.CreateCommand();
@@ -47,22 +49,21 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private void CreateTable() => _createTableCommand.ExecuteNonQuery();
+    private Task CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
 
-    private void InsertData(long groupId, string message)
+    private async Task InsertDataAsync(long groupId, string message, CancellationToken token)
     {
         _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
         _insertDataCommand.Parameters.AddWithValue("$message", message);
-        _insertDataCommand.ExecuteNonQuery();
+        await _insertDataCommand.ExecuteNonQueryAsync(token);
         _insertDataCommand.Parameters.Clear();
     }
 
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return Task.CompletedTask;
-        InsertData(e.GroupId,
-            string.Join(' ', e.Message.Segments.Where(s => s is TextData).Select(s => (s as TextData)!.Text)));
-        return Task.CompletedTask;
+        if (@event is not GroupMessageEvent e) return;
+        await InsertDataAsync(e.GroupId,
+            string.Join(' ', e.Message.Segments.OfType<TextData>().Select(s => s.Text)), token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -75,7 +76,8 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
 
         _option = option;
 
-        CreateTable();
+        await _connection.OpenAsync(token);
+        await CreateTableAsync(token);
 
         _job = new WordCloudJob(_service, _operation, _connection, _option);
         _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
@@ -96,8 +98,11 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         LogWordCloudJobScheduled(_logger);
     }
 
-    public override Task StopAsync(CancellationToken token)
-        => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
+    public override async Task StopAsync(CancellationToken token)
+    {
+        await (_scheduler?.Shutdown(token) ?? Task.CompletedTask);
+        await _connection.CloseAsync();
+    }
 
     public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
         @event is GroupMessageEvent e ? _job!.SendWordCloudAsync(e.GroupId, token: token) : Task.CompletedTask;

@@ -66,11 +66,11 @@ public partial class UserRankJob : IJob
         _clearGroupMessagesCommand.CommandText = ClearGroupMessagesSql;
     }
 
-    private List<long> GetGroups()
+    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
     {
         var groups = new List<long>();
-        using var reader = _getGroupsCommand.ExecuteReader();
-        while (reader.Read())
+        await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
+        while (await reader.ReadAsync(token))
         {
             groups.Add(reader.GetInt64(0));
         }
@@ -78,30 +78,31 @@ public partial class UserRankJob : IJob
         return groups;
     }
 
-    private int GetGroupPeopleCount(long groupId)
+    private async Task<int> GetGroupPeopleCountAsync(long groupId, CancellationToken token)
     {
         _getGroupPeopleCountCommand.Parameters.AddWithValue("$group_id", groupId);
-        var count = _getGroupPeopleCountCommand.ExecuteScalar();
+        var count = await _getGroupPeopleCountCommand.ExecuteScalarAsync(token);
         _getGroupPeopleCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
 
-    private int GetGroupMessageCount(long groupId)
+    private async Task<int> GetGroupMessageCountAsync(long groupId, CancellationToken token)
     {
         _getGroupMessageCountCommand.Parameters.AddWithValue("$group_id", groupId);
-        var count = _getGroupMessageCountCommand.ExecuteScalar();
+        var count = await _getGroupMessageCountCommand.ExecuteScalarAsync(token);
         _getGroupMessageCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
 
-    private IEnumerable<(long Id, int Count)> GetGroupTopN(long groupId, int n)
+    private async Task<IEnumerable<(long Id, int Count)>> GetGroupTopNAsync(long groupId, int n,
+        CancellationToken token)
     {
         _getGroupTopNCommand.Parameters.AddWithValue("$group_id", groupId);
         _getGroupTopNCommand.Parameters.AddWithValue("$n", n);
 
         var top = new List<(long, int)>();
-        using var reader = _getGroupTopNCommand.ExecuteReader();
-        while (reader.Read())
+        await using var reader = await _getGroupTopNCommand.ExecuteReaderAsync(token);
+        while (await reader.ReadAsync(token))
         {
             top.Add((reader.GetInt64(0), reader.GetInt32(1)));
         }
@@ -110,19 +111,19 @@ public partial class UserRankJob : IJob
         return top;
     }
 
-    private void ClearGroupMessages(long groupId)
+    private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-        _clearGroupMessagesCommand.ExecuteNonQuery();
+        await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
     internal async Task SendUserRankAsync(long groupId, bool clear = false, CancellationToken token = default)
     {
-        var peopleCount = GetGroupPeopleCount(groupId);
-        var messageCount = GetGroupMessageCount(groupId);
-        var top = GetGroupTopN(groupId, _option.TopN);
-        if (clear) ClearGroupMessages(groupId);
+        var peopleCount = await GetGroupPeopleCountAsync(groupId, token);
+        var messageCount = await GetGroupMessageCountAsync(groupId, token);
+        var top = await GetGroupTopNAsync(groupId, _option.TopN, token);
+        if (clear) await ClearGroupMessagesAsync(groupId, token);
 
         string message;
 
@@ -156,8 +157,8 @@ public partial class UserRankJob : IJob
         LogUserRankSent(_logger, groupId);
     }
 
-    public Task Execute(IJobExecutionContext context) =>
-        Task.WhenAll(GetGroups().Select(group => SendUserRankAsync(group, true)));
+    public async Task Execute(IJobExecutionContext context) =>
+        await Task.WhenAll((await GetGroupsAsync()).Select(group => SendUserRankAsync(group, true)));
 
     #region Log
 

@@ -12,27 +12,18 @@ using Robin.Annotations.Command;
 
 namespace Robin.Extensions.RandReply;
 
-[BotFunctionInfo("rand_reply", "Random Reply", typeof(GroupMessageEvent))]
+[BotFunctionInfo("rand_reply", "Random Reply")]
 [OnCommand("", at: true)]
-public partial class RandReplyFunction : BotFunction, ICommandHandler
+public partial class RandReplyFunction(
+    IServiceProvider service,
+    long uin,
+    IOperationProvider operation,
+    IConfiguration configuration,
+    IEnumerable<BotFunction> functions)
+    : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
 {
-    private readonly RandReplyOption _option;
-    private readonly ILogger<RandReplyFunction> _logger;
-
-    public RandReplyFunction(IServiceProvider service,
-        IOperationProvider operation,
-        IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
-    {
-        _logger = service.GetRequiredService<Logger<RandReplyFunction>>();
-        if (_configuration.Get<RandReplyOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_logger);
-            return;
-        }
-
-        _option = option;
-    }
+    private RandReplyOption? _option;
+    private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<Logger<RandReplyFunction>>();
 
     public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
 
@@ -40,7 +31,7 @@ public partial class RandReplyFunction : BotFunction, ICommandHandler
     {
         if (@event is not GroupMessageEvent e) return;
 
-        var textCount = _option.Texts.Count;
+        var textCount = _option!.Texts.Count;
         var imageCount = _option.ImagePaths.Count;
         var index = Random.Shared.Next(textCount + imageCount);
 
@@ -62,7 +53,17 @@ public partial class RandReplyFunction : BotFunction, ICommandHandler
         LogReplySent(_logger, e.GroupId);
     }
 
-    public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
+    public override Task StartAsync(CancellationToken token)
+    {
+        if (_configuration.Get<RandReplyOption>() is not { } option)
+        {
+            LogOptionBindingFailed(_logger);
+            return Task.CompletedTask;
+        }
+
+        _option = option;
+        return Task.CompletedTask;
+    }
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
