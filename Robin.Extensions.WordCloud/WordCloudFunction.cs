@@ -32,7 +32,8 @@ public partial class WordCloudFunction : BotFunction
     public WordCloudFunction(IServiceProvider service,
         long uin,
         IOperationProvider operation,
-        IConfiguration configuration) : base(service, operation, configuration)
+        IConfiguration configuration,
+        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
     {
         _connection = new SqliteConnection($"Data Source=word_cloud-{uin}.db");
         _logger = service.GetRequiredService<Logger<WordCloudFunction>>();

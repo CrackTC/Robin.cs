@@ -13,6 +13,7 @@ internal partial class BotFunctionService(
     BotContext context) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _eventToFunctions = [];
+    private readonly List<BotFunction> _functions = [];
 
     private async Task RegisterFunctions(CancellationToken token)
     {
@@ -31,14 +32,15 @@ internal partial class BotFunctionService(
                         service,
                         context.Uin,
                         context.OperationProvider,
-                        context.FunctionConfigurations![info.Name]
+                        context.FunctionConfigurations![info.Name],
+                        _functions
                     ) is not BotFunction function)
                 {
                     LogFunctionNotRegistered(logger, info.Name);
                     continue;
                 }
 
-                await function.StartAsync(token);
+                _functions.Add(function);
 
                 foreach (var eventType in info.EventTypes)
                 {
@@ -54,6 +56,8 @@ internal partial class BotFunctionService(
                 LogFunctionError(logger, info.Name, e);
             }
         }
+        
+        await Task.WhenAll(_functions.Select(function => function.StartAsync(token)));
     }
 
     private void OnBotEvent(BotEvent @event)

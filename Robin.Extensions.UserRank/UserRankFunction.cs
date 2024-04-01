@@ -29,14 +29,16 @@ public partial class UserRankFunction : BotFunction
     private const string InsertDataSql =
         "INSERT INTO user_rank (group_id, user_id, message) VALUES ($group_id, $user_id, $message)";
 
-    public UserRankFunction(IServiceProvider service,
+    public UserRankFunction(
+        IServiceProvider service,
         long uin,
         IOperationProvider operation,
-        IConfiguration configuration) : base(service, operation, configuration)
+        IConfiguration configuration,
+        IEnumerable<BotFunction> functions) : base(service, operation, configuration, functions)
     {
         _connection = new SqliteConnection($"Data Source=user_rank-{uin}.db");
         _logger = service.GetRequiredService<Logger<UserRankFunction>>();
-        
+
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;
         _insertDataCommand = _connection.CreateCommand();
