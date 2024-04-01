@@ -26,7 +26,7 @@ internal partial class OneBotHttpServerService(
         new(service.GetRequiredService<ILogger<OneBotEventConverter>>());
 
     public event Func<BotEvent, CancellationToken, Task>? OnEventAsync;
-    
+
     private HMACSHA1? _sha1;
 
     private async Task DispatchMessageAsync(string message, CancellationToken token)
@@ -36,11 +36,11 @@ internal partial class OneBotHttpServerService(
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;
-        
+
         if (OnEventAsync is not null)
             await OnEventAsync.Invoke(@event, token);
     }
-    
+
     private string ComputeSha1(string message)
     {
         var hash = _sha1!.ComputeHash(Encoding.UTF8.GetBytes(message));
@@ -52,7 +52,7 @@ internal partial class OneBotHttpServerService(
         var listener = new HttpListener();
         listener.Prefixes.Add($"http://*:{options.Port}/");
         listener.Start();
-        
+
         if (!string.IsNullOrEmpty(options.Secret))
         {
             _sha1 = new HMACSHA1(Encoding.UTF8.GetBytes(options.Secret));
@@ -67,11 +67,11 @@ internal partial class OneBotHttpServerService(
                 context.Response.Close();
                 continue;
             }
-            
+
             var reader = new StreamReader(context.Request.InputStream);
             var message = await reader.ReadToEndAsync(token);
             LogReceiveMessage(_logger, message);
-            
+
             if (!string.IsNullOrEmpty(options.Secret))
             {
                 var signature = context.Request.Headers["X-Signature"];

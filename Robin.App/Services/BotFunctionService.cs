@@ -56,7 +56,7 @@ internal partial class BotFunctionService(
                 LogFunctionError(logger, info.Name, e);
             }
         }
-        
+
         await Task.WhenAll(_functions.Select(function => function.StartAsync(token)));
     }
 
@@ -95,8 +95,8 @@ internal partial class BotFunctionService(
     {
         context.EventInvoker!.OnEventAsync -= OnBotEventAsync;
         foreach (var (_, functions) in _eventToFunctions)
-        foreach (var function in functions)
-            await function.StopAsync(cancellationToken);
+            foreach (var function in functions)
+                await function.StopAsync(cancellationToken);
     }
 
     #region Log

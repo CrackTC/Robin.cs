@@ -11,7 +11,7 @@ public record class CloudOption
     [JsonPropertyName("font_path")] public required string FontPath { get; set; }
     [JsonPropertyName("padding")] public required int Padding { get; set; }
     [JsonPropertyName("background_image_blur")] public int BackgroundImageBlur { get; set; }
-    
+
     // Not used for configuration
     [JsonPropertyName("text")] public required string Text { get; set; }
 }

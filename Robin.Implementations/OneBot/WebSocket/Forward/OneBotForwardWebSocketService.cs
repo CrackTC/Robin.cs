@@ -109,7 +109,7 @@ internal partial class OneBotForwardWebSocketService(
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;
-        
+
         if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
     }
 
