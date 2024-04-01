@@ -100,7 +100,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
 
     public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
-        _job!.SendWordCloudAsync(token: token);
+        @event is GroupMessageEvent e ? _job!.SendWordCloudAsync(e.GroupId, token: token) : Task.CompletedTask;
 
     #region Log
 

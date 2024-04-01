@@ -86,39 +86,36 @@ public partial class WordCloudJob : IJob
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
-    internal async Task SendWordCloudAsync(bool clear = false, CancellationToken token = default)
+    internal async Task SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
     {
-        foreach (var group in GetGroups())
+        var messages = GetGroupMessages(groupId);
+        var content = string.Join('\n', messages);
+        using var response = await _client.PostAsJsonAsync(_option.ApiAddress,
+            _option.CloudOption with { Text = content }, cancellationToken: token);
+        if (!response.IsSuccessStatusCode)
         {
-            var messages = GetGroupMessages(group);
-            var content = string.Join('\n', messages);
-            using var response = await _client.PostAsJsonAsync(_option.ApiAddress,
-                _option.CloudOption with { Text = content }, cancellationToken: token);
-            if (!response.IsSuccessStatusCode)
-            {
-                LogApiRequestFailed(_logger, group);
-                continue;
-            }
-
-            if (clear) ClearGroupMessages(group);
-
-            var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
-
-            var builder = new MessageBuilder();
-            builder.Add(new ImageData($"base64://{base64}"));
-            var response1 =
-                await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()), token);
-            if (!(response1?.Success ?? false))
-            {
-                LogSendFailed(_logger, group);
-                continue;
-            }
-
-            LogWordCloudSent(_logger, group);
+            LogApiRequestFailed(_logger, groupId);
+            return;
         }
+
+        if (clear) ClearGroupMessages(groupId);
+
+        var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
+
+        var builder = new MessageBuilder();
+        builder.Add(new ImageData($"base64://{base64}"));
+        var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token);
+        if (!(response1?.Success ?? false))
+        {
+            LogSendFailed(_logger, groupId);
+            return;
+        }
+
+        LogWordCloudSent(_logger, groupId);
     }
 
-    public Task Execute(IJobExecutionContext context) => SendWordCloudAsync(true);
+    public Task Execute(IJobExecutionContext context) =>
+        Task.WhenAll(GetGroups().Select(group => SendWordCloudAsync(group, true)));
 
     #region Log
 

@@ -117,50 +117,48 @@ public partial class UserRankJob : IJob
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
-    internal async Task SendUserRankAsync(bool clear = false, CancellationToken token = default)
+    internal async Task SendUserRankAsync(long groupId, bool clear = false, CancellationToken token = default)
     {
-        foreach (var group in GetGroups())
+        var peopleCount = GetGroupPeopleCount(groupId);
+        var messageCount = GetGroupMessageCount(groupId);
+        var top = GetGroupTopN(groupId, _option.TopN);
+        if (clear) ClearGroupMessages(groupId);
+
+        string message;
+
+        if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
+        else
         {
-            var peopleCount = GetGroupPeopleCount(group);
-            var messageCount = GetGroupMessageCount(group);
-            var top = GetGroupTopN(group, _option.TopN);
-            if (clear) ClearGroupMessages(group);
-
-            string message;
-
-            if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
-            else
+            var memberList = await _operation.SendRequestAsync(new GetGroupMemberListRequest(groupId, true), token);
+            if (!(memberList?.Success ?? false))
             {
-                var memberList = await _operation.SendRequestAsync(new GetGroupMemberListRequest(group, true), token);
-                if (!(memberList?.Success ?? false))
-                {
-                    LogGetGroupMemberListFailed(_logger, group);
-                    continue;
-                }
-
-                var dict = (memberList as GetGroupMemberListResponse)!.Members!
-                    .Select(member => (member.UserId, Name: member.Card ?? member.Nickname))
-                    .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
-
-                var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");
-                stringBuilder.AppendJoin('\n', top.Select(pair => $"{dict[pair.Id]} 贡献：{pair.Count}"));
-                message = stringBuilder.ToString();
+                LogGetGroupMemberListFailed(_logger, groupId);
+                return;
             }
 
-            var builder = new MessageBuilder();
-            builder.Add(new TextData(message));
-            var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(group, builder.Build()), token);
-            if (!(response1?.Success ?? false))
-            {
-                LogSendFailed(_logger, group);
-                continue;
-            }
+            var dict = (memberList as GetGroupMemberListResponse)!.Members!
+                .Select(member => (member.UserId, Name: member.Card ?? member.Nickname))
+                .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
-            LogUserRankSent(_logger, group);
+            var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");
+            stringBuilder.AppendJoin('\n', top.Select(pair => $"{dict[pair.Id]} 贡献：{pair.Count}"));
+            message = stringBuilder.ToString();
         }
+
+        var builder = new MessageBuilder();
+        builder.Add(new TextData(message));
+        var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token);
+        if (!(response1?.Success ?? false))
+        {
+            LogSendFailed(_logger, groupId);
+            return;
+        }
+
+        LogUserRankSent(_logger, groupId);
     }
 
-    public Task Execute(IJobExecutionContext context) => SendUserRankAsync(true);
+    public Task Execute(IJobExecutionContext context) =>
+        Task.WhenAll(GetGroups().Select(group => SendUserRankAsync(group, true)));
 
     #region Log
 

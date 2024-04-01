@@ -103,7 +103,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         => _scheduler?.Shutdown(token) ?? Task.CompletedTask;
 
     public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>
-        _job!.SendUserRankAsync(token: token);
+        @event is GroupMessageEvent e ? _job!.SendUserRankAsync(e.GroupId, token: token) : Task.CompletedTask;
 
     #region Log
 
