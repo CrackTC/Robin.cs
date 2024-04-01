@@ -14,7 +14,7 @@ internal class OneBotGetMessageRequest : IOneBotRequest
         if (request is not GetMessageRequest r) return null;
         return JsonSerializer.SerializeToNode(new
         {
-            message_id = r.MessageId
+            message_id = Convert.ToInt32(r.MessageId)
         });
     }
 }

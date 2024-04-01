@@ -1,8 +1,9 @@
+using System.Collections;
 using System.Collections.Immutable;
 
 namespace Robin.Abstractions.Message;
 
-public class MessageBuilder
+public class MessageBuilder : IEnumerable<SegmentData>
 {
     private readonly List<SegmentData> _segments = [];
 
@@ -13,4 +14,7 @@ public class MessageBuilder
     }
 
     public MessageChain Build() => new(_segments.ToImmutableArray());
+    public IEnumerator<SegmentData> GetEnumerator() => _segments.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

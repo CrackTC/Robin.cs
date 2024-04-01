@@ -3,7 +3,7 @@ namespace Robin.Abstractions.Entities;
 public record GroupMessageSender(
     long UserId,
     string Nickname,
-    string Card,
+    string? Card,
     UserSex Sex,
     int Age,
     string Area,

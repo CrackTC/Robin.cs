@@ -129,14 +129,14 @@ public partial class UserRankJob : IJob
         if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
         else
         {
-            var memberList = await _operation.SendRequestAsync(new GetGroupMemberListRequest(groupId, true), token);
-            if (!(memberList?.Success ?? false))
+            if (await _operation.SendRequestAsync(new GetGroupMemberListRequest(groupId, true), token) is not
+                GetGroupMemberListResponse { Success: true, Members: not null } memberList)
             {
                 LogGetGroupMemberListFailed(_logger, groupId);
                 return;
             }
 
-            var dict = (memberList as GetGroupMemberListResponse)!.Members!
+            var dict = memberList.Members
                 .Select(member => (member.UserId, Name: member.Card ?? member.Nickname))
                 .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
@@ -145,10 +145,9 @@ public partial class UserRankJob : IJob
             message = stringBuilder.ToString();
         }
 
-        var builder = new MessageBuilder();
-        builder.Add(new TextData(message));
-        var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token);
-        if (!(response1?.Success ?? false))
+        MessageBuilder builder = [new TextData(message)];
+        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token) is not
+            { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

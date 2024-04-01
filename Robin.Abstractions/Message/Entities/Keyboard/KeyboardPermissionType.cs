@@ -1,9 +1,9 @@
 namespace Robin.Abstractions.Message.Entities.Keyboard;
 
-public enum KeyboardPermissionType : int
+public enum KeyboardPermissionType
 {
     SpecifyUser = 0,
     Admin = 1,
     Everyone = 2,
-    SpecifyRole = 3,
+    SpecifyRole = 3
 }

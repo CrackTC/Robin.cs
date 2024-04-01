@@ -27,7 +27,7 @@ public partial class WordCloudJob : IJob
     private const string ClearGroupMessagesSql =
         "DELETE FROM word_cloud WHERE group_id = $group_id";
 
-    private readonly HttpClient _client = new();
+    private static readonly HttpClient _client = new();
 
     private readonly WordCloudOption _option;
 
@@ -102,10 +102,9 @@ public partial class WordCloudJob : IJob
 
         var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
 
-        var builder = new MessageBuilder();
-        builder.Add(new ImageData($"base64://{base64}"));
-        var response1 = await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token);
-        if (!(response1?.Success ?? false))
+        MessageBuilder builder = [new ImageData($"base64://{base64}")];
+        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token) is not
+            { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

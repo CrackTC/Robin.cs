@@ -18,12 +18,12 @@ public class CommandDispatchFunction(
     IConfiguration configuration,
     IEnumerable<BotFunction> functions) : BotFunction(service, operation, configuration, functions)
 {
-    private readonly FrozenDictionary<string, ICommandHandler> _functionMap = functions
+    private readonly FrozenDictionary<string, (bool, ICommandHandler)> _functionMap = functions
         .Select(function =>
             (Function: function as ICommandHandler,
                 Attribute: function.GetType().GetCustomAttribute<OnCommandAttribute>()))
         .Where(pair => pair.Attribute is not null && pair.Function is not null)
-        .ToFrozenDictionary(pair => pair.Attribute!.Command, pair => pair.Function!);
+        .ToFrozenDictionary(pair => pair.Attribute!.Command, pair => (pair.Attribute!.At, pair.Function!));
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
@@ -32,11 +32,14 @@ public class CommandDispatchFunction(
         if (e.Message.Segments.FirstOrDefault(segment => segment is TextData) is not TextData command) return;
         var commandText = command.Text.Trim().Split(' ').FirstOrDefault() ?? string.Empty;
 
-        if (!commandText.StartsWith('/')) return;
+        if (!commandText.StartsWith('/') || !_functionMap.ContainsKey(commandText[1..]))
+            commandText = "/"; // try to match the default command
 
-        if (_functionMap.TryGetValue(commandText[1..], out var function))
+        if (_functionMap.TryGetValue(commandText[1..], out var pair))
         {
-            await function.OnCommandAsync(selfId, e, token);
+            if (pair.Item1 && !e.Message.Segments.Any(segment => segment is AtData at && at.Uin == selfId))
+                return;
+            await pair.Item2.OnCommandAsync(selfId, e, token);
         }
     }
 

@@ -1,7 +1,7 @@
 namespace Robin.Abstractions.Message.Entities.Keyboard;
 
-public enum KeyboardButtonStyle : int
+public enum KeyboardButtonStyle
 {
     Gray = 0,
-    Blue = 1,
+    Blue = 1
 }

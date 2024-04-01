@@ -1,3 +1,3 @@
 namespace Robin.Abstractions.Operation.Requests;
 
-public record GetMessageRequest(int MessageId) : Request;
+public record GetMessageRequest(string MessageId) : Request;
