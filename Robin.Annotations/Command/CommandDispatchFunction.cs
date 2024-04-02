@@ -22,9 +22,10 @@ public class CommandDispatchFunction(
     private readonly FrozenDictionary<string, (bool, ICommandHandler)> _functionMap = functions
         .Select(function =>
             (Function: function as ICommandHandler,
-                Attribute: function.GetType().GetCustomAttribute<OnCommandAttribute>()))
-        .Where(pair => pair.Attribute is not null && pair.Function is not null)
-        .ToFrozenDictionary(pair => pair.Attribute!.Command, pair => (pair.Attribute!.At, pair.Function!));
+                Attributes: function.GetType().GetCustomAttributes<OnCommandAttribute>()))
+        .Where(pair => pair.Attributes.Any() && pair.Function is not null)
+        .SelectMany(pair => pair.Attributes.Select(attr => (pair.Function, attr.Command, attr.At)))
+        .ToFrozenDictionary(tuple => tuple.Command, tuple => (tuple.At, tuple.Function!));
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
