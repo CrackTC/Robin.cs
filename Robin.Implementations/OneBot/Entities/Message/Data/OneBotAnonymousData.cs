@@ -18,6 +18,6 @@ internal class OneBotAnonymousData : IOneBotSegmentData
     {
         var d = data as AnonymousData;
         Ignore = d!.Ignore is true ? "1" : "0";
-        return new OneBotSegment { Type = "ignore", Data = JsonSerializer.SerializeToNode(this) };
+        return new OneBotSegment { Type = "anonymous", Data = JsonSerializer.SerializeToNode(this) };
     }
 }
