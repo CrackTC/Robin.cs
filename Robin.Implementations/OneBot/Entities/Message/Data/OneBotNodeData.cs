@@ -20,8 +20,7 @@ internal class OneBotNodeData : IOneBotSegmentData
         Id switch
         {
             not null => new NodeData(Id),
-            _ => new CustomNodeData(Convert.ToInt64(Uin), Name,
-                converter.ParseMessageChain(Content) ?? new MessageBuilder().Build())
+            _ => new CustomNodeData(Convert.ToInt64(Uin), Name, converter.ParseMessageChain(Content) ?? [])
         };
 
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)

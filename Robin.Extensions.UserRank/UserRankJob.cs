@@ -146,9 +146,8 @@ public partial class UserRankJob : IJob
             message = stringBuilder.ToString();
         }
 
-        MessageBuilder builder = [new TextData(message)];
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token) is not
-            { Success: true })
+        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, [new TextData(message)]), token) is
+            not { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

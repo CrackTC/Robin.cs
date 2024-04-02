@@ -56,7 +56,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
     public JsonArray? SerializeToArray(MessageChain chain)
     {
         var list = new List<OneBotSegment>();
-        foreach (var segmentData in chain.Segments)
+        foreach (var segmentData in chain)
         {
             var dataType = _segmentTypeToDataType[segmentData.GetType()];
             if (Activator.CreateInstance(dataType) is IOneBotSegmentData data)
@@ -74,7 +74,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     private MessageChain? ParseFromArray(JsonArray segmentArray)
     {
-        var builder = new MessageBuilder();
+        var chain = new MessageChain();
 
         foreach (var segmentNode in segmentArray)
         {
@@ -96,10 +96,10 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
                 return null;
             }
 
-            builder.Add(data.ToSegmentData(this));
+            chain.Add(data.ToSegmentData(this));
         }
 
-        return builder.Build();
+        return chain;
     }
 
     [GeneratedRegex(@"\[CQ:([^,\]]+)(?:,([^,\]]+))*\]")]
@@ -118,13 +118,13 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     private MessageChain? ParseFromString(string segmentString)
     {
-        var builder = new MessageBuilder();
+        var chain = new MessageChain();
 
         var matches = CqCodeRegex().Matches(segmentString);
         var textStart = 0;
         foreach (Match match in matches)
         {
-            if (match.Index > textStart) builder.Add(new TextData(UnescapeText(segmentString[textStart..match.Index])));
+            if (match.Index > textStart) chain.Add(new TextData(UnescapeText(segmentString[textStart..match.Index])));
             textStart = match.Index + match.Length;
 
             var type = match.Groups[1].Value;
@@ -154,13 +154,13 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
                 return null;
             }
 
-            builder.Add(data.ToSegmentData(this));
+            chain.Add(data.ToSegmentData(this));
         }
 
         if (textStart < segmentString.Length)
-            builder.Add(new TextData(UnescapeText(segmentString[textStart..])));
+            chain.Add(new TextData(UnescapeText(segmentString[textStart..])));
 
-        return builder.Build();
+        return chain;
     }
 
     #region Log

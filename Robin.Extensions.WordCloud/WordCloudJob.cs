@@ -102,8 +102,8 @@ public partial class WordCloudJob : IJob
 
         var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
 
-        MessageBuilder builder = [new ImageData($"base64://{base64}")];
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, builder.Build()), token) is not
+        if (await _operation.SendRequestAsync(
+                new SendGroupMessageRequest(groupId, [new ImageData($"base64://{base64}")]), token) is not
             { Success: true })
         {
             LogSendFailed(_logger, groupId);

@@ -20,7 +20,7 @@ internal class OneBotGroupMessageEvent : OneBotMessageEvent
     {
         return new GroupMessageEvent(Time, MessageId, GroupId, UserId,
             new AnonymousInfo(Anonymous.Id, Anonymous.Name, Anonymous.Flag),
-            converter.ParseMessageChain(Message) ?? new MessageBuilder().Build(),
+            converter.ParseMessageChain(Message) ?? [],
             Font,
             new GroupMessageSender(Sender.UserId, Sender.Nickname, Sender.Card,
                 Sender.Sex switch { "male" => UserSex.Male, "female" => UserSex.Female, _ => UserSex.Unknown },

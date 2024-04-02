@@ -1,6 +1,3 @@
-using System.Collections.Immutable;
-using Robin.Abstractions.Common;
-using Robin.Abstractions.Entities;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Implementations.OneBot.Entities.Operations.Requests;
@@ -17,9 +14,6 @@ internal class OneBotGetGroupMemberListResponseData : List<OneBotGetGroupMemberI
             response.Status is not "failed",
             response.ReturnCode,
             null,
-            new EquatableImmutableArray<GroupMemberInfo>(
-                this.Select(data => (data.ToResponse(response, converter) as GetGroupMemberInfoResponse)!.Info!)
-                    .ToImmutableArray()
-            )
+            this.Select(data => (data.ToResponse(response, converter) as GetGroupMemberInfoResponse)!.Info!).ToList()
         );
 }

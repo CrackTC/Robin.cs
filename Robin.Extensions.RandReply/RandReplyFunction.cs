@@ -35,7 +35,7 @@ public partial class RandReplyFunction(
         var imageCount = _option.ImagePaths.Count;
         var index = Random.Shared.Next(textCount + imageCount);
 
-        MessageBuilder builder =
+        MessageChain chain =
         [
             index < textCount
                 ? new TextData(_option.Texts[index])
@@ -43,7 +43,7 @@ public partial class RandReplyFunction(
                     $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths[index - textCount], token))}")
         ];
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, builder.Build()), token) is not
+        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, chain), token) is not
             { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);

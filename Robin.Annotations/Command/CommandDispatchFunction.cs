@@ -30,7 +30,7 @@ public class CommandDispatchFunction(
     {
         var e = (@event as MessageEvent)!;
 
-        if (e.Message.Segments.FirstOrDefault(segment => segment is TextData) is not TextData command) return;
+        if (e.Message.FirstOrDefault(segment => segment is TextData) is not TextData command) return;
         var commandText = command.Text.Trim().Split(' ').FirstOrDefault() ?? string.Empty;
 
         if (!commandText.StartsWith('/') || !_functionMap.ContainsKey(commandText[1..]))
@@ -38,7 +38,7 @@ public class CommandDispatchFunction(
 
         if (_functionMap.TryGetValue(commandText[1..], out var pair))
         {
-            if (pair.Item1 && !e.Message.Segments.Any(segment => segment is AtData at && at.Uin == selfId))
+            if (pair.Item1 && !e.Message.Any(segment => segment is AtData at && at.Uin == selfId))
                 return;
             await pair.Item2.OnCommandAsync(selfId, e, token);
         }

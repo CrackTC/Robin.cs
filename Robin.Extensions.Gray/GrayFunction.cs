@@ -47,7 +47,7 @@ public partial class GrayFunction(
     {
         if (@event is not GroupMessageEvent e) return;
 
-        var segments = e.Message.Segments.ToList();
+        var segments = e.Message;
 
         if (segments.FirstOrDefault(segment => segment is ReplyData) is not ReplyData reply) return;
 
@@ -65,8 +65,9 @@ public partial class GrayFunction(
         try
         {
             var image = await _client.GetByteArrayAsync($"{_option!.ApiAddress}/?id={senderId}", token);
-            MessageBuilder builder = [new ImageData($"base64://{Convert.ToBase64String(image)}")];
-            if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, builder.Build()), token) is not
+            if (await _operation.SendRequestAsync(
+                    new SendGroupMessageRequest(e.GroupId,
+                        [new ImageData($"base64://{Convert.ToBase64String(image)}")]), token) is not
                 { Success: true })
             {
                 LogSendFailed(_logger, e.GroupId);

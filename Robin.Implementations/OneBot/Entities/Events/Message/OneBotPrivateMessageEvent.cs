@@ -17,7 +17,7 @@ internal class OneBotPrivateMessageEvent : OneBotMessageEvent
     public override BotEvent ToBotEvent(OneBotMessageConverter converter)
     {
         return new PrivateMessageEvent(Time, MessageId, UserId,
-            converter.ParseMessageChain(Message) ?? new MessageBuilder().Build(), Font,
+            converter.ParseMessageChain(Message) ?? [], Font,
             new MessageSender(Sender.UserId, Sender.Nickname,
                 Sender.Sex switch { "male" => UserSex.Male, "female" => UserSex.Female, _ => UserSex.Unknown },
                 Sender.Age));

@@ -31,7 +31,7 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
                 MessageId,
                 RealId,
                 Sender,
-                converter.ParseMessageChain(Message) ?? new MessageBuilder().Build()
+                converter.ParseMessageChain(Message) ?? []
             )
         );
 }

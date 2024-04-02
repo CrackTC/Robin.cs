@@ -1,5 +1,4 @@
-using Robin.Abstractions.Common;
-
 namespace Robin.Abstractions.Message;
 
-public record MessageChain(EquatableImmutableArray<SegmentData> Segments);
+// public record MessageChain(List<SegmentData> Segments);
+public class MessageChain : List<SegmentData>;

@@ -27,7 +27,7 @@ public partial class ReplyActionFunction(
     {
         if (@event is not GroupMessageEvent e) return;
 
-        var segments = e.Message.Segments.ToList();
+        var segments = e.Message;
 
         var text = string.Join(' ', segments.OfType<TextData>().Select(segment => segment.Text.Trim()));
 
@@ -59,14 +59,13 @@ public partial class ReplyActionFunction(
         var sourceName = e.Sender.Card ?? e.Sender.Nickname;
         var targetName = info.Info.Card ?? info.Info.Nickname;
 
-        MessageBuilder builder =
+        MessageChain chain =
         [
-            new TextData($"{sourceName} {parts[0]} {targetName}{
-                (parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)
-            }")
+            new TextData(
+                $"{sourceName} {parts[0]} {targetName}{(parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)}")
         ];
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, builder.Build()), token) is not
+        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, chain), token) is not
             { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
