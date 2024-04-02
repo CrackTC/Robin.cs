@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using Robin.Abstractions.Entities;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Implementations.OneBot.Entities.Common;
 using Robin.Implementations.OneBot.Converters;
 

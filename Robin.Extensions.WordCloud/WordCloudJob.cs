@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using Robin.Abstractions.Communication;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
 

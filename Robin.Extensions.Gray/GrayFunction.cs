@@ -5,7 +5,6 @@ using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;

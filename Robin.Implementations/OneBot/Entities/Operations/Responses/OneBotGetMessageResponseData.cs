@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Robin.Abstractions.Entities;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Implementations.OneBot.Entities.Operations.Requests;
