@@ -5,6 +5,7 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Implementations.OneBot.Entities.Operations.Requests;
 using Robin.Implementations.OneBot.Converters;
+using Robin.Implementations.OneBot.Entities.Common;
 
 namespace Robin.Implementations.OneBot.Entities.Operations.Responses;
 
@@ -16,7 +17,7 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
     [JsonPropertyName("message_type")] public required string MessageType { get; set; }
     [JsonPropertyName("message_id")] public int MessageId { get; set; }
     [JsonPropertyName("real_id")] public int RealId { get; set; }
-    [JsonPropertyName("sender")] public required GroupMessageSender Sender { get; set; }
+    [JsonPropertyName("sender")] public required OneBotGroupMessageSender Sender { get; set; }
     [JsonPropertyName("message")] public required JsonNode Message { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter converter) =>
@@ -29,7 +30,27 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
                 MessageType,
                 MessageId,
                 RealId,
-                Sender,
+                new GroupMessageSender(
+                    Sender.UserId,
+                    Sender.Nickname,
+                    Sender.Card,
+                    Sender.Sex switch
+                    {
+                        "male" => UserSex.Male,
+                        "female" => UserSex.Female,
+                        _ => UserSex.Unknown
+                    },
+                    Sender.Age,
+                    Sender.Area,
+                    Sender.Level,
+                    Sender.Role switch
+                    {
+                        "owner" => GroupMemberRole.Owner,
+                        "admin" => GroupMemberRole.Admin,
+                        _ => GroupMemberRole.Member
+                    },
+                    Sender.Title
+                ),
                 converter.ParseMessageChain(Message) ?? []
             )
         );

@@ -8,7 +8,7 @@ public record GroupMessageEvent(
     int MessageId,
     long GroupId,
     long UserId,
-    AnonymousInfo Anonymous,
+    AnonymousInfo? Anonymous,
     MessageChain Message,
     int Font,
     GroupMessageSender Sender

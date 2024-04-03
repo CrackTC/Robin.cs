@@ -12,13 +12,13 @@ namespace Robin.Implementations.OneBot.Entities.Events.Message;
 internal class OneBotGroupMessageEvent : OneBotMessageEvent
 {
     [JsonPropertyName("group_id")] public long GroupId { get; set; }
-    [JsonPropertyName("anonymous")] public required OneBotAnonymousInfo Anonymous { get; set; }
+    [JsonPropertyName("anonymous")] public OneBotAnonymousInfo? Anonymous { get; set; }
     [JsonPropertyName("sender")] public required OneBotGroupMessageSender Sender { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter)
     {
         return new GroupMessageEvent(Time, MessageId, GroupId, UserId,
-            new AnonymousInfo(Anonymous.Id, Anonymous.Name, Anonymous.Flag),
+            Anonymous is not null ? new AnonymousInfo(Anonymous.Id, Anonymous.Name, Anonymous.Flag) : null,
             converter.ParseMessageChain(Message) ?? [],
             Font,
             new GroupMessageSender(Sender.UserId, Sender.Nickname, Sender.Card,

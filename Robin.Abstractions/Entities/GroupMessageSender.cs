@@ -6,8 +6,8 @@ public record GroupMessageSender(
     string? Card,
     UserSex Sex,
     int Age,
-    string Area,
-    string Level,
+    string? Area,
+    string? Level,
     GroupMemberRole Role,
-    string Title
+    string? Title
 ) : MessageSender(UserId, Nickname, Sex, Age);
