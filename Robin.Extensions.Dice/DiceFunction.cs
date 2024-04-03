@@ -35,7 +35,6 @@ public partial class DiceFunction(
 
         var text = string.Join("", e.Message
             .OfType<TextData>()
-            .Where(data => !data.Text.StartsWith('/'))
             .Select(data => data.Text.Trim())).Trim();
 
         if (string.IsNullOrEmpty(text)) return;
@@ -52,7 +51,7 @@ public partial class DiceFunction(
 
         var chain = new MessageChain
         {
-            new TextData($"Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}..."),
+            new TextData($"Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...\n"),
             new TextData($"Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}")
         };
 
@@ -66,7 +65,7 @@ public partial class DiceFunction(
         LogDiceSent(_logger, e.GroupId);
     }
 
-    [GeneratedRegex(@"^(\d+)?d(\d+)([+-]\d+)?$")]
+    [GeneratedRegex(@"^/dice (\d+)?d(\d+)([+-]\d+)?$")]
     private static partial Regex DiceRegex();
 
     private readonly ILogger<DiceFunction> _logger = service.GetRequiredService<ILogger<DiceFunction>>();
