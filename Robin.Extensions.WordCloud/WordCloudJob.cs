@@ -41,7 +41,7 @@ public partial class WordCloudJob : IJob
         WordCloudOption option)
     {
         _option = option;
-        _logger = service.GetRequiredService<Logger<WordCloudJob>>();
+        _logger = service.GetRequiredService<ILogger<WordCloudJob>>();
         _operation = operation;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;

@@ -22,7 +22,7 @@ public partial class GrayFunction(
     IEnumerable<BotFunction> functions)
     : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
 {
-    private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<Logger<GrayFunction>>();
+    private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<ILogger<GrayFunction>>();
     private GrayOption? _option;
     private static readonly HttpClient _client = new();
 

@@ -22,7 +22,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     private UserRankJob? _job;
     private UserRankOption? _option;
     private readonly SqliteConnection _connection;
-    private readonly Logger<UserRankFunction> _logger;
+    private readonly ILogger<UserRankFunction> _logger;
     private readonly SqliteCommand _createTableCommand;
 
     private const string CreateTableSql =
@@ -42,7 +42,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     {
         _connection = new SqliteConnection($"Data Source=user_rank-{uin}.db");
 
-        _logger = service.GetRequiredService<Logger<UserRankFunction>>();
+        _logger = service.GetRequiredService<ILogger<UserRankFunction>>();
 
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;

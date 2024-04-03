@@ -22,7 +22,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
     private WordCloudJob? _job;
     private WordCloudOption? _option;
     private readonly SqliteConnection _connection;
-    private readonly Logger<WordCloudFunction> _logger;
+    private readonly ILogger<WordCloudFunction> _logger;
     private readonly SqliteCommand _createTableCommand;
 
     private const string CreateTableSql =
@@ -41,7 +41,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
     {
         _connection = new SqliteConnection($"Data Source=word_cloud-{uin}.db");
 
-        _logger = service.GetRequiredService<Logger<WordCloudFunction>>();
+        _logger = service.GetRequiredService<ILogger<WordCloudFunction>>();
 
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;

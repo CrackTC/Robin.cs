@@ -23,7 +23,7 @@ public partial class RandReplyFunction(
     : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
 {
     private RandReplyOption? _option;
-    private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<Logger<RandReplyFunction>>();
+    private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<ILogger<RandReplyFunction>>();
 
     public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
 

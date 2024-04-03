@@ -21,7 +21,7 @@ public partial class ReplyActionFunction(
     IConfiguration configuration,
     IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
 {
-    private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<Logger<ReplyActionFunction>>();
+    private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {

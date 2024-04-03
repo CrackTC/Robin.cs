@@ -51,7 +51,7 @@ public partial class UserRankJob : IJob
         UserRankOption option)
     {
         _option = option;
-        _logger = service.GetRequiredService<Logger<UserRankJob>>();
+        _logger = service.GetRequiredService<ILogger<UserRankJob>>();
         _operation = operation;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;
