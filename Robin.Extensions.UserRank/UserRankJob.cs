@@ -21,7 +21,7 @@ public partial class UserRankJob : IJob
     private readonly SqliteCommand _getGroupPeopleCountCommand;
 
     private const string GetGroupPeopleCountSql =
-        "SELECT COUNT(DINSTINCT user_id) FROM user_rank WHERE group_id = $group_id";
+        "SELECT COUNT(DISTINCT user_id) FROM user_rank WHERE group_id = $group_id";
 
     private readonly SqliteCommand _getGroupMessageCountCommand;
 
