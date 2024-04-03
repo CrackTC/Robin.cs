@@ -35,12 +35,12 @@ internal partial class OneBotHttpClientService(
 
         var (endpoint, r, type) = pair;
 
-        var json = r.ToJsonString();
+        var json = r!.ToJsonString();
         LogSendingData(_logger, json);
 
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/{endpoint}")
         {
-            Content = new StringContent(json)
+            Content = new StringContent(json, new MediaTypeHeaderValue("application/json"))
         };
 
         if (!string.IsNullOrEmpty(options.AccessToken))
