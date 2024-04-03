@@ -13,7 +13,7 @@ using Robin.Annotations.Command;
 
 namespace Robin.Extensions.Dice;
 
-[BotFunctionInfo("dice", "Roll a dice.")]
+[BotFunctionInfo("dice", "Roll a dice.", typeof(GroupMessageEvent))]
 [OnCommand("dice")]
 public partial class DiceFunction(
     IServiceProvider service,
@@ -23,7 +23,12 @@ public partial class DiceFunction(
     IEnumerable<BotFunction> functions)
     : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
 {
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
+    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    {
+        if (@event is not MessageEvent e) return;
+        if (e.Message.OfType<TextData>().FirstOrDefault()?.Text.Trim().StartsWith('/') ?? true) return;
+        await OnCommandAsync(selfId, e, token);
+    }
 
     public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
 
@@ -65,7 +70,7 @@ public partial class DiceFunction(
         LogDiceSent(_logger, e.GroupId);
     }
 
-    [GeneratedRegex(@"^/dice (\d+)?d(\d+)([+-]\d+)?$")]
+    [GeneratedRegex(@"/dice (\d+)?d(\d+)([+-]\d+)?")]
     private static partial Regex DiceRegex();
 
     private readonly ILogger<DiceFunction> _logger = service.GetRequiredService<ILogger<DiceFunction>>();
