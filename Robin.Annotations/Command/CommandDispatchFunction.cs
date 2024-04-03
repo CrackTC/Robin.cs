@@ -25,7 +25,7 @@ public class CommandDispatchFunction(
     {
         var e = (@event as MessageEvent)!;
 
-        if (e.Message.FirstOrDefault(segment => segment is TextData) is not TextData command) return;
+        if (e.Message.FirstOrDefault(segment => segment is TextData data && !string.IsNullOrWhiteSpace(data.Text)) is not TextData command) return;
         var commandText = command.Text.Trim().Split(' ').FirstOrDefault() ?? string.Empty;
 
         if (!commandText.StartsWith('/') || !_functionMap!.ContainsKey(commandText[1..]))

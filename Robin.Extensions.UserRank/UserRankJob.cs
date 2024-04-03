@@ -137,7 +137,7 @@ public partial class UserRankJob : IJob
             }
 
             var dict = memberList.Members
-                .Select(member => (member.UserId, Name: member.Card ?? member.Nickname))
+                .Select(member => (member.UserId, Name: string.IsNullOrEmpty(member.Card) ? member.Nickname : member.Card))
                 .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
             var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");

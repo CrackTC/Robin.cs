@@ -31,8 +31,8 @@ public partial class RandReplyFunction(
     {
         if (@event is not GroupMessageEvent e) return;
 
-        var textCount = _option!.Texts.Count;
-        var imageCount = _option.ImagePaths.Count;
+        var textCount = _option!.Texts?.Count ?? 0;
+        var imageCount = _option.ImagePaths?.Count ?? 0;
         var index = Random.Shared.Next(textCount + imageCount);
 
         MessageChain chain =

@@ -29,7 +29,7 @@ public partial class ReplyActionFunction(
 
         var segments = e.Message;
 
-        var text = string.Join(' ', segments.OfType<TextData>().Select(segment => segment.Text.Trim()));
+        var text = string.Join(' ', segments.OfType<TextData>().Select(segment => segment.Text.Trim()).Where(text => !string.IsNullOrEmpty(text)));
 
         if (!text.StartsWith('/')) return;
 
@@ -56,8 +56,8 @@ public partial class ReplyActionFunction(
             return;
         }
 
-        var sourceName = e.Sender.Card ?? e.Sender.Nickname;
-        var targetName = info.Info.Card ?? info.Info.Nickname;
+        var sourceName = string.IsNullOrEmpty(e.Sender.Card) ? e.Sender.Nickname : e.Sender.Card;
+        var targetName = string.IsNullOrEmpty(info.Info.Card) ? info.Info.Nickname : info.Info.Card;
 
         MessageChain chain =
         [
