@@ -1,8 +1,8 @@
-using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Event;
+using System.Reflection;
 
 namespace Robin.App.Services;
 
@@ -68,7 +68,16 @@ internal partial class BotFunctionService(
         {
             if (_eventToFunctions.TryGetValue(type, out var functions))
                 foreach (var function in functions)
-                    await function.OnEventAsync(context.Uin, @event, token);
+                {
+                    try
+                    {
+                        await function.OnEventAsync(context.Uin, @event, token);
+                    }
+                    catch (Exception e)
+                    {
+                        LogFunctionError(logger, function.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!.Name, e);
+                    }
+                }
 
             type = type.BaseType!;
         }
