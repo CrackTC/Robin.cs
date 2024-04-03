@@ -27,12 +27,13 @@ internal partial class BotFunctionService(
             var info = type.GetCustomAttribute<BotFunctionInfoAttribute>()!;
             try
             {
+                context.FunctionConfigurations!.TryGetValue(info.Name, out var config);
                 if (Activator.CreateInstance(
                         type,
                         service,
                         context.Uin,
                         context.OperationProvider,
-                        context.FunctionConfigurations![info.Name],
+                        config,
                         _functions
                     ) is not BotFunction function)
                 {
