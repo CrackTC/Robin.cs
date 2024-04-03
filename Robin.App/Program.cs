@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -43,6 +44,6 @@ void LoadAssemblies(string dir)
     var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, dir);
     foreach (var dll in Directory.GetFiles(path, "*.dll"))
     {
-        Assembly.LoadFile(Path.GetFullPath(dll));
+        AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
     }
 }
