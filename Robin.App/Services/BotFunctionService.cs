@@ -83,7 +83,7 @@ internal partial class BotFunctionService(
         }
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken token)
     {
         if (context.OperationProvider is null)
         {
@@ -97,16 +97,16 @@ internal partial class BotFunctionService(
             return;
         }
 
-        await RegisterFunctions(cancellationToken);
+        await RegisterFunctions(token);
         context.EventInvoker.OnEventAsync += OnBotEventAsync;
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken token)
     {
         context.EventInvoker!.OnEventAsync -= OnBotEventAsync;
         foreach (var (_, functions) in _eventToFunctions)
             foreach (var function in functions)
-                await function.StopAsync(cancellationToken);
+                await function.StopAsync(token);
     }
 
     #region Log

@@ -1,5 +1,3 @@
-using System.Collections.Frozen;
-using System.Text;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,6 +6,8 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
+using System.Collections.Frozen;
+using System.Text;
 
 namespace Robin.Extensions.UserRank;
 

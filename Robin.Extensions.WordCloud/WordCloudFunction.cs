@@ -49,7 +49,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private Task CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
+    private Task<int> CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
 
     private async Task InsertDataAsync(long groupId, string message, CancellationToken token)
     {

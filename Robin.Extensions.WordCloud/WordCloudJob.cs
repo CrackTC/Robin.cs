@@ -103,7 +103,7 @@ public partial class WordCloudJob : IJob
 
         if (await _operation.SendRequestAsync(
                 new SendGroupMessageRequest(groupId, [new ImageData($"base64://{base64}")]), token) is not
-            { Success: true })
+                { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

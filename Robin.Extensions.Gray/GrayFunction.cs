@@ -67,7 +67,7 @@ public partial class GrayFunction(
             if (await _operation.SendRequestAsync(
                     new SendGroupMessageRequest(e.GroupId,
                         [new ImageData($"base64://{Convert.ToBase64String(image)}")]), token) is not
-                { Success: true })
+                        { Success: true })
             {
                 LogSendFailed(_logger, e.GroupId);
                 return;

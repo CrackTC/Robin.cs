@@ -1,11 +1,11 @@
-using System.Collections.Frozen;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using System.Collections.Frozen;
+using System.Reflection;
 
 // ReSharper disable PossibleMultipleEnumeration
 

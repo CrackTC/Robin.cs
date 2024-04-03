@@ -50,7 +50,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         _insertDataCommand.CommandText = InsertDataSql;
     }
 
-    private Task CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
+    private Task<int> CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
 
     private async Task InsertDataAsync(long groupId, long userId, string message, CancellationToken token)
     {
