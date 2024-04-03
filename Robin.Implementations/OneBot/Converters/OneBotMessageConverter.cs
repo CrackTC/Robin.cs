@@ -53,19 +53,29 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
         }
     }
 
+    public OneBotSegment? FromSegmentData(SegmentData segmentData)
+    {
+        var dataType = _segmentTypeToDataType[segmentData.GetType()];
+        if (Activator.CreateInstance(dataType) is IOneBotSegmentData data)
+        {
+            return data.FromSegmentData(segmentData, this);
+        }
+
+        LogCreateInstanceFailed(logger, dataType.Name);
+        return null;
+    }
+
     public JsonArray? SerializeToArray(MessageChain chain)
     {
         var list = new List<OneBotSegment>();
         foreach (var segmentData in chain)
         {
-            var dataType = _segmentTypeToDataType[segmentData.GetType()];
-            if (Activator.CreateInstance(dataType) is IOneBotSegmentData data)
+            if (FromSegmentData(segmentData) is { } data)
             {
-                list.Add(data.FromSegmentData(segmentData, this));
+                list.Add(data);
                 continue;
             }
 
-            LogCreateInstanceFailed(logger, dataType.Name);
             return null;
         }
 
