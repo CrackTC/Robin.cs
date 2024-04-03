@@ -75,6 +75,11 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         }
 
         _option = option;
+        if (!string.IsNullOrEmpty(_option.BackgroundImagePath))
+        {
+            var bytes = await File.ReadAllBytesAsync(_option.BackgroundImagePath, token);
+            _option.CloudOption.BackgroundImage = Convert.ToBase64String(bytes);
+        }
 
         await _connection.OpenAsync(token);
         await CreateTableAsync(token);

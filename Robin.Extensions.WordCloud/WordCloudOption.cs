@@ -14,6 +14,7 @@ public record CloudOption
 
     // Not used for configuration
     [JsonPropertyName("text")] public required string Text { get; set; }
+    [JsonPropertyName("background_image")] public required string BackgroundImage { get; set; }
 }
 
 [Serializable]
