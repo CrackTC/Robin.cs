@@ -19,13 +19,7 @@ public class CommandDispatchFunction(
     IConfiguration configuration,
     IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
 {
-    private readonly FrozenDictionary<string, (bool, ICommandHandler)> _functionMap = functions
-        .Select(function =>
-            (Function: function as ICommandHandler,
-                Attributes: function.GetType().GetCustomAttributes<OnCommandAttribute>()))
-        .Where(pair => pair.Attributes.Any() && pair.Function is not null)
-        .SelectMany(pair => pair.Attributes.Select(attr => (pair.Function, attr.Command, attr.At)))
-        .ToFrozenDictionary(tuple => tuple.Command, tuple => (tuple.At, tuple.Function!));
+    private FrozenDictionary<string, (bool, ICommandHandler)>? _functionMap;
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
@@ -34,10 +28,10 @@ public class CommandDispatchFunction(
         if (e.Message.FirstOrDefault(segment => segment is TextData) is not TextData command) return;
         var commandText = command.Text.Trim().Split(' ').FirstOrDefault() ?? string.Empty;
 
-        if (!commandText.StartsWith('/') || !_functionMap.ContainsKey(commandText[1..]))
+        if (!commandText.StartsWith('/') || !_functionMap!.ContainsKey(commandText[1..]))
             commandText = "/"; // try to match the default command
 
-        if (_functionMap.TryGetValue(commandText[1..], out var pair))
+        if (_functionMap!.TryGetValue(commandText[1..], out var pair))
         {
             if (pair.Item1 && !e.Message.Any(segment => segment is AtData at && at.Uin == selfId))
                 return;
@@ -45,7 +39,17 @@ public class CommandDispatchFunction(
         }
     }
 
-    public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
+    public override Task StartAsync(CancellationToken token)
+    {
+        _functionMap = _functions
+            .Select(function =>
+                (Function: function as ICommandHandler,
+                    Attributes: function.GetType().GetCustomAttributes<OnCommandAttribute>()))
+            .Where(pair => pair.Attributes.Any() && pair.Function is not null)
+            .SelectMany(pair => pair.Attributes.Select(attr => (pair.Function, attr.Command, attr.At)))
+            .ToFrozenDictionary(tuple => tuple.Command, tuple => (tuple.At, tuple.Function!));
+        return Task.CompletedTask;
+    }
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 }
