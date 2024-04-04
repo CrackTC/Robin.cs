@@ -71,9 +71,9 @@ public partial class UserRankJob : IJob
     {
         var groups = new List<long>();
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {
@@ -93,9 +93,9 @@ public partial class UserRankJob : IJob
         _getGroupPeopleCountCommand.Parameters.AddWithValue("$group_id", groupId);
         object? count;
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             count = await _getGroupPeopleCountCommand.ExecuteScalarAsync(token);
         }
         finally
@@ -112,9 +112,9 @@ public partial class UserRankJob : IJob
         _getGroupMessageCountCommand.Parameters.AddWithValue("$group_id", groupId);
         object? count;
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             count = await _getGroupMessageCountCommand.ExecuteScalarAsync(token);
         }
         finally
@@ -134,9 +134,9 @@ public partial class UserRankJob : IJob
 
         var top = new List<(long, int)>();
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await using var reader = await _getGroupTopNCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {
@@ -156,9 +156,9 @@ public partial class UserRankJob : IJob
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
         }
         finally

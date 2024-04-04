@@ -66,9 +66,9 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await InsertDataAsync(e.GroupId, e.UserId,
                 string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
         }

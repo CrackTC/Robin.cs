@@ -65,9 +65,9 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
     {
         if (@event is not GroupMessageEvent e) return;
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await InsertDataAsync(e.GroupId,
                 string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
         }

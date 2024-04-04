@@ -56,9 +56,9 @@ public partial class WordCloudJob : IJob
     {
         var groups = new List<long>();
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {
@@ -78,9 +78,9 @@ public partial class WordCloudJob : IJob
         _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
         var messages = new List<string>();
 
+        await _semaphore.WaitAsync(token);
         try
         {
-            await _semaphore.WaitAsync(token);
             await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {

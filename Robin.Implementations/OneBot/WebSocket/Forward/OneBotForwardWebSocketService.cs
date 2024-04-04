@@ -58,9 +58,9 @@ internal partial class OneBotForwardWebSocketService(
 
         try
         {
+            await _semaphore.WaitAsync(token);
             try
             {
-                await _semaphore.WaitAsync(token);
                 await _websocket!.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token);
             }
             finally
