@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+out
+Robin.Extensions.Gemini
+Robin.Extensions.Panel
+Robin.Extensions.SauceNao
+*.tar
