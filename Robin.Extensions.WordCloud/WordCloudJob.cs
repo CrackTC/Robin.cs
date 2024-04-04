@@ -45,6 +45,7 @@ public partial class WordCloudJob : IJob
         _operation = operation;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;
+        _getGroupsCommand.Prepare();
         _getGroupMessagesCommand = connection.CreateCommand();
         _getGroupMessagesCommand.CommandText = GetGroupMessagesSql;
         _clearGroupMessagesCommand = connection.CreateCommand();

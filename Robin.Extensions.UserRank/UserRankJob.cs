@@ -55,6 +55,7 @@ public partial class UserRankJob : IJob
         _operation = operation;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;
+        _getGroupsCommand.Prepare();
         _getGroupPeopleCountCommand = connection.CreateCommand();
         _getGroupPeopleCountCommand.CommandText = GetGroupPeopleCountSql;
         _getGroupMessageCountCommand = connection.CreateCommand();
