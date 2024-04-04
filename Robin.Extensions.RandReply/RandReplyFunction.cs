@@ -37,6 +37,7 @@ public partial class RandReplyFunction(
 
         MessageChain chain =
         [
+            new ReplyData(e.MessageId),
             index < textCount
                 ? new TextData(_option.Texts![index])
                 : new ImageData(
