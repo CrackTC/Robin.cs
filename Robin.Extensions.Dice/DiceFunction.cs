@@ -15,6 +15,7 @@ namespace Robin.Extensions.Dice;
 
 [BotFunctionInfo("dice", "Roll a dice.", typeof(GroupMessageEvent))]
 [OnCommand("dice")]
+// ReSharper disable once UnusedType.Global
 public partial class DiceFunction(
     IServiceProvider service,
     long uin,

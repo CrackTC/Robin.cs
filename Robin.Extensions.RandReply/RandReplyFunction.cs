@@ -38,9 +38,9 @@ public partial class RandReplyFunction(
         MessageChain chain =
         [
             index < textCount
-                ? new TextData(_option.Texts[index])
+                ? new TextData(_option.Texts![index])
                 : new ImageData(
-                    $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths[index - textCount], token))}")
+                    $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], token))}")
         ];
 
         if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, chain), token) is not
