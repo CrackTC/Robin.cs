@@ -20,7 +20,7 @@ internal class OneBotSendForwardMessageResponseData : IOneBotResponseData
 
 file class StringToResponseDataConverter : JsonConverter<OneBotSendForwardMessageResponseData>
 {
-    public override OneBotSendForwardMessageResponseData? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override OneBotSendForwardMessageResponseData Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw new JsonException();
         return new OneBotSendForwardMessageResponseData { ResId = reader.GetString()! };
