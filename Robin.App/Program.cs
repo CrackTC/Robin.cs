@@ -41,7 +41,7 @@ void ConfigureBackend()
 
 void LoadAssemblies(string dir)
 {
-    var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, dir);
+    var path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? string.Empty, dir);
     foreach (var dll in Directory.GetFiles(path, "*.dll"))
     {
         AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
