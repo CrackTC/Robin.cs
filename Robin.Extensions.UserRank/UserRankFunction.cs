@@ -48,10 +48,8 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
 
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;
-        _createTableCommand.Prepare();
         _insertDataCommand = _connection.CreateCommand();
         _insertDataCommand.CommandText = InsertDataSql;
-        _insertDataCommand.Prepare();
     }
 
     private Task<int> CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
@@ -91,6 +89,9 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         _option = option;
 
         await _connection.OpenAsync(token);
+
+        await _createTableCommand.PrepareAsync(token);
+        await _insertDataCommand.PrepareAsync(token);
         await CreateTableAsync(token);
 
         _job = new UserRankJob(_service, _operation, _connection, _semaphore, _option);
