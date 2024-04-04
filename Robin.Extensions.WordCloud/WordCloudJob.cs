@@ -100,6 +100,7 @@ public partial class WordCloudJob : IJob
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
 
+        await _semaphore.WaitAsync(token);
         try
         {
             await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
