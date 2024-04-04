@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,7 +83,12 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         await CreateTableAsync(token);
 
         _job = new UserRankJob(_service, _operation, _connection, _option);
-        _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
+
+        var properties = new NameValueCollection
+        {
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = "UserRankScheduler"
+        };
+        _scheduler = await new StdSchedulerFactory(properties).GetScheduler(token);
         _scheduler.JobFactory = new UserRankJobFactory(_job);
 
         var job = JobBuilder.Create<UserRankJob>()

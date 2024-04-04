@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,7 +86,12 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         await CreateTableAsync(token);
 
         _job = new WordCloudJob(_service, _operation, _connection, _option);
-        _scheduler = await StdSchedulerFactory.GetDefaultScheduler(token);
+
+        var properties = new NameValueCollection
+        {
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = "WordCloudScheduler"
+        };
+        _scheduler = await new StdSchedulerFactory(properties).GetScheduler(token);
         _scheduler.JobFactory = new WordCloudJobFactory(_job);
 
         var job = JobBuilder.Create<WordCloudJob>()
