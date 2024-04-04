@@ -5,7 +5,7 @@ namespace Robin.Abstractions.Event.Message;
 
 public record GroupMessageEvent(
     long Time,
-    int MessageId,
+    string MessageId,
     long GroupId,
     long UserId,
     AnonymousInfo? Anonymous,

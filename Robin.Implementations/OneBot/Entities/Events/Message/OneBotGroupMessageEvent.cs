@@ -17,7 +17,7 @@ internal class OneBotGroupMessageEvent : OneBotMessageEvent
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter)
     {
-        return new GroupMessageEvent(Time, MessageId, GroupId, UserId,
+        return new GroupMessageEvent(Time, MessageId.ToString(), GroupId, UserId,
             Anonymous is not null ? new AnonymousInfo(Anonymous.Id, Anonymous.Name, Anonymous.Flag) : null,
             converter.ParseMessageChain(Message) ?? [],
             Font,

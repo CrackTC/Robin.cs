@@ -4,7 +4,7 @@ namespace Robin.Abstractions.Event.Message;
 
 public abstract record MessageEvent(
     long Time,
-    int MessageId,
+    string MessageId,
     long UserId,
     MessageChain Message,
     int Font
