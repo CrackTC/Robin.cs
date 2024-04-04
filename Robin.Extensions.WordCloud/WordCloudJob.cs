@@ -48,8 +48,10 @@ public partial class WordCloudJob : IJob
         _getGroupsCommand.Prepare();
         _getGroupMessagesCommand = connection.CreateCommand();
         _getGroupMessagesCommand.CommandText = GetGroupMessagesSql;
+        _getGroupMessagesCommand.Prepare();
         _clearGroupMessagesCommand = connection.CreateCommand();
         _clearGroupMessagesCommand.CommandText = ClearGroupMessagesSql;
+        _clearGroupMessagesCommand.Prepare();
     }
 
     private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
@@ -75,12 +77,12 @@ public partial class WordCloudJob : IJob
 
     private async Task<IEnumerable<string>> GetGroupMessagesAsync(long groupId, CancellationToken token)
     {
-        _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
         var messages = new List<string>();
 
         await _semaphore.WaitAsync(token);
         try
         {
+            _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
             await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {
@@ -89,28 +91,26 @@ public partial class WordCloudJob : IJob
         }
         finally
         {
+            _getGroupMessagesCommand.Parameters.Clear();
             _semaphore.Release();
         }
 
-        _getGroupMessagesCommand.Parameters.Clear();
         return messages;
     }
 
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
-        _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-
         await _semaphore.WaitAsync(token);
         try
         {
+            _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
             await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
         }
         finally
         {
+            _clearGroupMessagesCommand.Parameters.Clear();
             _semaphore.Release();
         }
-
-        _clearGroupMessagesCommand.Parameters.Clear();
     }
 
     internal async Task SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
@@ -131,7 +131,7 @@ public partial class WordCloudJob : IJob
 
         if (await _operation.SendRequestAsync(
                 new SendGroupMessageRequest(groupId, [new ImageData($"base64://{base64}")]), token) is not
-                { Success: true })
+            { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

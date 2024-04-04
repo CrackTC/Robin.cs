@@ -59,12 +59,16 @@ public partial class UserRankJob : IJob
         _getGroupsCommand.Prepare();
         _getGroupPeopleCountCommand = connection.CreateCommand();
         _getGroupPeopleCountCommand.CommandText = GetGroupPeopleCountSql;
+        _getGroupPeopleCountCommand.Prepare();
         _getGroupMessageCountCommand = connection.CreateCommand();
         _getGroupMessageCountCommand.CommandText = GetGroupMessageCountSql;
+        _getGroupMessageCountCommand.Prepare();
         _getGroupTopNCommand = connection.CreateCommand();
         _getGroupTopNCommand.CommandText = GetGroupTopNSql;
+        _getGroupTopNCommand.Prepare();
         _clearGroupMessagesCommand = connection.CreateCommand();
         _clearGroupMessagesCommand.CommandText = ClearGroupMessagesSql;
+        _clearGroupMessagesCommand.Prepare();
     }
 
     private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
@@ -90,53 +94,52 @@ public partial class UserRankJob : IJob
 
     private async Task<int> GetGroupPeopleCountAsync(long groupId, CancellationToken token)
     {
-        _getGroupPeopleCountCommand.Parameters.AddWithValue("$group_id", groupId);
         object? count;
 
         await _semaphore.WaitAsync(token);
         try
         {
+            _getGroupPeopleCountCommand.Parameters.AddWithValue("$group_id", groupId);
             count = await _getGroupPeopleCountCommand.ExecuteScalarAsync(token);
         }
         finally
         {
+            _getGroupPeopleCountCommand.Parameters.Clear();
             _semaphore.Release();
         }
 
-        _getGroupPeopleCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
 
     private async Task<int> GetGroupMessageCountAsync(long groupId, CancellationToken token)
     {
-        _getGroupMessageCountCommand.Parameters.AddWithValue("$group_id", groupId);
         object? count;
 
         await _semaphore.WaitAsync(token);
         try
         {
+            _getGroupMessageCountCommand.Parameters.AddWithValue("$group_id", groupId);
             count = await _getGroupMessageCountCommand.ExecuteScalarAsync(token);
         }
         finally
         {
+            _getGroupMessageCountCommand.Parameters.Clear();
             _semaphore.Release();
         }
 
-        _getGroupMessageCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
 
     private async Task<IEnumerable<(long Id, int Count)>> GetGroupTopNAsync(long groupId, int n,
         CancellationToken token)
     {
-        _getGroupTopNCommand.Parameters.AddWithValue("$group_id", groupId);
-        _getGroupTopNCommand.Parameters.AddWithValue("$n", n);
-
         var top = new List<(long, int)>();
 
         await _semaphore.WaitAsync(token);
         try
         {
+            _getGroupTopNCommand.Parameters.AddWithValue("$group_id", groupId);
+            _getGroupTopNCommand.Parameters.AddWithValue("$n", n);
             await using var reader = await _getGroupTopNCommand.ExecuteReaderAsync(token);
             while (await reader.ReadAsync(token))
             {
@@ -145,28 +148,25 @@ public partial class UserRankJob : IJob
         }
         finally
         {
+            _getGroupTopNCommand.Parameters.Clear();
             _semaphore.Release();
         }
 
-        _getGroupTopNCommand.Parameters.Clear();
         return top;
     }
 
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
-        _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-
-        await _semaphore.WaitAsync(token);
         try
         {
+            _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
             await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
         }
         finally
         {
+            _clearGroupMessagesCommand.Parameters.Clear();
             _semaphore.Release();
         }
-
-        _clearGroupMessagesCommand.Parameters.Clear();
     }
 
     internal async Task SendUserRankAsync(long groupId, bool clear = false, CancellationToken token = default)

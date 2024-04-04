@@ -47,34 +47,36 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
 
         _createTableCommand = _connection.CreateCommand();
         _createTableCommand.CommandText = CreateTableSql;
+        _createTableCommand.Prepare();
         _insertDataCommand = _connection.CreateCommand();
         _insertDataCommand.CommandText = InsertDataSql;
+        _insertDataCommand.Prepare();
     }
 
     private Task<int> CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
 
     private async Task InsertDataAsync(long groupId, string message, CancellationToken token)
     {
-        _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
-        _insertDataCommand.Parameters.AddWithValue("$message", message);
-        await _insertDataCommand.ExecuteNonQueryAsync(token);
-        _insertDataCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
+            _insertDataCommand.Parameters.AddWithValue("$message", message);
+            await _insertDataCommand.ExecuteNonQueryAsync(token);
+        }
+        finally
+        {
+            _insertDataCommand.Parameters.Clear();
+            _semaphore.Release();
+        }
     }
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
 
-        await _semaphore.WaitAsync(token);
-        try
-        {
-            await InsertDataAsync(e.GroupId,
-                string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
+        await InsertDataAsync(e.GroupId,
+            string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
     }
 
     public override async Task StartAsync(CancellationToken token)
