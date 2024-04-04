@@ -27,22 +27,22 @@ public partial class WordCloudJob : IJob
         "DELETE FROM word_cloud WHERE group_id = $group_id";
 
     private static readonly HttpClient _client = new();
-
     private readonly WordCloudOption _option;
-
     private readonly ILogger<WordCloudJob> _logger;
-
     private readonly IOperationProvider _operation;
+    private readonly SemaphoreSlim _semaphore;
 
     public WordCloudJob(
         IServiceProvider service,
         IOperationProvider operation,
         SqliteConnection connection,
+        SemaphoreSlim semaphore,
         WordCloudOption option)
     {
         _option = option;
         _logger = service.GetRequiredService<ILogger<WordCloudJob>>();
         _operation = operation;
+        _semaphore = semaphore;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;
         _getGroupsCommand.Prepare();
@@ -55,10 +55,19 @@ public partial class WordCloudJob : IJob
     private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
     {
         var groups = new List<long>();
-        await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
-        while (await reader.ReadAsync(token))
+
+        try
         {
-            groups.Add(reader.GetInt64(0));
+            await _semaphore.WaitAsync(token);
+            await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
+            while (await reader.ReadAsync(token))
+            {
+                groups.Add(reader.GetInt64(0));
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         return groups;
@@ -67,12 +76,20 @@ public partial class WordCloudJob : IJob
     private async Task<IEnumerable<string>> GetGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-
         var messages = new List<string>();
-        await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
-        while (await reader.ReadAsync(token))
+
+        try
         {
-            messages.Add(reader.GetString(0));
+            await _semaphore.WaitAsync(token);
+            await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
+            while (await reader.ReadAsync(token))
+            {
+                messages.Add(reader.GetString(0));
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         _getGroupMessagesCommand.Parameters.Clear();
@@ -82,7 +99,16 @@ public partial class WordCloudJob : IJob
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-        await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
+
+        try
+        {
+            await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
@@ -104,7 +130,7 @@ public partial class WordCloudJob : IJob
 
         if (await _operation.SendRequestAsync(
                 new SendGroupMessageRequest(groupId, [new ImageData($"base64://{base64}")]), token) is not
-                { Success: true })
+            { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;
@@ -113,8 +139,17 @@ public partial class WordCloudJob : IJob
         LogWordCloudSent(_logger, groupId);
     }
 
-    public async Task Execute(IJobExecutionContext context) =>
-        await Task.WhenAll((await GetGroupsAsync()).Select(group => SendWordCloudAsync(group, true)));
+    public async Task Execute(IJobExecutionContext context)
+    {
+        try
+        {
+            await Task.WhenAll((await GetGroupsAsync()).Select(group => SendWordCloudAsync(group, true)));
+        }
+        catch (Exception e)
+        {
+            LogExceptionOccurred(_logger, e);
+        }
+    }
 
     #region Log
 
@@ -127,6 +162,9 @@ public partial class WordCloudJob : IJob
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Word cloud sent for group {GroupId}")]
     private static partial void LogWordCloudSent(ILogger logger, long groupId);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion
 }

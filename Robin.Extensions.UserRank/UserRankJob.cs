@@ -39,19 +39,20 @@ public partial class UserRankJob : IJob
         "DELETE FROM user_rank WHERE group_id = $group_id";
 
     private readonly UserRankOption _option;
-
+    private readonly SemaphoreSlim _semaphore;
     private readonly ILogger<UserRankJob> _logger;
-
     private readonly IOperationProvider _operation;
 
     public UserRankJob(
         IServiceProvider service,
         IOperationProvider operation,
         SqliteConnection connection,
+        SemaphoreSlim semaphore,
         UserRankOption option)
     {
         _option = option;
         _logger = service.GetRequiredService<ILogger<UserRankJob>>();
+        _semaphore = semaphore;
         _operation = operation;
         _getGroupsCommand = connection.CreateCommand();
         _getGroupsCommand.CommandText = GetGroupsSql;
@@ -69,10 +70,19 @@ public partial class UserRankJob : IJob
     private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
     {
         var groups = new List<long>();
-        await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
-        while (await reader.ReadAsync(token))
+
+        try
         {
-            groups.Add(reader.GetInt64(0));
+            await _semaphore.WaitAsync(token);
+            await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
+            while (await reader.ReadAsync(token))
+            {
+                groups.Add(reader.GetInt64(0));
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         return groups;
@@ -81,7 +91,18 @@ public partial class UserRankJob : IJob
     private async Task<int> GetGroupPeopleCountAsync(long groupId, CancellationToken token)
     {
         _getGroupPeopleCountCommand.Parameters.AddWithValue("$group_id", groupId);
-        var count = await _getGroupPeopleCountCommand.ExecuteScalarAsync(token);
+        object? count;
+
+        try
+        {
+            await _semaphore.WaitAsync(token);
+            count = await _getGroupPeopleCountCommand.ExecuteScalarAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
         _getGroupPeopleCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
@@ -89,7 +110,18 @@ public partial class UserRankJob : IJob
     private async Task<int> GetGroupMessageCountAsync(long groupId, CancellationToken token)
     {
         _getGroupMessageCountCommand.Parameters.AddWithValue("$group_id", groupId);
-        var count = await _getGroupMessageCountCommand.ExecuteScalarAsync(token);
+        object? count;
+
+        try
+        {
+            await _semaphore.WaitAsync(token);
+            count = await _getGroupMessageCountCommand.ExecuteScalarAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
         _getGroupMessageCountCommand.Parameters.Clear();
         return Convert.ToInt32(count);
     }
@@ -101,10 +133,19 @@ public partial class UserRankJob : IJob
         _getGroupTopNCommand.Parameters.AddWithValue("$n", n);
 
         var top = new List<(long, int)>();
-        await using var reader = await _getGroupTopNCommand.ExecuteReaderAsync(token);
-        while (await reader.ReadAsync(token))
+
+        try
         {
-            top.Add((reader.GetInt64(0), reader.GetInt32(1)));
+            await _semaphore.WaitAsync(token);
+            await using var reader = await _getGroupTopNCommand.ExecuteReaderAsync(token);
+            while (await reader.ReadAsync(token))
+            {
+                top.Add((reader.GetInt64(0), reader.GetInt32(1)));
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         _getGroupTopNCommand.Parameters.Clear();
@@ -114,7 +155,17 @@ public partial class UserRankJob : IJob
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
         _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-        await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
+
+        try
+        {
+            await _semaphore.WaitAsync(token);
+            await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
         _clearGroupMessagesCommand.Parameters.Clear();
     }
 
@@ -138,7 +189,8 @@ public partial class UserRankJob : IJob
             }
 
             var dict = memberList.Members
-                .Select(member => (member.UserId, Name: string.IsNullOrEmpty(member.Card) ? member.Nickname : member.Card))
+                .Select(member => (member.UserId,
+                    Name: string.IsNullOrEmpty(member.Card) ? member.Nickname : member.Card))
                 .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
             var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");
@@ -156,8 +208,17 @@ public partial class UserRankJob : IJob
         LogUserRankSent(_logger, groupId);
     }
 
-    public async Task Execute(IJobExecutionContext context) =>
-        await Task.WhenAll((await GetGroupsAsync()).Select(group => SendUserRankAsync(group, true)));
+    public async Task Execute(IJobExecutionContext context)
+    {
+        try
+        {
+            await Task.WhenAll((await GetGroupsAsync()).Select(group => SendUserRankAsync(group, true)));
+        }
+        catch (Exception e)
+        {
+            LogExceptionOccurred(_logger, e);
+        }
+    }
 
     #region Log
 
@@ -169,6 +230,9 @@ public partial class UserRankJob : IJob
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Word cloud sent for group {GroupId}")]
     private static partial void LogUserRankSent(ILogger logger, long groupId);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion
 }

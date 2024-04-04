@@ -23,6 +23,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     private UserRankJob? _job;
     private UserRankOption? _option;
     private readonly SqliteConnection _connection;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly ILogger<UserRankFunction> _logger;
     private readonly SqliteCommand _createTableCommand;
 
@@ -65,8 +66,16 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
-        await InsertDataAsync(e.GroupId, e.UserId,
-            string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+        try
+        {
+            await _semaphore.WaitAsync(token);
+            await InsertDataAsync(e.GroupId, e.UserId,
+                string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -82,7 +91,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
         await _connection.OpenAsync(token);
         await CreateTableAsync(token);
 
-        _job = new UserRankJob(_service, _operation, _connection, _option);
+        _job = new UserRankJob(_service, _operation, _connection, _semaphore, _option);
 
         var properties = new NameValueCollection
         {
@@ -110,6 +119,7 @@ public partial class UserRankFunction : BotFunction, ICommandHandler
     {
         await (_scheduler?.Shutdown(token) ?? Task.CompletedTask);
         await _connection.CloseAsync();
+        _semaphore.Dispose();
     }
 
     public Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token) =>

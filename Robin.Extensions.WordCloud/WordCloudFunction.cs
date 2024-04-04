@@ -23,6 +23,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
     private WordCloudJob? _job;
     private WordCloudOption? _option;
     private readonly SqliteConnection _connection;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly ILogger<WordCloudFunction> _logger;
     private readonly SqliteCommand _createTableCommand;
 
@@ -63,8 +64,17 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
-        await InsertDataAsync(e.GroupId,
-            string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+
+        try
+        {
+            await _semaphore.WaitAsync(token);
+            await InsertDataAsync(e.GroupId,
+                string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -85,7 +95,7 @@ public partial class WordCloudFunction : BotFunction, ICommandHandler
         await _connection.OpenAsync(token);
         await CreateTableAsync(token);
 
-        _job = new WordCloudJob(_service, _operation, _connection, _option);
+        _job = new WordCloudJob(_service, _operation, _connection, _semaphore, _option);
 
         var properties = new NameValueCollection
         {
