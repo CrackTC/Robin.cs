@@ -157,6 +157,7 @@ public partial class UserRankJob : IJob
 
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
     {
+        await _semaphore.WaitAsync(token);
         try
         {
             _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
