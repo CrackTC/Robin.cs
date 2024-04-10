@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.App", "Robin.App\Robi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.Abstractions", "Robin.Abstractions\Robin.Abstractions.csproj", "{65F60E62-BFCE-492E-88B1-D2F2BEF5775C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.Implementations", "Robin.Implementations\Robin.Implementations.csproj", "{74B01597-DF9E-479A-958A-8A0BD51C6A4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Robin.Implementations.OneBot", "Robin.Implementations.OneBot\Robin.Implementations.OneBot.csproj", "{74B01597-DF9E-479A-958A-8A0BD51C6A4E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.WordCloud", "Robin.Extensions.WordCloud\Robin.Extensions.WordCloud.csproj", "{DC7F5817-7811-4E1E-88D9-99023707F150}"
 EndProject
