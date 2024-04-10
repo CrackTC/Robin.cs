@@ -25,6 +25,8 @@ internal partial class OneBotHttpClientService(
 
     private readonly HttpClient _client = new();
 
+    private readonly SemaphoreSlim _semaphore = new(options.RequestParallelism, options.RequestParallelism);
+
     public async Task<Response?> SendRequestAsync(Request request, CancellationToken token = default)
     {
         if (_operationConverter.SerializeToJson(request, _messageConverter) is not { } pair)
@@ -48,7 +50,17 @@ internal partial class OneBotHttpClientService(
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
         }
 
-        var response = await _client.SendAsync(requestMessage, token);
+        HttpResponseMessage response;
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            response = await _client.SendAsync(requestMessage, token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             LogSendFailed(_logger);
