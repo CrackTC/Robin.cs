@@ -105,6 +105,7 @@ internal partial class OneBotForwardWebSocketService(
             }
 
             OnResponse?.Invoke(response);
+            return;
         }
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
