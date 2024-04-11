@@ -9,34 +9,38 @@ using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
+using Robin.Annotations.Filters;
+using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.ReplyAction;
 
-[BotFunctionInfo("reply_action", "send actions on reply", typeof(GroupMessageEvent))]
+[BotFunctionInfo("reply_action", "send actions on reply")]
+[OnReply]
 // ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(
     IServiceProvider service,
     long uin,
     IOperationProvider operation,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
 {
     private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
 
-    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
 
-        var segments = e.Message;
-
-        var text = string.Join(' ', segments.OfType<TextData>().Select(segment => segment.Text.Trim()).Where(text => !string.IsNullOrEmpty(text)));
+        var text = string.Join(' ', e.Message
+            .OfType<TextData>()
+            .Select(segment => segment.Text.Trim())
+            .Where(text => !string.IsNullOrEmpty(text)));
 
         if (!text.StartsWith('/')) return;
 
         var parts = text[1..].Split(' ');
         if (parts.Length == 0) return;
 
-        if (segments.FirstOrDefault(segment => segment is ReplyData) is not ReplyData reply) return;
+        var reply = e.Message.OfType<ReplyData>().First();
 
         if (await _operation.SendRequestAsync(new GetMessageRequest(reply.Id), token) is not GetMessageResponse
             {
@@ -75,6 +79,7 @@ public partial class ReplyActionFunction(
         LogActionSent(_logger, e.GroupId);
     }
 
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
     public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;

@@ -8,26 +8,30 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Command;
+using Robin.Annotations.Filters;
+using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.RandReply;
 
 [BotFunctionInfo("rand_reply", "Random Reply")]
-[OnCommand("", at: true)]
+[OnAtSelf]
+[Fallback]
+// ReSharper disable once UnusedType.Global
 public partial class RandReplyFunction(
     IServiceProvider service,
     long uin,
     IOperationProvider operation,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
+    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
 {
     private RandReplyOption? _option;
     private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<ILogger<RandReplyFunction>>();
 
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
 
-    public async Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token)
+
+    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
 

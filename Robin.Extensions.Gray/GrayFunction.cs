@@ -8,11 +8,13 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
-using Robin.Annotations.Command;
+using Robin.Annotations.Filters;
+using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "send gray avatar")]
+[OnReply]
 [OnCommand("送走")]
 public partial class GrayFunction(
     IServiceProvider service,
@@ -20,13 +22,13 @@ public partial class GrayFunction(
     IOperationProvider operation,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
+    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
 {
     private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<ILogger<GrayFunction>>();
     private GrayOption? _option;
     private static readonly HttpClient _client = new();
 
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
 
     public override Task StartAsync(CancellationToken token)
     {
@@ -42,13 +44,14 @@ public partial class GrayFunction(
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
-    public async Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token)
+
+    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
 
         var segments = e.Message;
 
-        if (segments.FirstOrDefault(segment => segment is ReplyData) is not ReplyData reply) return;
+        var reply = segments.OfType<ReplyData>().First();
 
         if (await _operation.SendRequestAsync(new GetMessageRequest(reply.Id), token) is not GetMessageResponse
             {

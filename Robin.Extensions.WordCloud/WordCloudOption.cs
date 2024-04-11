@@ -20,7 +20,6 @@ public record CloudOption
 [Serializable]
 public class WordCloudOption
 {
-    public string Cron { get; set; } = "1 0 0 * * *";
     public required string ApiAddress { get; set; }
     public required CloudOption CloudOption { get; set; }
     public required string BackgroundImagePath { get; set; }

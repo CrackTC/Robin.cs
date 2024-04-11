@@ -13,7 +13,6 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.3" />
-      <PackageReference Include="Quartz" Version="3.8.1" />
     </ItemGroup>
 
 </Project>

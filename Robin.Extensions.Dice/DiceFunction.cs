@@ -9,11 +9,12 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Command;
+using Robin.Annotations.Filters;
+using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Dice;
 
-[BotFunctionInfo("dice", "Roll a dice.", typeof(GroupMessageEvent))]
+[BotFunctionInfo("dice", "Roll a dice.")]
 [OnCommand("dice")]
 // ReSharper disable once UnusedType.Global
 public partial class DiceFunction(
@@ -22,20 +23,16 @@ public partial class DiceFunction(
     IOperationProvider operation,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), ICommandHandler
+    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
 {
-    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
-    {
-        if (@event is not MessageEvent e) return;
-        if (e.Message.OfType<TextData>().FirstOrDefault()?.Text.Trim().StartsWith('/') ?? true) return;
-        await OnCommandAsync(selfId, e, token);
-    }
+    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
 
     public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
 
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
-    public async Task OnCommandAsync(long selfId, MessageEvent @event, CancellationToken token)
+
+    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return;
 
