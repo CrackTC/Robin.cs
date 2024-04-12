@@ -155,7 +155,10 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
         var messages = await GetGroupMessagesAsync(groupId, token);
         var content = string.Join('\n', messages);
         using var response = await _client.PostAsJsonAsync(_option!.ApiAddress,
-            _option.CloudOption with { Text = content }, cancellationToken: token);
+            _option.CloudOption with
+            {
+                Text = content
+            }, cancellationToken: token);
         if (!response.IsSuccessStatusCode)
         {
             LogApiRequestFailed(_logger, groupId);
@@ -194,11 +197,6 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
         }
 
         _option = option;
-        if (!string.IsNullOrEmpty(_option.BackgroundImagePath))
-        {
-            var bytes = await File.ReadAllBytesAsync(_option.BackgroundImagePath, token);
-            _option.CloudOption.BackgroundImage = Convert.ToBase64String(bytes);
-        }
 
         await _connection.OpenAsync(token);
 
