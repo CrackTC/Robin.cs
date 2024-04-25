@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Gray", "Ro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Gemini", "Robin.Extensions.Gemini\Robin.Extensions.Gemini.csproj", "{3F6B8837-D213-4687-9C23-5F5C589CA0C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Panel", "Robin.Extensions.Panel\Robin.Extensions.Panel.csproj", "{AAE1B6D6-A7AF-45B2-A218-A2E6009C3FDC}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Dice", "Robin.Extensions.Dice\Robin.Extensions.Dice.csproj", "{24B5C1E2-F1D1-4A9E-AD15-C34537E81CC9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.SauceNao", "Robin.Extensions.SauceNao\Robin.Extensions.SauceNao.csproj", "{4BADA596-B7C9-4D0A-B533-498143C19DD1}"
@@ -75,10 +73,6 @@ Global
 		{3F6B8837-D213-4687-9C23-5F5C589CA0C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F6B8837-D213-4687-9C23-5F5C589CA0C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F6B8837-D213-4687-9C23-5F5C589CA0C6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AAE1B6D6-A7AF-45B2-A218-A2E6009C3FDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AAE1B6D6-A7AF-45B2-A218-A2E6009C3FDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AAE1B6D6-A7AF-45B2-A218-A2E6009C3FDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AAE1B6D6-A7AF-45B2-A218-A2E6009C3FDC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{24B5C1E2-F1D1-4A9E-AD15-C34537E81CC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{24B5C1E2-F1D1-4A9E-AD15-C34537E81CC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24B5C1E2-F1D1-4A9E-AD15-C34537E81CC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
