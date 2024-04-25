@@ -26,19 +26,19 @@ public partial class ReplyActionFunction(
 {
     private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
 
-    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return false;
 
         var text = string.Join(' ', e.Message
             .OfType<TextData>()
             .Select(segment => segment.Text.Trim())
             .Where(text => !string.IsNullOrEmpty(text)));
 
-        if (!text.StartsWith('/')) return;
+        if (!text.StartsWith('/')) return false;
 
         var parts = text[1..].Split(' ');
-        if (parts.Length == 0) return;
+        if (parts.Length == 0) return false;
 
         var reply = e.Message.OfType<ReplyData>().First();
 
@@ -48,7 +48,7 @@ public partial class ReplyActionFunction(
             } originalMessage)
         {
             LogGetMessageFailed(_logger, reply.Id);
-            return;
+            return true;
         }
 
         var senderId = originalMessage.Message.Sender.UserId;
@@ -57,7 +57,7 @@ public partial class ReplyActionFunction(
             GetGroupMemberInfoResponse { Success: true, Info: not null } info)
         {
             LogGetGroupMemberInfoFailed(_logger, e.GroupId, senderId);
-            return;
+            return true;
         }
 
         var sourceName = string.IsNullOrEmpty(e.Sender.Card) ? e.Sender.Nickname : e.Sender.Card;
@@ -73,10 +73,11 @@ public partial class ReplyActionFunction(
             { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
-            return;
+            return true;
         }
 
         LogActionSent(_logger, e.GroupId);
+        return true;
     }
 
     public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();

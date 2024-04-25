@@ -293,8 +293,13 @@ public partial class UserRankFunction : BotFunction, IFilterHandler, ICronHandle
         }
     }
 
-    public Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token) =>
-        @event is GroupMessageEvent e ? SendUserRankAsync(e.GroupId, token: token) : Task.CompletedTask;
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    {
+        if (@event is not GroupMessageEvent e) return false;
+
+        await SendUserRankAsync(e.GroupId, token: token);
+        return true;
+    }
 
     #region Log
 

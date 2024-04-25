@@ -14,8 +14,7 @@ using Robin.Annotations.Filters.Message;
 namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "send gray avatar")]
-[OnReply]
-[OnCommand("送走")]
+[OnReply, OnCommand("送走")]
 public partial class GrayFunction(
     IServiceProvider service,
     long uin,
@@ -45,9 +44,9 @@ public partial class GrayFunction(
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
 
-    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return false;
 
         var segments = e.Message;
 
@@ -59,7 +58,7 @@ public partial class GrayFunction(
             } originalMessage)
         {
             LogGetMessageFailed(_logger, reply.Id);
-            return;
+            return true;
         }
 
         var senderId = originalMessage.Message.Sender.UserId;
@@ -73,16 +72,17 @@ public partial class GrayFunction(
                         { Success: true })
             {
                 LogSendFailed(_logger, e.GroupId);
-                return;
+                return true;
             }
         }
         catch (Exception ex)
         {
             LogGetImageFailed(_logger, senderId.ToString(), ex);
-            return;
+            return true;
         }
 
         LogImageSent(_logger, e.GroupId);
+        return true;
     }
 
     #region Log

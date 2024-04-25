@@ -19,7 +19,7 @@ public class EventFilterFunction(
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        var tasks = new List<Task>();
+        var tasks = new List<Task<bool>>();
         foreach (var (filterGroups, handler) in _nonFallbackHandlers!)
         {
             if (filterGroups.FirstOrDefault(filterGroup =>
@@ -29,16 +29,15 @@ public class EventFilterFunction(
             }
         }
 
-        if (tasks.Count == 0)
+        if ((await Task.WhenAll(tasks)).Any(result => result)) return;
+
+        foreach (var (filterGroups, handler) in _fallbackHandlers!)
         {
-            foreach (var (filterGroups, handler) in _fallbackHandlers!)
-            {
-                if (filterGroups.FirstOrDefault(filterGroup =>
-                        filterGroup.All(filter => filter.FilterEvent(selfId, @event))) is not
-                        { } group) continue;
-                tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, selfId, @event, token));
-                break;
-            }
+            if (filterGroups.FirstOrDefault(filterGroup =>
+                    filterGroup.All(filter => filter.FilterEvent(selfId, @event))) is not
+                    { } group) continue;
+            tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, selfId, @event, token));
+            break;
         }
 
         await Task.WhenAll(tasks);

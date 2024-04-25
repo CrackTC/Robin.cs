@@ -14,8 +14,7 @@ using Robin.Annotations.Filters.Message;
 namespace Robin.Extensions.RandReply;
 
 [BotFunctionInfo("rand_reply", "Random Reply")]
-[OnAtSelf]
-[Fallback]
+[OnAtSelf, Fallback]
 // ReSharper disable once UnusedType.Global
 public partial class RandReplyFunction(
     IServiceProvider service,
@@ -31,9 +30,9 @@ public partial class RandReplyFunction(
     public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
 
 
-    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return false;
 
         var textCount = _option!.Texts?.Count ?? 0;
         var imageCount = _option.ImagePaths?.Count ?? 0;
@@ -52,10 +51,11 @@ public partial class RandReplyFunction(
             { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
-            return;
+            return true;
         }
 
         LogReplySent(_logger, e.GroupId);
+        return true;
     }
 
     public override Task StartAsync(CancellationToken token)

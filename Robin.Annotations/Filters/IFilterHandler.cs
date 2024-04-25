@@ -4,5 +4,5 @@ namespace Robin.Annotations.Filters;
 
 public interface IFilterHandler
 {
-    Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token);
+    Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token);
 }

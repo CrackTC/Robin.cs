@@ -213,8 +213,12 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
         await _connection.CloseAsync();
     }
 
-    public Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token) =>
-        @event is GroupMessageEvent e ? SendWordCloudAsync(e.GroupId, token: token) : Task.CompletedTask;
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    {
+        if (@event is not GroupMessageEvent e) return false;
+        await SendWordCloudAsync(e.GroupId, token: token);
+        return true;
+    }
 
     public async Task OnCronEventAsync(CancellationToken token)
     {

@@ -32,18 +32,18 @@ public partial class DiceFunction(
     public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
 
-    public async Task OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (@event is not GroupMessageEvent e) return false;
 
         var text = string.Join("", e.Message
             .OfType<TextData>()
             .Select(data => data.Text.Trim())).Trim();
 
-        if (string.IsNullOrEmpty(text)) return;
+        if (string.IsNullOrEmpty(text)) return false;
 
         var match = DiceRegex().Match(text);
-        if (!match.Success) return;
+        if (!match.Success) return false;
 
         var count = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 1;
         var sides = int.Parse(match.Groups[2].Value);
@@ -62,10 +62,11 @@ public partial class DiceFunction(
             { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
-            return;
+            return true;
         }
 
         LogDiceSent(_logger, e.GroupId);
+        return true;
     }
 
     [GeneratedRegex(@"/dice (\d+)?d(\d+)([+-]\d+)?")]
