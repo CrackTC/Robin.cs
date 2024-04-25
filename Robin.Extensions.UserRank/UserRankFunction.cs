@@ -232,7 +232,7 @@ public partial class UserRankFunction : BotFunction, IFilterHandler, ICronHandle
                 .ToFrozenDictionary(pair => pair.UserId, pair => pair.Name);
 
             var stringBuilder = new StringBuilder($"本群 {peopleCount} 位朋友共产生 {messageCount} 条发言\n活跃用户排行榜\n");
-            stringBuilder.AppendJoin('\n', top.Select(pair => $"{dict[pair.Id]} 贡献：{pair.Count}"));
+            stringBuilder.AppendJoin('\n', top.Select(pair => $"{(dict.TryGetValue(pair.Id, out var value) ? value : pair.Id)} 贡献：{pair.Count}"));
             message = stringBuilder.ToString();
         }
 
