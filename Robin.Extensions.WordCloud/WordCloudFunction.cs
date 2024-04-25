@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -159,7 +160,17 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
             {
                 Text = content
             }, cancellationToken: token);
+
         if (!response.IsSuccessStatusCode)
+        {
+            LogApiRequestFailed(_logger, groupId);
+            return;
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync(token);
+        var url = (await JsonNode.ParseAsync(stream, cancellationToken: token))?["url"]?.ToString();
+
+        if (url is null)
         {
             LogApiRequestFailed(_logger, groupId);
             return;
@@ -167,10 +178,8 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        var base64 = Convert.ToBase64String(await response.Content.ReadAsByteArrayAsync(token));
-
         if (await _operation.SendRequestAsync(
-                new SendGroupMessageRequest(groupId, [new ImageData($"base64://{base64}")]), token) is not
+                new SendGroupMessageRequest(groupId, [new ImageData(url)]), token) is not
                 { Success: true })
         {
             LogSendFailed(_logger, groupId);

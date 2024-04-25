@@ -7,11 +7,14 @@ public record CloudOption
 {
     [JsonPropertyName("width")] public int Width { get; set; }
     [JsonPropertyName("height")] public int Height { get; set; }
-    [JsonPropertyName("colors")] public required List<string> Colors { get; set; }
-    [JsonPropertyName("font_url")] public required string FontUrl { get; set; }
-    [JsonPropertyName("padding")] public required int Padding { get; set; }
+    [JsonPropertyName("stroke_width")] public int StrokeWidth { get; set; }
+    [JsonPropertyName("stroke_ratio")] public float StrokeRatio { get; set; }
+    [JsonPropertyName("stroke_colors")] public List<string>? StrokeColors { get; set; }
+    [JsonPropertyName("colors")] public List<string>? Colors { get; set; }
+    [JsonPropertyName("font_url")] public string? FontUrl { get; set; }
+    [JsonPropertyName("padding")] public int Padding { get; set; }
     [JsonPropertyName("background_image_blur")] public int BackgroundImageBlur { get; set; }
-    [JsonPropertyName("background_image_url")] public required string BackgroundImageUrl { get; set; }
+    [JsonPropertyName("background_image_url")] public string? BackgroundImageUrl { get; set; }
 
     // Not used for configuration
     [JsonPropertyName("text")] public required string Text { get; set; }
