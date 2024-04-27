@@ -43,11 +43,12 @@ public partial class WordCloudFunction(
         await _semaphore.WaitAsync(token);
         try
         {
-            await _db.Records.AddAsync(new Record()
+            await _db.Records.AddAsync(new Record
             {
                 GroupId = groupId,
                 Content = message
             }, token);
+            await _db.SaveChangesAsync(token);
         }
         finally
         {
