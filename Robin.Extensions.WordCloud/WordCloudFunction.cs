@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,120 +20,66 @@ namespace Robin.Extensions.WordCloud;
 [OnCommand("word_cloud")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global
-public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandler
+public partial class WordCloudFunction(
+    IServiceProvider service,
+    long uin,
+    IOperationProvider operation,
+    IConfiguration configuration,
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler, ICronHandler
 {
     private WordCloudOption? _option;
-    private readonly SqliteConnection _connection;
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
-    private readonly ILogger<WordCloudFunction> _logger;
-    private readonly SqliteCommand _createTableCommand;
+    private readonly ILogger<WordCloudFunction> _logger = service.GetRequiredService<ILogger<WordCloudFunction>>();
     private static readonly HttpClient _client = new();
 
-    private const string CreateTableSql =
-        "CREATE TABLE IF NOT EXISTS word_cloud (group_id INTEGER NOT NULL, message TEXT NOT NULL)";
+    private readonly WordCloudDbContext _db = new(uin);
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private readonly SqliteCommand _insertDataCommand;
-
-    private const string InsertDataSql =
-        "INSERT INTO word_cloud (group_id, message) VALUES ($group_id, $message)";
-
-    private readonly SqliteCommand _getGroupsCommand;
-
-    private const string GetGroupsSql =
-        "SELECT DISTINCT group_id FROM word_cloud";
-
-    private readonly SqliteCommand _getGroupMessagesCommand;
-
-    private const string GetGroupMessagesSql =
-        "SELECT message FROM word_cloud WHERE group_id = $group_id";
-
-    private readonly SqliteCommand _clearGroupMessagesCommand;
-
-    private const string ClearGroupMessagesSql =
-        "DELETE FROM word_cloud WHERE group_id = $group_id";
-
-    public WordCloudFunction(IServiceProvider service,
-        long uin,
-        IOperationProvider operation,
-        IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, uin, operation, configuration, functions)
-    {
-        _connection = new SqliteConnection($"Data Source=word_cloud-{uin}.db");
-
-        _logger = service.GetRequiredService<ILogger<WordCloudFunction>>();
-
-        _createTableCommand = _connection.CreateCommand();
-        _createTableCommand.CommandText = CreateTableSql;
-        _insertDataCommand = _connection.CreateCommand();
-        _insertDataCommand.CommandText = InsertDataSql;
-        _getGroupsCommand = _connection.CreateCommand();
-        _getGroupsCommand.CommandText = GetGroupsSql;
-        _getGroupMessagesCommand = _connection.CreateCommand();
-        _getGroupMessagesCommand.CommandText = GetGroupMessagesSql;
-        _clearGroupMessagesCommand = _connection.CreateCommand();
-        _clearGroupMessagesCommand.CommandText = ClearGroupMessagesSql;
-    }
-
-    private Task<int> CreateTableAsync(CancellationToken token) => _createTableCommand.ExecuteNonQueryAsync(token);
+    private Task<bool> CreateTableAsync(CancellationToken token)
+        => _db.Database.EnsureCreatedAsync(token);
 
     private async Task InsertDataAsync(long groupId, string message, CancellationToken token)
     {
         await _semaphore.WaitAsync(token);
         try
         {
-            _insertDataCommand.Parameters.AddWithValue("$group_id", groupId);
-            _insertDataCommand.Parameters.AddWithValue("$message", message);
-            await _insertDataCommand.ExecuteNonQueryAsync(token);
+            await _db.Records.AddAsync(new Record()
+            {
+                GroupId = groupId,
+                Content = message
+            }, token);
         }
         finally
         {
-            _insertDataCommand.Parameters.Clear();
             _semaphore.Release();
         }
     }
 
     private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
     {
-        var groups = new List<long>();
-
         await _semaphore.WaitAsync(token);
+
         try
         {
-            await using var reader = await _getGroupsCommand.ExecuteReaderAsync(token);
-            while (await reader.ReadAsync(token))
-            {
-                groups.Add(reader.GetInt64(0));
-            }
+            return await _db.Records.Select(r => r.GroupId).Distinct().ToListAsync(token);
         }
         finally
         {
             _semaphore.Release();
         }
-
-        return groups;
     }
 
     private async Task<IEnumerable<string>> GetGroupMessagesAsync(long groupId, CancellationToken token)
     {
-        var messages = new List<string>();
-
         await _semaphore.WaitAsync(token);
         try
         {
-            _getGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-            await using var reader = await _getGroupMessagesCommand.ExecuteReaderAsync(token);
-            while (await reader.ReadAsync(token))
-            {
-                messages.Add(reader.GetString(0));
-            }
+            return await _db.Records.Where(r => r.GroupId == groupId).Select(r => r.Content).ToListAsync(token);
         }
         finally
         {
-            _getGroupMessagesCommand.Parameters.Clear();
             _semaphore.Release();
         }
-
-        return messages;
     }
 
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
@@ -141,12 +87,11 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
         await _semaphore.WaitAsync(token);
         try
         {
-            _clearGroupMessagesCommand.Parameters.AddWithValue("$group_id", groupId);
-            await _clearGroupMessagesCommand.ExecuteNonQueryAsync(token);
+            _db.Records.RemoveRange(_db.Records.Where(r => r.GroupId == groupId));
+            await _db.SaveChangesAsync(token);
         }
         finally
         {
-            _clearGroupMessagesCommand.Parameters.Clear();
             _semaphore.Release();
         }
     }
@@ -207,19 +152,13 @@ public partial class WordCloudFunction : BotFunction, IFilterHandler, ICronHandl
 
         _option = option;
 
-        await _connection.OpenAsync(token);
-
-        await _createTableCommand.PrepareAsync(token);
-        await _insertDataCommand.PrepareAsync(token);
-        await _getGroupsCommand.PrepareAsync(token);
-        await _getGroupMessagesCommand.PrepareAsync(token);
-        await _clearGroupMessagesCommand.PrepareAsync(token);
         await CreateTableAsync(token);
     }
 
     public override async Task StopAsync(CancellationToken token)
     {
-        await _connection.CloseAsync();
+        _semaphore.Dispose();
+        await _db.DisposeAsync();
     }
 
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)

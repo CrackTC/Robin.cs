@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
@@ -20,10 +19,15 @@ namespace Robin.Extensions.Gemini;
 [BotFunctionInfo("gemini", "Gemini chat bot")]
 [OnPrivateMessage, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class GeminiFunction : BotFunction, IFilterHandler
+public partial class GeminiFunction(
+    IServiceProvider service,
+    long uin,
+    IOperationProvider operation,
+    IConfiguration configuration,
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
 {
-    private readonly SqliteConnection _connection;
-    private readonly ILogger<GeminiFunction> _logger;
+    private readonly ILogger<GeminiFunction> _logger = service.GetRequiredService<ILogger<GeminiFunction>>();
     private GeminiOption? _option;
 
     private Regex? _modelRegex;
@@ -31,204 +35,197 @@ public partial class GeminiFunction : BotFunction, IFilterHandler
     private Regex? _clearRegex;
     private Regex? _rollbackRegex;
 
-    #region Commands
+    private readonly GeminiDbContext _db = new(uin);
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private readonly SqliteCommand _createMessageTableCommand;
-
-    private const string CreateMessageTableSql =
-        "CREATE TABLE IF NOT EXISTS gemini (user_id INTEGER NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, timestamp INTEGER NOT NULL)";
-
-    private readonly SqliteCommand _createModelTableCommand;
-
-    private const string CreateModelTableSql =
-        "CREATE TABLE IF NOT EXISTS gemini_model (user_id INTEGER NOT NULL PRIMARY KEY, model TEXT NOT NULL)";
-
-    private readonly SqliteCommand _createSystemTableCommand;
-
-    private const string CreateSystemTableSql =
-        "CREATE TABLE IF NOT EXISTS gemini_system (user_id INTEGER NOT NULL PRIMARY KEY, system TEXT NOT NULL)";
-
-    private readonly SqliteCommand _removeLastCommand;
-
-    private const string RemoveLastCommandSql =
-        "DELETE FROM gemini WHERE timestamp IN (SELECT timestamp FROM gemini WHERE user_id = $userId ORDER BY timestamp DESC LIMIT 2) AND user_id = $userId";
-
-    private readonly SqliteCommand _removeAllCommand;
-
-    private const string RemoveAllCommandSql =
-        "DELETE FROM gemini WHERE user_id = $userId";
-
-    private readonly SqliteCommand _getHistoryCommand;
-
-    private const string GetHistoryCommandSql =
-        "SELECT role, content FROM gemini WHERE user_id = $userId ORDER BY timestamp";
-
-    private readonly SqliteCommand _addHistoryCommand;
-
-    private const string AddHistoryCommandSql =
-        "INSERT INTO gemini (user_id, role, content, timestamp) VALUES ($userId, $role, $content, $timestamp)";
-
-    private readonly SqliteCommand _getModelCommand;
-
-    private const string GetModelCommandSql =
-        "SELECT model FROM gemini_model WHERE user_id = $userId";
-
-    private readonly SqliteCommand _setModelCommand;
-
-    private const string SetModelCommandSql =
-        "INSERT INTO gemini_model (user_id, model) VALUES ($userId, $model) ON CONFLICT(user_id) DO UPDATE SET model = $model";
-
-    private readonly SqliteCommand _getSystemCommand;
-
-    private const string GetSystemCommand =
-        "SELECT system FROM gemini_system WHERE user_id = $userId";
-
-    private readonly SqliteCommand _setSystemCommand;
-
-    #endregion
-
-    private async Task CreateTablesAsync(CancellationToken token)
-    {
-        await _createMessageTableCommand.ExecuteNonQueryAsync(token);
-        await _createModelTableCommand.ExecuteNonQueryAsync(token);
-        await _createSystemTableCommand.ExecuteNonQueryAsync(token);
-    }
+    private Task<bool> CreateTablesAsync(CancellationToken token) => _db.Database.EnsureCreatedAsync(token);
 
     private async Task RemoveLastAsync(long userId, CancellationToken token)
     {
-        _removeLastCommand.Parameters.AddWithValue("$userId", userId);
-        await _removeLastCommand.ExecuteNonQueryAsync(token);
-        _removeLastCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var last = _db.Messages
+                .Where(msg => msg.User.UserId == userId)
+                .OrderByDescending(msg => msg.Timestamp)
+                .Take(2);
+
+            _db.Messages.RemoveRange(last);
+            await _db.SaveChangesAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task RemoveAllAsync(long userId, CancellationToken token)
     {
-        _removeAllCommand.Parameters.AddWithValue("$userId", userId);
-        await _removeAllCommand.ExecuteNonQueryAsync(token);
-        _removeAllCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var all = _db.Messages
+                .Where(msg => msg.User.UserId == userId);
+
+            _db.Messages.RemoveRange(all);
+            await _db.SaveChangesAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task<IEnumerable<GeminiContent>> GetHistoryAsync(long userId, CancellationToken token)
     {
-        _getHistoryCommand.Parameters.AddWithValue("$userId", userId);
-        await using var reader = await _getHistoryCommand.ExecuteReaderAsync(token);
-        var history = new List<GeminiContent>();
-        while (await reader.ReadAsync(token))
+        await _semaphore.WaitAsync(token);
+        try
         {
-            var role = reader.GetString(0);
-            var content = reader.GetString(1);
-            history.Add(new GeminiContent
-            {
-                Parts =
-                [
-                    new GeminiTextPart
+            return _db.Messages
+                .Where(msg => msg.User.UserId == userId)
+                .Select(msg => new GeminiContent
+                {
+                    Parts = new List<GeminiTextPart>
                     {
-                        Text = content
-                    }
-                ],
-                Role = role is "user" ? GeminiRole.User : GeminiRole.Model
-            });
+                        new()
+                        {
+                            Text = msg.Content
+                        }
+                    },
+                    Role = msg.Role
+                });
         }
-
-        _getHistoryCommand.Parameters.Clear();
-        return history;
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
-    private async Task AddHistoryAsync(long userId, string role, string content, long timestamp,
+    private async Task AddHistoryAsync(long userId, GeminiRole role, string content, long timestamp,
         CancellationToken token)
     {
-        _addHistoryCommand.Parameters.AddWithValue("$userId", userId);
-        _addHistoryCommand.Parameters.AddWithValue("$role", role);
-        _addHistoryCommand.Parameters.AddWithValue("$content", content);
-        _addHistoryCommand.Parameters.AddWithValue("$timestamp", timestamp);
-        await _addHistoryCommand.ExecuteNonQueryAsync(token);
-        _addHistoryCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var user = await _db.Users.FindAsync([userId], token);
+            if (user is null)
+            {
+                user = new User
+                {
+                    UserId = userId,
+                    ModelName = _option!.Model,
+                    SystemCommand = string.Empty
+                };
+                _db.Users.Add(user);
+            }
+
+            user.Messages.Add(new Message
+            {
+                User = user,
+                Role = role,
+                Content = content,
+                Timestamp = timestamp
+            });
+
+            await _db.SaveChangesAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task<string> GetModelAsync(long userId, CancellationToken token)
     {
-        _getModelCommand.Parameters.AddWithValue("$userId", userId);
-        var model = await _getModelCommand.ExecuteScalarAsync(token);
-        _getModelCommand.Parameters.Clear();
-        return model as string ?? _option!.Model;
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var user = await _db.Users.FindAsync([userId], token);
+            return user?.ModelName ?? _option!.Model;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task SetModelAsync(long userId, string model, CancellationToken token)
     {
-        _setModelCommand.Parameters.AddWithValue("$userId", userId);
-        _setModelCommand.Parameters.AddWithValue("$model", model);
-        await _setModelCommand.ExecuteNonQueryAsync(token);
-        _setModelCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var user = await _db.Users.FindAsync([userId], token);
+            if (user is null)
+            {
+                user = new User
+                {
+                    UserId = userId,
+                    ModelName = model,
+                    SystemCommand = string.Empty
+                };
+                _db.Users.Add(user);
+            }
+            else
+            {
+                user.ModelName = model;
+            }
+
+            await _db.SaveChangesAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task<string> GetSystem(long userId, CancellationToken token)
     {
-        _getSystemCommand.Parameters.AddWithValue("$userId", userId);
-        var system = await _getSystemCommand.ExecuteScalarAsync(token);
-        _getSystemCommand.Parameters.Clear();
-        return system as string ?? string.Empty;
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var user = await _db.Users.FindAsync([userId], token);
+            return user?.SystemCommand ?? string.Empty;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     private async Task SetSystemAsync(long userId, string system, CancellationToken token)
     {
-        _setSystemCommand.Parameters.AddWithValue("$userId", userId);
-        _setSystemCommand.Parameters.AddWithValue("$system", system);
-        await _setSystemCommand.ExecuteNonQueryAsync(token);
-        _setSystemCommand.Parameters.Clear();
+        await _semaphore.WaitAsync(token);
+        try
+        {
+            var user = await _db.Users.FindAsync([userId], token);
+            if (user is null)
+            {
+                user = new User
+                {
+                    UserId = userId,
+                    ModelName = _option!.Model,
+                    SystemCommand = system
+                };
+                _db.Users.Add(user);
+            }
+            else
+            {
+                user.SystemCommand = system;
+            }
+
+            await _db.SaveChangesAsync(token);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
-
-    public GeminiFunction(IServiceProvider service,
-        long uin,
-        IOperationProvider operation,
-        IConfiguration configuration,
-        IEnumerable<BotFunction> functions) : base(service, uin, operation, configuration, functions)
-    {
-        _connection = new SqliteConnection($"Data Source=gemini-{uin}.db");
-
-        _logger = service.GetRequiredService<ILogger<GeminiFunction>>();
-
-        _createMessageTableCommand = _connection.CreateCommand();
-        _createMessageTableCommand.CommandText = CreateMessageTableSql;
-
-        _createModelTableCommand = _connection.CreateCommand();
-        _createModelTableCommand.CommandText = CreateModelTableSql;
-
-        _createSystemTableCommand = _connection.CreateCommand();
-        _createSystemTableCommand.CommandText = CreateSystemTableSql;
-
-        _removeLastCommand = _connection.CreateCommand();
-        _removeLastCommand.CommandText = RemoveLastCommandSql;
-
-        _removeAllCommand = _connection.CreateCommand();
-        _removeAllCommand.CommandText = RemoveAllCommandSql;
-
-        _getHistoryCommand = _connection.CreateCommand();
-        _getHistoryCommand.CommandText = GetHistoryCommandSql;
-
-        _addHistoryCommand = _connection.CreateCommand();
-        _addHistoryCommand.CommandText = AddHistoryCommandSql;
-
-        _getModelCommand = _connection.CreateCommand();
-        _getModelCommand.CommandText = GetModelCommandSql;
-
-        _setModelCommand = _connection.CreateCommand();
-        _setModelCommand.CommandText = SetModelCommandSql;
-
-        _getSystemCommand = _connection.CreateCommand();
-        _getSystemCommand.CommandText = GetSystemCommand;
-
-        _setSystemCommand = _connection.CreateCommand();
-        _setSystemCommand.CommandText = SetSystemCommandSql;
-    }
-
-    private const string SetSystemCommandSql =
-        "INSERT INTO gemini_system (user_id, system) VALUES ($userId, $system) ON CONFLICT(user_id) DO UPDATE SET system = $system";
 
     private async Task SendReplyAsync(long userId, string reply, CancellationToken token)
     {
         if (await _operation.SendRequestAsync(
                 new SendPrivateMessageRequest(userId, [new TextData(reply)]), token) is not
-            { Success: true })
+                { Success: true })
         {
             LogSendFailed(_logger, userId);
         }
@@ -305,10 +302,10 @@ public partial class GeminiFunction : BotFunction, IFilterHandler
         var now = DateTimeOffset.Now.ToUnixTimeSeconds();
         var request = new GeminiRequest(_option!.ApiKey, model: model);
         if (await request.GenerateContentAsync(new GeminiRequestBody
-            {
-                Contents = contents
-            }, token) is not
-            { } response)
+        {
+            Contents = contents
+        }, token) is not
+        { } response)
         {
             LogGenerateContentFailed(_logger, e.UserId);
             await SendReplyAsync(e.UserId, _option!.ErrorReply, token);
@@ -330,8 +327,8 @@ public partial class GeminiFunction : BotFunction, IFilterHandler
         }
 
         var content = r.Candidates[0].Content.Parts[0].Text;
-        await AddHistoryAsync(e.UserId, "user", text, now, token);
-        await AddHistoryAsync(e.UserId, "model", content, now, token);
+        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, token);
+        await AddHistoryAsync(e.UserId, GeminiRole.Model, content, now, token);
 
         var textData = new TextData(content);
 
@@ -370,11 +367,14 @@ public partial class GeminiFunction : BotFunction, IFilterHandler
             return;
         }
 
-        await _connection.OpenAsync(token);
         await CreateTablesAsync(token);
     }
 
-    public override Task StopAsync(CancellationToken token) => _connection.CloseAsync();
+    public override async Task StopAsync(CancellationToken token)
+    {
+        _semaphore.Dispose();
+        await _db.DisposeAsync();
+    }
 
     #region Log
 

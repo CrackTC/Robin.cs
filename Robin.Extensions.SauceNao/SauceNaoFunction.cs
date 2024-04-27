@@ -6,7 +6,6 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
-using Robin.Abstractions.Message.Entities.Keyboard;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Annotations.Filters;
@@ -80,7 +79,7 @@ public partial class SauceNaoFunction(
         {
             if (await _operation.SendRequestAsync(
                     new SendGroupMessageRequest(e.GroupId, [new TextData("找不到喵>_<")]), token) is not
-                { Success: true })
+                    { Success: true })
             {
                 LogSendMessageFailed(_logger, e.GroupId);
                 return true;
