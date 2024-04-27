@@ -15,6 +15,7 @@ internal class WordCloudDbContext(long uin) : DbContext
     {
         model.Entity<Record>(records =>
         {
+            records.HasKey(record => record.RecordId);
             records.Property(record => record.GroupId).IsRequired();
             records.Property(record => record.Content).IsRequired();
         });

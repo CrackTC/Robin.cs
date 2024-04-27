@@ -16,6 +16,7 @@ internal class UserRankDbContext(long uin) : DbContext
     {
         modelBuilder.Entity<Record>(records =>
         {
+            records.HasKey(record => record.RecordId);
             records.Property(record => record.GroupId).IsRequired();
             records.Property(record => record.UserId).IsRequired();
         });

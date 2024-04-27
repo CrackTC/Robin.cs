@@ -25,6 +25,7 @@ internal class GeminiDbContext(long uin) : DbContext
 
         model.Entity<Message>(messages =>
         {
+            messages.HasKey(msg => msg.MessageId);
             messages.Property(msg => msg.Role).IsRequired();
             messages.Property(msg => msg.Content).IsRequired();
             messages.Property(msg => msg.Timestamp).IsRequired();

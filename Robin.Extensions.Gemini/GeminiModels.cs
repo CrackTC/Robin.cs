@@ -13,6 +13,7 @@ internal class User
 
 internal class Message
 {
+    public long MessageId { get; init; }
     public required User User { get; init; }
     public GeminiRole Role { get; init; }
     public required string Content { get; init; }
