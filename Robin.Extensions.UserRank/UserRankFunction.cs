@@ -44,8 +44,7 @@ public partial class UserRankFunction(
         {
             await _db.Records.AddAsync(new Record
             {
-                GroupId = groupId,
-                UserId = userId
+                GroupId = groupId, UserId = userId
             }, token);
             await _db.SaveChangesAsync(token);
         }
@@ -109,10 +108,14 @@ public partial class UserRankFunction(
             return _db.Records
                 .Where(record => record.GroupId == groupId)
                 .GroupBy(record => record.UserId)
-                .OrderByDescending(group => group.Count())
+                .Select(group => new
+                {
+                    Id = group.Key, Count = group.Count()
+                })
+                .OrderByDescending(group => group.Count)
                 .Take(n)
                 .AsEnumerable()
-                .Select(group => (group.Key, group.Count()));
+                .Select(group => (group.Id, group.Count));
         }
         finally
         {
