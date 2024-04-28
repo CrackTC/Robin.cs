@@ -7,6 +7,7 @@ using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Annotations.Filters;
 using Robin.Annotations.Filters.Message;
@@ -19,16 +20,13 @@ namespace Robin.Extensions.RandReply;
 public partial class RandReplyFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
+    : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private RandReplyOption? _option;
     private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<ILogger<RandReplyFunction>>();
-
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
-
 
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
@@ -47,8 +45,7 @@ public partial class RandReplyFunction(
                     $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], token))}")
         ];
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, chain), token) is not
-            { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
             return true;
@@ -69,8 +66,6 @@ public partial class RandReplyFunction(
         _option = option;
         return Task.CompletedTask;
     }
-
-    public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
     #region Log
 

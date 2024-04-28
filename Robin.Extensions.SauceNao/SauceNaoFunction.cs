@@ -6,6 +6,7 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Annotations.Filters;
@@ -20,13 +21,11 @@ namespace Robin.Extensions.SauceNao;
 public partial class SauceNaoFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
+    : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
-
     public override Task StartAsync(CancellationToken token)
     {
         if (_configuration.Get<SauceNaoOption>() is not { } option)
@@ -40,18 +39,14 @@ public partial class SauceNaoFunction(
         return Task.CompletedTask;
     }
 
-    public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
-
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return false;
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await _operation.SendRequestAsync(new GetMessageRequest(reply.Id), token) is not GetMessageResponse
-            {
-                Success: true, Message: not null
-            } originalMessage)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token)
+            is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_logger, reply.Id);
             return true;
@@ -77,9 +72,7 @@ public partial class SauceNaoFunction(
 
         if (results.Count == 0)
         {
-            if (await _operation.SendRequestAsync(
-                    new SendGroupMessageRequest(e.GroupId, [new TextData("找不到喵>_<")]), token) is not
-                    { Success: true })
+            if (await new SendGroupMessageRequest(e.GroupId, [new TextData("找不到喵>_<")]).SendAsync(_provider, token) is not { Success: true })
             {
                 LogSendMessageFailed(_logger, e.GroupId);
                 return true;
@@ -91,7 +84,7 @@ public partial class SauceNaoFunction(
 
         var textData = new TextData(string.Join("---\n", results));
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, [textData]), token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, [textData]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendMessageFailed(_logger, e.GroupId);
             return true;

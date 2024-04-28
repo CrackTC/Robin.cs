@@ -9,6 +9,7 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Annotations.Cron;
@@ -24,10 +25,10 @@ namespace Robin.Extensions.UserRank;
 public partial class UserRankFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler, ICronHandler
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler, ICronHandler
 {
     private UserRankOption? _option;
     private readonly ILogger<UserRankFunction> _logger = service.GetRequiredService<ILogger<UserRankFunction>>();
@@ -44,7 +45,8 @@ public partial class UserRankFunction(
         {
             await _db.Records.AddAsync(new Record
             {
-                GroupId = groupId, UserId = userId
+                GroupId = groupId,
+                UserId = userId
             }, token);
             await _db.SaveChangesAsync(token);
         }
@@ -54,7 +56,7 @@ public partial class UserRankFunction(
         }
     }
 
-    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
+    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token)
     {
         await _semaphore.WaitAsync(token);
         try
@@ -110,7 +112,8 @@ public partial class UserRankFunction(
                 .GroupBy(record => record.UserId)
                 .Select(group => new
                 {
-                    Id = group.Key, Count = group.Count()
+                    Id = group.Key,
+                    Count = group.Count()
                 })
                 .OrderByDescending(group => group.Count)
                 .Take(n)
@@ -149,8 +152,8 @@ public partial class UserRankFunction(
         if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
         else
         {
-            if (await _operation.SendRequestAsync(new GetGroupMemberListRequest(groupId, true), token) is not
-                GetGroupMemberListResponse { Success: true, Members: not null } memberList)
+            if (await new GetGroupMemberListRequest(groupId, true).SendAsync(_provider, token)
+                is not GetGroupMemberListResponse { Success: true, Members: not null } memberList)
             {
                 LogGetGroupMemberListFailed(_logger, groupId);
                 return;
@@ -166,8 +169,7 @@ public partial class UserRankFunction(
             message = stringBuilder.ToString();
         }
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(groupId, [new TextData(message)]), token) is
-            not { Success: true })
+        if (await new SendGroupMessageRequest(groupId, [new TextData(message)]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;

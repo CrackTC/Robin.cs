@@ -11,9 +11,9 @@ namespace Robin.Annotations.Filters;
 public class EventFilterFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions)
 {
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _nonFallbackHandlers;
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;

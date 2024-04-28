@@ -9,6 +9,7 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Annotations.Cron;
 using Robin.Annotations.Filters;
@@ -23,10 +24,10 @@ namespace Robin.Extensions.WordCloud;
 public partial class WordCloudFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler, ICronHandler
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler, ICronHandler
 {
     private WordCloudOption? _option;
     private readonly ILogger<WordCloudFunction> _logger = service.GetRequiredService<ILogger<WordCloudFunction>>();
@@ -56,7 +57,7 @@ public partial class WordCloudFunction(
         }
     }
 
-    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token = default)
+    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token)
     {
         await _semaphore.WaitAsync(token);
 
@@ -124,9 +125,7 @@ public partial class WordCloudFunction(
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        if (await _operation.SendRequestAsync(
-                new SendGroupMessageRequest(groupId, [new ImageData(url)]), token) is not
-                { Success: true })
+        if (await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, groupId);
             return;
@@ -139,8 +138,7 @@ public partial class WordCloudFunction(
     {
         if (@event is not GroupMessageEvent e) return;
 
-        await InsertDataAsync(e.GroupId,
-            string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+        await InsertDataAsync(e.GroupId, string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -158,6 +156,7 @@ public partial class WordCloudFunction(
 
     public override async Task StopAsync(CancellationToken token)
     {
+        _client.Dispose();
         _semaphore.Dispose();
         await _db.DisposeAsync();
     }

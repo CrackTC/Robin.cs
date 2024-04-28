@@ -11,6 +11,7 @@ using Robin.Extensions.Gemini.Entities;
 using Robin.Extensions.Gemini.Entities.Responses;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Robin.Abstractions.Operation;
 using Robin.Annotations.Filters;
 using Robin.Annotations.Filters.Message;
 
@@ -22,10 +23,10 @@ namespace Robin.Extensions.Gemini;
 public partial class GeminiFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private readonly ILogger<GeminiFunction> _logger = service.GetRequiredService<ILogger<GeminiFunction>>();
     private GeminiOption? _option;
@@ -223,11 +224,13 @@ public partial class GeminiFunction(
 
     private async Task SendReplyAsync(long userId, string reply, CancellationToken token)
     {
-        if (await _operation.SendRequestAsync(
-                new SendPrivateMessageRequest(userId, [new TextData(reply)]), token) is not
-                { Success: true })
+        if (await new SendPrivateMessageRequest(userId, [new TextData(reply)]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, userId);
+        }
+        else
+        {
+            LogReplySent(_logger, userId);
         }
     }
 
@@ -330,20 +333,10 @@ public partial class GeminiFunction(
         await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, token);
         await AddHistoryAsync(e.UserId, GeminiRole.Model, content, now, token);
 
-        var textData = new TextData(content);
-
-        if (await _operation.SendRequestAsync(new SendPrivateMessageRequest(e.UserId, [textData]), token) is not { Success: true })
-        {
-            LogSendFailed(_logger, e.UserId);
-            await SendReplyAsync(e.UserId, _option!.ErrorReply, token);
-            return true;
-        }
-
-        LogReplySent(_logger, e.UserId);
+        await SendReplyAsync(e.UserId, content, token);
         return true;
     }
 
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
     public override async Task StartAsync(CancellationToken token)
     {
         if (_configuration.Get<GeminiOption>() is not { } option)

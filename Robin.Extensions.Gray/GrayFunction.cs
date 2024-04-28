@@ -6,6 +6,7 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Annotations.Filters;
@@ -18,10 +19,10 @@ namespace Robin.Extensions.Gray;
 public partial class GrayFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
+    : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<ILogger<GrayFunction>>();
     private GrayOption? _option;
@@ -41,7 +42,11 @@ public partial class GrayFunction(
         return Task.CompletedTask;
     }
 
-    public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
+    public override Task StopAsync(CancellationToken token)
+    {
+        _client.Dispose();
+        return Task.CompletedTask;
+    }
 
 
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
@@ -52,10 +57,7 @@ public partial class GrayFunction(
 
         var reply = segments.OfType<ReplyData>().First();
 
-        if (await _operation.SendRequestAsync(new GetMessageRequest(reply.Id), token) is not GetMessageResponse
-            {
-                Success: true, Message: not null
-            } originalMessage)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_logger, reply.Id);
             return true;
@@ -65,11 +67,8 @@ public partial class GrayFunction(
 
         try
         {
-            var image = await _client.GetByteArrayAsync($"{_option!.ApiAddress}/?id={senderId}", token);
-            if (await _operation.SendRequestAsync(
-                    new SendGroupMessageRequest(e.GroupId,
-                        [new ImageData($"base64://{Convert.ToBase64String(image)}")]), token) is not
-                        { Success: true })
+            var url = $"{_option!.ApiAddress}/?id={senderId}";
+            if (await new SendGroupMessageRequest(e.GroupId, [new ImageData(url)]).SendAsync(_provider, token) is not { Success: true })
             {
                 LogSendFailed(_logger, e.GroupId);
                 return true;

@@ -15,9 +15,9 @@ namespace Robin.Annotations.Cron;
 public partial class CronFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions)
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions)
 {
     private IScheduler? _scheduler;
     private readonly ILogger<CronFunction> _logger = service.GetRequiredService<ILogger<CronFunction>>();

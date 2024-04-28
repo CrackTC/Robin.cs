@@ -7,6 +7,7 @@ using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Annotations.Filters;
@@ -20,9 +21,9 @@ namespace Robin.Extensions.ReplyAction;
 public partial class ReplyActionFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, operation, configuration, functions), IFilterHandler
+    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
 
@@ -42,10 +43,8 @@ public partial class ReplyActionFunction(
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await _operation.SendRequestAsync(new GetMessageRequest(reply.Id), token) is not GetMessageResponse
-            {
-                Success: true, Message: not null
-            } originalMessage)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token)
+            is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_logger, reply.Id);
             return true;
@@ -53,8 +52,8 @@ public partial class ReplyActionFunction(
 
         var senderId = originalMessage.Message.Sender.UserId;
 
-        if (await _operation.SendRequestAsync(new GetGroupMemberInfoRequest(e.GroupId, senderId, true), token) is not
-            GetGroupMemberInfoResponse { Success: true, Info: not null } info)
+        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true).SendAsync(_provider, token)
+            is not GetGroupMemberInfoResponse { Success: true, Info: not null } info)
         {
             LogGetGroupMemberInfoFailed(_logger, e.GroupId, senderId);
             return true;
@@ -65,12 +64,10 @@ public partial class ReplyActionFunction(
 
         MessageChain chain =
         [
-            new TextData(
-                $"{sourceName} {parts[0]} {targetName}{(parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)}")
+            new TextData($"{sourceName} {parts[0]} {targetName}{(parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)}")
         ];
 
-        if (await _operation.SendRequestAsync(new SendGroupMessageRequest(e.GroupId, chain), token) is not
-            { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, e.GroupId);
             return true;
@@ -79,11 +76,6 @@ public partial class ReplyActionFunction(
         LogActionSent(_logger, e.GroupId);
         return true;
     }
-
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
-    public override Task StartAsync(CancellationToken token) => Task.CompletedTask;
-
-    public override Task StopAsync(CancellationToken token) => Task.CompletedTask;
 
     #region Log
 

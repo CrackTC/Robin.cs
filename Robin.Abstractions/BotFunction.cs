@@ -8,19 +8,19 @@ namespace Robin.Abstractions;
 public abstract class BotFunction(
     IServiceProvider service,
     long uin,
-    IOperationProvider operation,
+    IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions) : IHostedService
 {
     protected readonly IServiceProvider _service = service;
     protected readonly long _uin = uin;
-    protected readonly IOperationProvider _operation = operation;
+    protected readonly IOperationProvider _provider = provider;
     protected readonly IConfiguration _configuration = configuration;
     protected readonly IEnumerable<BotFunction> _functions = functions;
 
-    public abstract Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token);
+    public virtual Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
 
-    public abstract Task StartAsync(CancellationToken token);
+    public virtual Task StartAsync(CancellationToken token) => Task.CompletedTask;
 
-    public abstract Task StopAsync(CancellationToken token);
+    public virtual Task StopAsync(CancellationToken token) => Task.CompletedTask;
 }
