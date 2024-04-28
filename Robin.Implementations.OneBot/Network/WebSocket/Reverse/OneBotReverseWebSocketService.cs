@@ -194,7 +194,7 @@ internal partial class OneBotReverseWebSocketService(
 
     #region Log
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Receive message: {Message}")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid response: {Response}")]

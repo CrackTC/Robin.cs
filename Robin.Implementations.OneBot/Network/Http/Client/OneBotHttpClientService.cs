@@ -85,7 +85,7 @@ internal partial class OneBotHttpClientService(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Receive message: {Message}")]
+    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Invalid request: {Request}")]

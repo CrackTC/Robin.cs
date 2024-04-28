@@ -187,7 +187,7 @@ internal partial class OneBotForwardWebSocketService(
     [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Invalid URI: {Uri}")]
     private static partial void LogInvalidUri(ILogger logger, string uri);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Receive message: {Message}")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid response: {Response}")]
