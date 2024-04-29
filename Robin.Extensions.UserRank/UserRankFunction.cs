@@ -118,7 +118,8 @@ public partial class UserRankFunction(
                 .OrderByDescending(group => group.Count)
                 .Take(n)
                 .AsEnumerable()
-                .Select(group => (group.Id, group.Count));
+                .Select(group => (group.Id, group.Count))
+                .ToList();
         }
         finally
         {
