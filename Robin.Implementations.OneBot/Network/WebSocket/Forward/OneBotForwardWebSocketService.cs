@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
+using Robin.Abstractions.Event.Meta;
 using Robin.Abstractions.Operation;
 using Robin.Implementations.OneBot.Converters;
 using Robin.Implementations.OneBot.Entities.Operations;
@@ -114,6 +115,27 @@ internal partial class OneBotForwardWebSocketService(
         if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
     }
 
+    private async Task KeepAliveAsync(BotEvent @event, CancellationToken token)
+    {
+        if (@event is not HeartbeatEvent e) return;
+
+        var alive = false;
+        Func<BotEvent, CancellationToken, Task> setAlive = null!;
+
+        setAlive = (_, _) =>
+        {
+            alive = true;
+            OnEventAsync -= setAlive;
+            return Task.CompletedTask;
+        };
+
+        OnEventAsync += setAlive;
+
+        await Task.Delay(TimeSpan.FromMilliseconds(e.Interval * 3), token);
+
+        if (!alive) _websocket!.Abort();
+    }
+
     private async Task ReceiveLoop(CancellationToken token)
     {
         var buffer = new byte[1024];
@@ -159,6 +181,8 @@ internal partial class OneBotForwardWebSocketService(
             return;
         }
 
+        OnEventAsync += KeepAliveAsync;
+
         while (true)
         {
             try
@@ -180,6 +204,8 @@ internal partial class OneBotForwardWebSocketService(
                 await Task.Delay(interval, token);
             }
         }
+
+        OnEventAsync -= KeepAliveAsync;
     }
 
     #region Log
