@@ -3,7 +3,6 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Quartz;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
