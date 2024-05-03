@@ -13,4 +13,6 @@ public class OnReplyAttribute(int filterGroup = 0) : OnMessageAttribute(filterGr
         var e = @event as MessageEvent;
         return e!.Message.Any(segment => segment is ReplyData);
     }
+
+    public override string GetDescription() => $"on_reply, {base.GetDescription()}";
 }

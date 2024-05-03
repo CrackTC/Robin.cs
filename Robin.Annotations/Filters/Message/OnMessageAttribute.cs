@@ -6,4 +6,6 @@ namespace Robin.Annotations.Filters.Message;
 public class OnMessageAttribute(int filterGroup = 0) : BaseEventFilterAttribute(filterGroup)
 {
     public override bool FilterEvent(long selfId, BotEvent @event) => @event is MessageEvent;
+
+    public override string GetDescription() => $"on_message, {base.GetDescription()}";
 }

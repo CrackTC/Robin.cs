@@ -13,4 +13,6 @@ public class OnAtSelfAttribute(int filterGroup = 0) : OnMessageAttribute(filterG
         var e = @event as MessageEvent;
         return e!.Message.Any(segment => segment is AtData at && at.Uin == selfId);
     }
+
+    public override string GetDescription() => $"at_self, {base.GetDescription()}";
 }

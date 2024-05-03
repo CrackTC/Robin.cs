@@ -16,4 +16,6 @@ public class OnCommandAttribute(string command, char prefix = '/', int filterGro
             .Split(null)
             .Any(text => text == $"{prefix}{command}"));
     }
+
+    public override string GetDescription() => $"on_command({prefix}{command}), {base.GetDescription()}";
 }

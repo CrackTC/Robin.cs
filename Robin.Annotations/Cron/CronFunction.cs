@@ -7,11 +7,11 @@ using Quartz;
 using Quartz.Impl;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
-using Robin.Abstractions.Event;
 
 namespace Robin.Annotations.Cron;
 
 [BotFunctionInfo("cron", "trigger a function on a cron schedule")]
+// ReSharper disable UnusedType.Global
 public partial class CronFunction(
     IServiceProvider service,
     long uin,
@@ -21,7 +21,6 @@ public partial class CronFunction(
 {
     private IScheduler? _scheduler;
     private readonly ILogger<CronFunction> _logger = service.GetRequiredService<ILogger<CronFunction>>();
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
     public override async Task StartAsync(CancellationToken token)
     {
         var handlers = _functions

@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Dice", "Ro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.SauceNao", "Robin.Extensions.SauceNao\Robin.Extensions.SauceNao.csproj", "{4BADA596-B7C9-4D0A-B533-498143C19DD1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Help", "Robin.Extensions.Help\Robin.Extensions.Help.csproj", "{9731098B-1ED5-4B8F-BBFA-184C4CD531E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,10 @@ Global
 		{4BADA596-B7C9-4D0A-B533-498143C19DD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BADA596-B7C9-4D0A-B533-498143C19DD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BADA596-B7C9-4D0A-B533-498143C19DD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9731098B-1ED5-4B8F-BBFA-184C4CD531E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9731098B-1ED5-4B8F-BBFA-184C4CD531E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9731098B-1ED5-4B8F-BBFA-184C4CD531E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9731098B-1ED5-4B8F-BBFA-184C4CD531E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
