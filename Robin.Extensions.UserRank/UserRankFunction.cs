@@ -235,7 +235,7 @@ public partial class UserRankFunction(
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
     private static partial void LogSendFailed(ILogger logger, long groupId);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Word cloud sent for group {GroupId}")]
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "User rank sent for group {GroupId}")]
     private static partial void LogUserRankSent(ILogger logger, long groupId);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
