@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Specialized;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,9 +34,12 @@ public partial class CronFunction(
             .Select(tuple => (tuple.Handler, tuple.InfoAttribute!.Name, tuple.CronAttribute!.Cron))
             .ToList();
 
-        _scheduler = await new StdSchedulerFactory().GetScheduler(token);
+        _scheduler = await new StdSchedulerFactory(new NameValueCollection
+        {
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_uin}"
+        }).GetScheduler(token);
         _scheduler.JobFactory = new CronJobFactory(
-            handlers.ToFrozenDictionary(tuple => tuple.Name, tuple => tuple.Handler),
+            handlers.ToFrozenDictionary(tuple => $"{tuple.Name}-{_uin}", tuple => tuple.Handler),
             token);
 
         foreach (var (_, name, defaultCron) in handlers)
