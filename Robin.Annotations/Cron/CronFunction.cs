@@ -41,13 +41,13 @@ public partial class CronFunction(
         foreach (var (_, name, defaultCron) in handlers)
         {
             var job = JobBuilder.Create<CronJob>()
-                .WithIdentity(name, "CronFunction")
+                .WithIdentity($"{name}-{_uin}", "CronFunction")
                 .Build();
 
             var cron = _configuration[name] ?? defaultCron;
 
             var trigger = TriggerBuilder.Create()
-                .WithIdentity(name, "CronFunction")
+                .WithIdentity($"{name}-{_uin}", "CronFunction")
                 .WithCronSchedule(cron)
                 .Build();
 
