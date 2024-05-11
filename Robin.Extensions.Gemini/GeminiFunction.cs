@@ -238,6 +238,7 @@ public partial class GeminiFunction(
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not PrivateMessageEvent e) return false;
+        if (e.UserId == selfId) return false;
 
         var text = string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)).Trim();
         if (text.Length == 0) return false;
