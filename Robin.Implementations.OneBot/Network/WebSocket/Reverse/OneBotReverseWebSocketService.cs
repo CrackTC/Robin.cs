@@ -195,6 +195,7 @@ internal partial class OneBotReverseWebSocketService(
             {
                 var wsContext = await context.AcceptWebSocketAsync(null);
                 _websocket = wsContext.WebSocket;
+                LogConnected(_logger, context.Request.RemoteEndPoint.ToString());
                 try
                 {
                     await ReceiveLoop(token);
@@ -238,6 +239,9 @@ internal partial class OneBotReverseWebSocketService(
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Send data failed")]
     private static partial void LogSendFailed(ILogger logger, Exception e);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Connection from {Src}")]
+    private static partial void LogConnected(ILogger logger, string src);
 
     #endregion
 }

@@ -191,6 +191,7 @@ internal partial class OneBotForwardWebSocketService(
                 if (!string.IsNullOrEmpty(options.AccessToken))
                     _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
                 await _websocket.ConnectAsync(uri, token);
+                LogConnected(_logger, options.Url);
                 await ReceiveLoop(token);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
@@ -231,6 +232,9 @@ internal partial class OneBotForwardWebSocketService(
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Send data failed")]
     private static partial void LogSendFailed(ILogger logger, Exception e);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Connected to {Uri}")]
+    private static partial void LogConnected(ILogger logger, string uri);
 
     #endregion
 }
