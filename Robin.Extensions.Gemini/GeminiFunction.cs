@@ -383,7 +383,7 @@ public partial class GeminiFunction(
     [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Failed to generate content for user {UserId}")]
     private static partial void LogGenerateContentFailed(ILogger logger, long userId);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "Reply sent for group {UserId}")]
+    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Reply sent for user {UserId}")]
     private static partial void LogReplySent(ILogger logger, long userId);
 
     #endregion
