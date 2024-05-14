@@ -3,13 +3,15 @@ using Microsoft.EntityFrameworkCore;
 namespace Robin.Extensions.WordCloud;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
-internal class WordCloudDbContext(long uin) : DbContext
+internal class WordCloudDbContext(long uin = 0) : DbContext
 {
     public DbSet<Record> Records { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite($"Data Source=word_cloud-{uin}.db");
+        optionsBuilder
+            .UseModel(CompiledModels.WordCloudDbContextModel.Instance)
+            .UseSqlite($"Data Source=word_cloud-{uin}.db");
     }
 
     protected override void OnModelCreating(ModelBuilder model)

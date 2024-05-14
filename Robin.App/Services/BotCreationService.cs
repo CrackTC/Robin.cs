@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,40 +14,39 @@ internal partial class BotCreationService(
     IServiceProvider service,
     IConfiguration config) : IHostedService
 {
-    private readonly List<(IServiceScope, BotFunctionService)> _scopedServices = [];
+    private readonly ConcurrentBag<(IServiceScope, BotFunctionService)> _scopedServices = [];
 
-    public async Task StartAsync(CancellationToken token)
+    private async Task StartBot(IConfiguration botConfig, CancellationToken token)
     {
-        var botSections = config.GetSection("Bots").GetChildren();
-        foreach (var section in botSections)
-        {
-            var scope = service.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<BotContext>();
-            context.Uin = long.Parse(section["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
+        var scope = service.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<BotContext>();
+        context.Uin = long.Parse(botConfig["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
 
-            var eventInvokerName = section["EventInvokerName"];
-            var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(eventInvokerName);
+        var eventInvokerName = botConfig["EventInvokerName"];
+        var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(eventInvokerName);
 
-            var operationProviderName = section["OperationProviderName"];
-            var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
+        var operationProviderName = botConfig["OperationProviderName"];
+        var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
 
-            context.EventInvoker =
-                await eventInvokerFactory.GetBotEventInvokerAsync(section.GetRequiredSection("EventInvokerConfig"),
-                    token);
-            context.OperationProvider =
-                await operationProviderFactory.GetOperationProviderAsync(
-                    section.GetRequiredSection("OperationProviderConfig"), token);
-            context.FunctionConfigurations = section.GetSection("Configurations")
-                .GetChildren()
-                .ToFrozenDictionary(child => child["Name"]!);
+        context.EventInvoker =
+            await eventInvokerFactory.GetBotEventInvokerAsync(botConfig.GetRequiredSection("EventInvokerConfig"),
+                token);
+        context.OperationProvider =
+            await operationProviderFactory.GetOperationProviderAsync(
+                botConfig.GetRequiredSection("OperationProviderConfig"), token);
+        context.FunctionConfigurations = botConfig.GetSection("Configurations")
+            .GetChildren()
+            .ToFrozenDictionary(child => child["Name"]!);
 
-            var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
-            await functionService.StartAsync(token);
-            _scopedServices.Add((scope, functionService));
+        var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
+        await functionService.StartAsync(token);
+        _scopedServices.Add((scope, functionService));
 
-            LogBotStarted(logger, context.Uin);
-        }
+        LogBotStarted(logger, context.Uin);
     }
+
+    public Task StartAsync(CancellationToken token) =>
+        Task.WhenAll(config.GetSection("Bots").GetChildren().Select(bot => StartBot(bot, token)));
 
     public async Task StopAsync(CancellationToken token)
     {

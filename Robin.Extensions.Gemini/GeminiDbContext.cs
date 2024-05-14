@@ -3,14 +3,16 @@ using Microsoft.EntityFrameworkCore;
 namespace Robin.Extensions.Gemini;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
-internal class GeminiDbContext(long uin) : DbContext
+internal class GeminiDbContext(long uin = 0) : DbContext
 {
     public DbSet<User> Users { get; set; }
     public DbSet<Message> Messages { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite($"Data Source=gemini-{uin}.db");
+        optionsBuilder
+            .UseModel(CompiledModels.GeminiDbContextModel.Instance)
+            .UseSqlite($"Data Source=gemini-{uin}.db");
     }
 
     protected override void OnModelCreating(ModelBuilder model)
