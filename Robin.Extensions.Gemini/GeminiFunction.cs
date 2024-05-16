@@ -86,7 +86,7 @@ public partial class GeminiFunction(
                 .Where(msg => msg.User.UserId == userId)
                 .Select(msg => new GeminiContent
                 {
-                    Parts = new List<GeminiTextPart>
+                    Parts = new List<GeminiPart>
                     {
                         new()
                         {
@@ -222,16 +222,16 @@ public partial class GeminiFunction(
         }
     }
 
-    private async Task SendReplyAsync(long userId, string reply, CancellationToken token)
+    private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token)
     {
         if (await new SendPrivateMessageRequest(userId, [new TextData(reply)]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendFailed(_logger, userId);
+            return false;
         }
-        else
-        {
-            LogReplySent(_logger, userId);
-        }
+
+        LogReplySent(_logger, userId);
+        return true;
     }
 
 
@@ -274,42 +274,40 @@ public partial class GeminiFunction(
         var model = await GetModelAsync(e.UserId, token);
         var system = await GetSystem(e.UserId, token);
 
-        var contents = new List<GeminiContent>();
-        if (!string.IsNullOrEmpty(system))
-            contents.Add(new GeminiContent
-            {
-                Parts =
-                [
-                    new GeminiTextPart
-                    {
-                        Text = system
-                    }
-                ],
-                Role = GeminiRole.User
-            });
-
-        contents.AddRange([
+        List<GeminiContent> contents =
+        [
             .. await GetHistoryAsync(e.UserId, token),
             new GeminiContent
             {
                 Parts =
                 [
-                    new GeminiTextPart
+                    new GeminiPart
                     {
                         Text = text
                     }
                 ],
                 Role = GeminiRole.User
             }
-        ]);
+        ];
 
         var now = DateTimeOffset.Now.ToUnixTimeSeconds();
         var request = new GeminiRequest(_option!.ApiKey, model: model);
         if (await request.GenerateContentAsync(new GeminiRequestBody
         {
-            Contents = contents
-        }, token) is not
-        { } response)
+            Contents = contents,
+            SystemInstruction = string.IsNullOrEmpty(system)
+                    ? null
+                    : new GeminiContent
+                    {
+                        Parts =
+                        [
+                            new GeminiPart
+                            {
+                                Text = system
+                            }
+                        ]
+                    }
+        }, token) is not { } response)
         {
             LogGenerateContentFailed(_logger, e.UserId);
             await SendReplyAsync(e.UserId, _option!.ErrorReply, token);
@@ -330,11 +328,16 @@ public partial class GeminiFunction(
             return true;
         }
 
-        var content = r.Candidates[0].Content.Parts[0].Text;
-        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, token);
-        await AddHistoryAsync(e.UserId, GeminiRole.Model, content, now, token);
+        var reply = "Invalid response";
+        if (r.Candidates[0].Content.Parts[0] is { Text: not null } p)
+        {
+            reply = p.Text;
+        }
 
-        await SendReplyAsync(e.UserId, content, token);
+        if (!await SendReplyAsync(e.UserId, reply, token)) return true;
+
+        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, token);
+        await AddHistoryAsync(e.UserId, GeminiRole.Model, reply, now, token);
         return true;
     }
 
