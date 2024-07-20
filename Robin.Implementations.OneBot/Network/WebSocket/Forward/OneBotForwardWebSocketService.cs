@@ -167,7 +167,7 @@ internal partial class OneBotForwardWebSocketService(
                 }
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
             // ignore
         }
@@ -185,9 +185,9 @@ internal partial class OneBotForwardWebSocketService(
 
         while (true)
         {
+            _websocket = new ClientWebSocket();
             try
             {
-                _websocket = new ClientWebSocket();
                 if (!string.IsNullOrEmpty(options.AccessToken))
                     _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
                 await _websocket.ConnectAsync(uri, token);
@@ -199,6 +199,12 @@ internal partial class OneBotForwardWebSocketService(
                 break;
             }
             catch (WebSocketException e) when (e.InnerException is HttpRequestException)
+            {
+                LogReconnect(_logger, options.ReconnectInterval);
+                var interval = TimeSpan.FromSeconds(options.ReconnectInterval);
+                await Task.Delay(interval, token);
+            }
+            catch (ObjectDisposedException)
             {
                 LogReconnect(_logger, options.ReconnectInterval);
                 var interval = TimeSpan.FromSeconds(options.ReconnectInterval);
