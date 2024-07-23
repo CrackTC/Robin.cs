@@ -22,8 +22,8 @@ public partial class RandReplyFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private RandReplyOption? _option;
     private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<ILogger<RandReplyFunction>>();

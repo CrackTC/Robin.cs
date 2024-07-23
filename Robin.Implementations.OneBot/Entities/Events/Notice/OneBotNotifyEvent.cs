@@ -14,7 +14,7 @@ internal class OneBotNotifyEvent : OneBotNoticeEvent
     [JsonPropertyName("group_id")] public long GroupId { get; set; }
     [JsonPropertyName("user_id")] public long UserId { get; set; }
     [JsonPropertyName("target_id")] public long TargetId { get; set; }
-    [JsonPropertyName("honor_type")] public required string HonorType { get; set; }
+    [JsonPropertyName("honor_type")] public string? HonorType { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter) =>
         SubType switch
