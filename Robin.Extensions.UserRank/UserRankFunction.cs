@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,8 +46,7 @@ public partial class UserRankFunction(
         {
             await _db.Records.AddAsync(new Record
             {
-                GroupId = groupId,
-                UserId = userId
+                GroupId = groupId, UserId = userId
             }, token);
             await _db.SaveChangesAsync(token);
         }
@@ -112,8 +112,7 @@ public partial class UserRankFunction(
                 .GroupBy(record => record.UserId)
                 .Select(group => new
                 {
-                    Id = group.Key,
-                    Count = group.Count()
+                    Id = group.Key, Count = group.Count()
                 })
                 .OrderByDescending(group => group.Count)
                 .Take(n)
@@ -141,11 +140,11 @@ public partial class UserRankFunction(
         }
     }
 
-    private async Task SendUserRankAsync(long groupId, bool clear = false, CancellationToken token = default)
+    private async Task SendUserRankAsync(long groupId, int n = 0, bool clear = false, CancellationToken token = default)
     {
         var peopleCount = await GetGroupPeopleCountAsync(groupId, token);
         var messageCount = await GetGroupMessageCountAsync(groupId, token);
-        var top = await GetGroupTopNAsync(groupId, _option!.TopN, token);
+        var top = await GetGroupTopNAsync(groupId, n > 0 ? n : _option!.TopN, token);
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
         string message;
@@ -208,7 +207,7 @@ public partial class UserRankFunction(
     {
         try
         {
-            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, true, token)));
+            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, clear: true, token: token)));
         }
         catch (Exception e)
         {
@@ -216,11 +215,19 @@ public partial class UserRankFunction(
         }
     }
 
+    [GeneratedRegex(@"/rank\s*(\d+)?")]
+    private static partial Regex RankRegex();
+
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return false;
 
-        await SendUserRankAsync(e.GroupId, token: token);
+        var match = RankRegex().Match(e.Message.OfType<TextData>().First().Text);
+        if (!match.Success) return false;
+
+        if (match.Groups.Count > 1 && int.TryParse(match.Groups[1].Value, out var n))
+            await SendUserRankAsync(e.GroupId, int.Min(n, 50), token: token);
+        else await SendUserRankAsync(e.GroupId, token: token);
         return true;
     }
 
