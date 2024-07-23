@@ -53,7 +53,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
         }
     }
 
-    public OneBotSegment? FromSegmentData(SegmentData segmentData)
+    private OneBotSegment? FromSegmentData(SegmentData segmentData)
     {
         var dataType = _segmentTypeToDataType[segmentData.GetType()];
         if (Activator.CreateInstance(dataType) is IOneBotSegmentData data)
@@ -70,13 +70,8 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
         var list = new List<OneBotSegment>();
         foreach (var segmentData in chain)
         {
-            if (FromSegmentData(segmentData) is { } data)
-            {
-                list.Add(data);
-                continue;
-            }
-
-            return null;
+            if (FromSegmentData(segmentData) is not { } data) return null;
+            list.Add(data);
         }
 
         return new JsonArray(list.Select(segment => JsonSerializer.SerializeToNode(segment)).ToArray());
