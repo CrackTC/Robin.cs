@@ -39,7 +39,7 @@ public partial class DiceFunction(
         var match = DiceRegex().Match(text);
         if (!match.Success) return false;
 
-        var count = match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 1;
+        var count = int.Min(match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 1, 20);
         var sides = int.Parse(match.Groups[2].Value);
         var modifier = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
 
