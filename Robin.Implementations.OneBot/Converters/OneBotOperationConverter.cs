@@ -46,14 +46,14 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
     public Response? ParseResponse(Type requestType, OneBotResponse response, OneBotMessageConverter converter)
     {
         if (response.Status == "failed") return new Response(false, response.ReturnCode, null);
-        
+
         // common response with null data
         if (!_requestTypeToResponseType.TryGetValue(requestType, out var dataType))
         {
             if (response.Data is not null) LogIgnoringData(logger, response.Data.ToJsonString());
             return new Response(response.Status is not "failed", response.ReturnCode, null);
         }
-        
+
         // response with data
         if (response.Data.Deserialize(dataType) is IOneBotResponseData data)
             return data.ToResponse(response, converter);
@@ -69,7 +69,7 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to deserialize response data: {Data}")]
     private static partial void LogDeserializeDataFailed(ILogger logger, string data);
-    
+
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Ignoring response data: {Data}")]
     private static partial void LogIgnoringData(ILogger logger, string data);
 

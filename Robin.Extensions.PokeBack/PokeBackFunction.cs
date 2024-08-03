@@ -21,7 +21,7 @@ public partial class PokeBackFunction(
     IOperationProvider provider,
     IConfiguration configuration,
     IEnumerable<BotFunction> functions
-): BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private readonly ILogger<PokeBackFunction> _logger = service.GetRequiredService<ILogger<PokeBackFunction>>();
 
@@ -34,7 +34,7 @@ public partial class PokeBackFunction(
             LogSendFailed(_logger, e.GroupId);
             return true;
         }
-        
+
         LogPokeSent(_logger, e.GroupId);
         return true;
     }
@@ -43,7 +43,7 @@ public partial class PokeBackFunction(
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Send poke to group {GroupId} failed")]
     private static partial void LogSendFailed(ILogger logger, long groupId);
-    
+
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Poke sent to group {GroupId}")]
     private static partial void LogPokeSent(ILogger logger, long groupId);
 
