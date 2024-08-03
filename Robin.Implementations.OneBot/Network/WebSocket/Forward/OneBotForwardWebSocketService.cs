@@ -190,16 +190,20 @@ internal partial class OneBotForwardWebSocketService(
             {
                 if (!string.IsNullOrEmpty(options.AccessToken))
                     _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
+
+                LogConnecting(_logger, options.Url);
                 await _websocket.ConnectAsync(uri, token);
                 LogConnected(_logger, options.Url);
+
                 await ReceiveLoop(token);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
                 break;
             }
-            catch (WebSocketException e) when (e.InnerException is HttpRequestException)
+            catch (WebSocketException e)
             {
+                LogWebSocketException(_logger, e);
                 LogReconnect(_logger, options.ReconnectInterval);
                 var interval = TimeSpan.FromSeconds(options.ReconnectInterval);
                 await Task.Delay(interval, token);
@@ -241,6 +245,12 @@ internal partial class OneBotForwardWebSocketService(
 
     [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Connected to {Uri}")]
     private static partial void LogConnected(ILogger logger, string uri);
+
+    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Connecting to {Uri}")]
+    private static partial void LogConnecting(ILogger logger, string uri);
+
+    [LoggerMessage(EventId = 9, Level = LogLevel.Warning, Message = "Websocket throws an exception")]
+    private static partial void LogWebSocketException(ILogger logger, Exception e);
 
     #endregion
 }
