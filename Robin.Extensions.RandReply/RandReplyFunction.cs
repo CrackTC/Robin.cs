@@ -14,7 +14,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.RandReply;
 
-[BotFunctionInfo("rand_reply", "Random Reply")]
+[BotFunctionInfo("rand_reply", "随机回复")]
 [OnAtSelf, Fallback]
 // ReSharper disable once UnusedType.Global
 public partial class RandReplyFunction(

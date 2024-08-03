@@ -11,5 +11,5 @@ public class OnPokeSelfAttribute(int filterGroup = 0) : OnNoticeAttribute(filter
         return @event is GroupPokeEvent poke && poke.TargetId == selfId;
     }
 
-    public override string GetDescription() => $"poke_self, {base.GetDescription()}";
+    public override string GetDescription() => $"自身在群聊中被戳一戳";
 }

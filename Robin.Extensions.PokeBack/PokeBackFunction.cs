@@ -12,7 +12,7 @@ using Robin.Annotations.Filters.Notice;
 
 namespace Robin.Extensions.PokeBack;
 
-[BotFunctionInfo("poke_back", "Simply poke back")]
+[BotFunctionInfo("poke_back", "戳回去")]
 [OnPokeSelf]
 // ReSharper disable once UnusedType.Global
 public partial class PokeBackFunction(

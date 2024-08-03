@@ -8,5 +8,4 @@ public abstract class BaseEventFilterAttribute(int filterGroup) : TriggerAttribu
     public int FilterGroup { get; } = filterGroup;
 
     public abstract bool FilterEvent(long selfId, BotEvent @event);
-    public override string GetDescription() => $"filter_group({FilterGroup})";
 }

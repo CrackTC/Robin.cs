@@ -1,5 +1,6 @@
 namespace Robin.Abstractions.Event.Notice.Ban;
 
+[EventDescription("群禁言解除")]
 public record GroupUnsetBanEvent(
     long Time,
     long GroupId,

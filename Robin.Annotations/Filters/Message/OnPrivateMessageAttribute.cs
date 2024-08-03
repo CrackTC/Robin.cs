@@ -7,5 +7,5 @@ public class OnPrivateMessageAttribute(int filterGroup = 0) : BaseEventFilterAtt
 {
     public override bool FilterEvent(long selfId, BotEvent @event) => @event is PrivateMessageEvent;
 
-    public override string GetDescription() => $"on_private_message, {base.GetDescription()}";
+    public override string GetDescription() => $"收到私聊消息";
 }

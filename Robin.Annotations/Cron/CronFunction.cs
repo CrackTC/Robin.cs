@@ -11,7 +11,7 @@ using Robin.Abstractions.Communication;
 
 namespace Robin.Annotations.Cron;
 
-[BotFunctionInfo("cron", "trigger a function on a cron schedule")]
+[BotFunctionInfo("cron", "元功能，在指定的时间执行任务")]
 // ReSharper disable UnusedType.Global
 public partial class CronFunction(
     IServiceProvider service,

@@ -3,6 +3,7 @@ using Robin.Abstractions.Message;
 
 namespace Robin.Abstractions.Event.Message;
 
+[EventDescription("群聊消息")]
 public record GroupMessageEvent(
     long Time,
     string MessageId,

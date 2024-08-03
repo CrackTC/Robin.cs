@@ -14,7 +14,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Gray;
 
-[BotFunctionInfo("gray", "send gray avatar")]
+[BotFunctionInfo("gray", "喜多烧香精神续作（x")]
 [OnReply, OnCommand("送走")]
 public partial class GrayFunction(
     IServiceProvider service,

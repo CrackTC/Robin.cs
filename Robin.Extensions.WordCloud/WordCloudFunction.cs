@@ -17,7 +17,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.WordCloud;
 
-[BotFunctionInfo("word_cloud", "daily word cloud", typeof(GroupMessageEvent))]
+[BotFunctionInfo("word_cloud", "群词云生成", typeof(GroupMessageEvent))]
 [OnCommand("word_cloud")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global

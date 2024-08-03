@@ -7,7 +7,7 @@ using Robin.Abstractions.Event;
 
 namespace Robin.Annotations.Filters;
 
-[BotFunctionInfo("filter", "Event filter service", typeof(BotEvent))]
+[BotFunctionInfo("filter", "元功能，面向方面订阅和分派事件", typeof(BotEvent))]
 public class EventFilterFunction(
     IServiceProvider service,
     long uin,

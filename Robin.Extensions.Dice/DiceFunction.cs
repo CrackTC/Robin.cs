@@ -15,7 +15,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Dice;
 
-[BotFunctionInfo("dice", "Roll a dice.")]
+[BotFunctionInfo("dice", "投个骰子（<次数>d<面数>[+/-<修正>]）")]
 [OnCommand("dice")]
 // ReSharper disable once UnusedType.Global
 public partial class DiceFunction(

@@ -19,7 +19,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.UserRank;
 
-[BotFunctionInfo("user_rank", "daily user rank", typeof(GroupMessageEvent))]
+[BotFunctionInfo("user_rank", "用户发言排行", typeof(GroupMessageEvent))]
 [OnCommand("rank")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global

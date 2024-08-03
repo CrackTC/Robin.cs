@@ -15,7 +15,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.ReplyAction;
 
-[BotFunctionInfo("reply_action", "send actions on reply")]
+[BotFunctionInfo("reply_action", "把字句制造机")]
 [OnReply]
 // ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(

@@ -15,7 +15,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Status;
 
-[BotFunctionInfo("status", "Display status.")]
+[BotFunctionInfo("status", "当前运行状态")]
 [OnCommand("status")]
 public partial class StatusFunction(
     IServiceProvider service,
@@ -29,10 +29,10 @@ public partial class StatusFunction(
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         var status = $"Robin Status\n" +
-                     $"UIN: {_uin}\n" +
-                     $"Uptime: {DateTime.Now - Process.GetCurrentProcess().StartTime}\n" +
-                     $"GC Memory: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB\n" +
-                     $"Total Memory: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB";
+                     $"QQ号: {_uin}\n" +
+                     $"运行时间: {DateTime.Now - Process.GetCurrentProcess().StartTime}\n" +
+                     $"总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB\n" +
+                     $"当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB";
         MessageChain chain = [new TextData(status)];
         Request? request = @event switch
         {

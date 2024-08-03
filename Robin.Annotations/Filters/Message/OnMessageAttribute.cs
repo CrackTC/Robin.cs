@@ -7,5 +7,5 @@ public class OnMessageAttribute(int filterGroup = 0) : BaseEventFilterAttribute(
 {
     public override bool FilterEvent(long selfId, BotEvent @event) => @event is MessageEvent;
 
-    public override string GetDescription() => $"on_message, {base.GetDescription()}";
+    public override string GetDescription() => $"收到消息";
 }

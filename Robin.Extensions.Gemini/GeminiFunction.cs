@@ -17,7 +17,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Gemini;
 
-[BotFunctionInfo("gemini", "Gemini chat bot")]
+[BotFunctionInfo("gemini", "Gemini 聊天机器人")]
 [OnPrivateMessage, Fallback]
 // ReSharper disable once UnusedType.Global
 public partial class GeminiFunction(

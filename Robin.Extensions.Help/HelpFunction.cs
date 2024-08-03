@@ -17,7 +17,7 @@ using Robin.Annotations.Filters.Message;
 
 namespace Robin.Extensions.Help;
 
-[BotFunctionInfo("help", "Display help information")]
+[BotFunctionInfo("help", "帮助信息")]
 [OnCommand("help")]
 // ReSharper disable UnusedType.Global
 public partial class HelpFunction(
@@ -32,20 +32,32 @@ public partial class HelpFunction(
 
     private static string GetTriggerDescription(BotFunctionInfoAttribute info, IEnumerable<TriggerAttribute> triggers)
     {
-        var infoText = string.Join('\n', info.EventTypes.Select(type => type.Name));
-        var triggerText = string.Join('\n', triggers.Select(trigger => trigger.GetDescription()));
+        var infoText = string.Join(
+            " 或 ",
+            info.EventTypes.Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
+        var triggerText = string.Join("\n• ", triggers
+            .GroupBy(trigger => (trigger is BaseEventFilterAttribute attr) ? attr.FilterGroup : -1)
+            .SelectMany(group => group.Key is -1 ? group.Select(trigger => Enumerable.Repeat(trigger, 1)) : [group])
+            .Select(triggerGroup => string.Join(" 且 ", triggerGroup.Select(trigger => trigger.GetDescription()))));
+
         if (string.IsNullOrEmpty(infoText) && string.IsNullOrEmpty(triggerText)) return string.Empty;
 
-        var builder = new StringBuilder("\ntriggers:");
+        var builder = new StringBuilder("\n触发条件：\n");
         if (!string.IsNullOrEmpty(infoText))
         {
-            builder.Append('\n');
+            builder.Append("收到 ");
             builder.Append(infoText);
+
+            if (!string.IsNullOrEmpty(triggerText))
+            {
+                builder.Append("，或");
+            }
         }
+
 
         if (!string.IsNullOrEmpty(triggerText))
         {
-            builder.Append('\n');
+            builder.Append("满足以下几组条件之一：\n• ");
             builder.Append(triggerText);
         }
 
@@ -56,7 +68,7 @@ public partial class HelpFunction(
     {
         var descriptions = _functions
             .Select(f => (info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!, triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()))
-            .Select(pair => $"name: {pair.info.Name}\ndescription: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
+            .Select(pair => $"名称: {pair.info.Name}\n描述: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
 
         MessageChain chain = [new TextData(string.Join("\n\n", descriptions))];
 
