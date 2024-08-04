@@ -62,11 +62,10 @@ public partial class SauceNaoFunction(
             .Select(result =>
                 string.Join(
                     '\n',
-                    $"![{result.Name}]({result.ThumbnailURL})\n",
-                    $"**相似度**: {result.Similarity}%\n",
-                    $"**来源**: {result.DatabaseName}\n",
-                    $"**标题**: {result.Name}\n",
-                    $"**链接**: {result.SourceURL}\n"
+                    $"标题: {result.Name}",
+                    $"链接: {result.SourceURL}",
+                    $"相似度: {result.Similarity}%",
+                    $"来源: {result.DatabaseName}"
                 )
             ).ToList();
 
@@ -82,7 +81,7 @@ public partial class SauceNaoFunction(
             return true;
         }
 
-        var textData = new TextData(string.Join("---\n", results));
+        var textData = new TextData(string.Join("\n", results));
 
         if (await new SendGroupMessageRequest(e.GroupId, [textData]).SendAsync(_provider, token) is not { Success: true })
         {
