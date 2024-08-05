@@ -6,4 +6,4 @@ public abstract record GroupMemberEvent(
     long GroupId,
     long OperatorId,
     long UserId
-) : BotEvent(Time);
+) : NoticeEvent(Time);
