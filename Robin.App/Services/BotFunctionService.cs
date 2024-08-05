@@ -74,7 +74,7 @@ internal partial class BotFunctionService(
     {
         if (@event is not HeartbeatEvent)
         {
-            LogReceivedEvent(logger, JsonSerializer.Serialize(@event, @event.GetType(), _jsonSerializerOptions));
+            LogReceivedEvent(logger, @event.GetType().Name, JsonSerializer.Serialize(@event, @event.GetType(), _jsonSerializerOptions));
         }
 
         var type = @event.GetType();
@@ -134,8 +134,8 @@ internal partial class BotFunctionService(
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid option {Name}")]
     private static partial void LogInvalidOption(ILogger logger, string name);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Received event: {Event}")]
-    private static partial void LogReceivedEvent(ILogger logger, string @event);
+    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
+    private static partial void LogReceivedEvent(ILogger logger, string type, string @event);
 
     #endregion
 }
