@@ -23,8 +23,8 @@ public partial class SauceNaoFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions)
-    : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     public override Task StartAsync(CancellationToken token)
     {
