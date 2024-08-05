@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Status", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.PokeBack", "Robin.Extensions.PokeBack\Robin.Extensions.PokeBack.csproj", "{1FFE7F24-2A4A-4E1D-90B4-1F109B4BA701}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Welcome", "Robin.Extensions.Welcome\Robin.Extensions.Welcome.csproj", "{9EF2F4DE-2FC4-4CDE-942B-F46D48F5FFF2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{1FFE7F24-2A4A-4E1D-90B4-1F109B4BA701}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FFE7F24-2A4A-4E1D-90B4-1F109B4BA701}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FFE7F24-2A4A-4E1D-90B4-1F109B4BA701}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EF2F4DE-2FC4-4CDE-942B-F46D48F5FFF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EF2F4DE-2FC4-4CDE-942B-F46D48F5FFF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EF2F4DE-2FC4-4CDE-942B-F46D48F5FFF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EF2F4DE-2FC4-4CDE-942B-F46D48F5FFF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
