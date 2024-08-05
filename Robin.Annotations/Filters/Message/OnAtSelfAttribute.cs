@@ -14,5 +14,5 @@ public class OnAtSelfAttribute(int filterGroup = 0) : OnMessageAttribute(filterG
         return e!.Message.Any(segment => segment is AtData at && at.Uin == selfId);
     }
 
-    public override string GetDescription() => $"自身在群聊中被@";
+    public override string GetDescription() => "自身在群聊中被@";
 }

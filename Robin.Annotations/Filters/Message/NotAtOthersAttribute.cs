@@ -14,5 +14,5 @@ public class NotAtOthersAttribute(int filterGroup = 0) : OnMessageAttribute(filt
         return e!.Message.All(segment => segment is not AtData at || at.Uin == selfId);
     }
 
-    public override string GetDescription() => $"消息未@其他人";
+    public override string GetDescription() => "消息未@其他人";
 }

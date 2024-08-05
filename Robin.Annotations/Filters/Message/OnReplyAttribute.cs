@@ -14,5 +14,5 @@ public class OnReplyAttribute(int filterGroup = 0) : OnMessageAttribute(filterGr
         return e!.Message.Any(segment => segment is ReplyData);
     }
 
-    public override string GetDescription() => $"消息包含对其它消息的回复";
+    public override string GetDescription() => "消息包含对其它消息的回复";
 }
