@@ -4,7 +4,11 @@ using Robin.Abstractions.Message.Entity;
 
 namespace Robin.Annotations.Filters.Message;
 
-public class OnCommandAttribute(string command, char prefix = '/', int filterGroup = 0) : OnMessageAttribute(filterGroup)
+public class OnCommandAttribute(
+    string command,
+    char prefix = '/',
+    int filterGroup = 0
+) : OnMessageAttribute(filterGroup)
 {
     public override bool FilterEvent(long selfId, BotEvent @event)
     {

@@ -10,7 +10,8 @@ public abstract class BotFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : IHostedService
+    IEnumerable<BotFunction> functions
+) : IHostedService
 {
     protected readonly IServiceProvider _service = service;
     protected readonly long _uin = uin;

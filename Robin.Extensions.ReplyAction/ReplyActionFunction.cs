@@ -23,7 +23,8 @@ public partial class ReplyActionFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
 {
     private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
 

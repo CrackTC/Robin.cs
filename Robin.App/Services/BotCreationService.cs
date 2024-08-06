@@ -13,7 +13,8 @@ namespace Robin.App.Services;
 internal partial class BotCreationService(
     ILogger<BotCreationService> logger,
     IServiceProvider service,
-    IConfiguration config) : IHostedService
+    IConfiguration config
+) : IHostedService
 {
     private readonly ConcurrentBag<(IServiceScope, BotFunctionService)> _scopedServices = [];
 

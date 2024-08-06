@@ -14,7 +14,8 @@ namespace Robin.App.Services;
 internal partial class BotFunctionService(
     ILogger<BotFunctionService> logger,
     IServiceProvider service,
-    BotContext context) : IHostedService
+    BotContext context
+) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _eventToFunctions = [];
     private readonly List<BotFunction> _functions = [];

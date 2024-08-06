@@ -13,7 +13,8 @@ public class EventFilterFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions)
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, provider, configuration, functions)
 {
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _nonFallbackHandlers;
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;

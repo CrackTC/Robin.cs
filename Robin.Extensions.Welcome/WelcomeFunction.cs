@@ -54,10 +54,10 @@ public partial class WelcomeFunction(
         var parts = text.Split("{at}");
 
         if (await new SendGroupMessageRequest(e.GroupId, [
-                new TextData(parts[0]),
-                new AtData(e.UserId),
-                new TextData(parts[1])
-            ]).SendAsync(_provider, token) is not { Success: true })
+            new TextData(parts[0]),
+            new AtData(e.UserId),
+            new TextData(parts[1]),
+        ]).SendAsync(_provider, token) is not { Success: true })
         {
             LogSendMessageFailed(_logger, e.GroupId);
             return true;

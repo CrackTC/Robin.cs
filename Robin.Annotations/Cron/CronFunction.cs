@@ -18,7 +18,8 @@ public partial class CronFunction(
     long uin,
     IOperationProvider provider,
     IConfiguration configuration,
-    IEnumerable<BotFunction> functions) : BotFunction(service, uin, provider, configuration, functions)
+    IEnumerable<BotFunction> functions
+) : BotFunction(service, uin, provider, configuration, functions)
 {
     private IScheduler? _scheduler;
     private readonly ILogger<CronFunction> _logger = service.GetRequiredService<ILogger<CronFunction>>();

@@ -10,6 +10,7 @@ public class OnCronAttribute(string cron) : TriggerAttribute
         Use24HourTimeFormat = true,
         Locale = "zh-Hans"
     };
+
     public override string GetDescription()
         => $"{CronExpressionDescriptor.ExpressionDescriptor.GetDescription(Cron, _options)} 自动触发";
 }
