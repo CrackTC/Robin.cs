@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
-using Robin.Implementations.OneBot.Converters;
+using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Network.Http.Server;
 

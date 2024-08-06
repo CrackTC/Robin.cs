@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Robin.Abstractions.Event.Meta;
+using Robin.App.Context;
 
 namespace Robin.App.Services;
 

@@ -1,6 +1,6 @@
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Message.Entity;
 
 namespace Robin.Annotations.Filters.Message;
 

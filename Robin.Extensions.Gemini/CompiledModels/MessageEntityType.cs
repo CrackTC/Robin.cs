@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.Json;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Robin.Extensions.Gemini.Entities;
+using Robin.Extensions.Gemini.Entity;
 
 #pragma warning disable 219, 612, 618
 #nullable disable

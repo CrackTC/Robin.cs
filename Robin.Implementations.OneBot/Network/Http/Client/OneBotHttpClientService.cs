@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Operation;
-using Robin.Implementations.OneBot.Converters;
-using Robin.Implementations.OneBot.Entities.Operations;
+using Robin.Implementations.OneBot.Converter;
+using Robin.Implementations.OneBot.Entity.Operations;
 
 namespace Robin.Implementations.OneBot.Network.Http.Client;
 

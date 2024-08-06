@@ -1,4 +1,4 @@
-using Robin.Abstractions.Entities;
+using Robin.Abstractions.Entity;
 
 namespace Robin.Abstractions.Event.Notice;
 

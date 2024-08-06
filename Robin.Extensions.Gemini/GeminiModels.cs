@@ -1,4 +1,4 @@
-using Robin.Extensions.Gemini.Entities;
+using Robin.Extensions.Gemini.Entity;
 
 namespace Robin.Extensions.Gemini;
 

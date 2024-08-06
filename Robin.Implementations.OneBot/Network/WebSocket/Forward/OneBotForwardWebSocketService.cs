@@ -9,8 +9,8 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Meta;
 using Robin.Abstractions.Operation;
-using Robin.Implementations.OneBot.Converters;
-using Robin.Implementations.OneBot.Entities.Operations;
+using Robin.Implementations.OneBot.Converter;
+using Robin.Implementations.OneBot.Entity.Operations;
 
 namespace Robin.Implementations.OneBot.Network.WebSocket.Forward;
 

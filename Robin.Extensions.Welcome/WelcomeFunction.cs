@@ -5,7 +5,7 @@ using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Notice.Member.Increase;
-using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Annotations.Filters;

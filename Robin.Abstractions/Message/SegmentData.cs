@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Robin.Abstractions.Message.Entities;
+using Robin.Abstractions.Message.Entity;
 
 namespace Robin.Abstractions.Message;
 
