@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -14,21 +12,15 @@ using System.Text.RegularExpressions;
 using Robin.Abstractions.Operation;
 using Robin.Annotations.Filters;
 using Robin.Annotations.Filters.Message;
+using Robin.Abstractions.Context;
 
 namespace Robin.Extensions.Gemini;
 
 [BotFunctionInfo("gemini", "Gemini 聊天机器人")]
 [OnPrivateMessage, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class GeminiFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class GeminiFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<GeminiFunction> _logger = service.GetRequiredService<ILogger<GeminiFunction>>();
     private GeminiOption? _option;
 
     private Regex? _modelRegex;
@@ -36,7 +28,7 @@ public partial class GeminiFunction(
     private Regex? _clearRegex;
     private Regex? _rollbackRegex;
 
-    private readonly GeminiDbContext _db = new(uin);
+    private readonly GeminiDbContext _db = new(context.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTablesAsync(CancellationToken token) => _db.Database.EnsureCreatedAsync(token);
@@ -224,13 +216,15 @@ public partial class GeminiFunction(
 
     private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token)
     {
-        if (await new SendPrivateMessageRequest(userId, [new TextData(reply)]).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendPrivateMessageRequest(userId, [
+                new TextData(reply)
+            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, userId);
+            LogSendFailed(_context.Logger, userId);
             return false;
         }
 
-        LogReplySent(_logger, userId);
+        LogReplySent(_context.Logger, userId);
         return true;
     }
 
@@ -309,21 +303,21 @@ public partial class GeminiFunction(
                     }
         }, token) is not { } response)
         {
-            LogGenerateContentFailed(_logger, e.UserId);
+            LogGenerateContentFailed(_context.Logger, e.UserId);
             await SendReplyAsync(e.UserId, _option!.ErrorReply, token);
             return true;
         }
 
         if (response is GeminiErrorResponse errorResponse)
         {
-            LogGenerateContentFailed(_logger, e.UserId);
+            LogGenerateContentFailed(_context.Logger, e.UserId);
             await SendReplyAsync(e.UserId, JsonSerializer.Serialize(errorResponse), token);
             return true;
         }
 
         if (response is not GeminiGenerateDataResponse { Candidates.Count: > 0 } r)
         {
-            LogGenerateContentFailed(_logger, e.UserId);
+            LogGenerateContentFailed(_context.Logger, e.UserId);
             await SendReplyAsync(e.UserId, _option!.FilteredReply, token);
             return true;
         }
@@ -343,9 +337,9 @@ public partial class GeminiFunction(
 
     public override async Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<GeminiOption>() is not { } option)
+        if (_context.Configuration.Get<GeminiOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return;
         }
 
@@ -360,7 +354,7 @@ public partial class GeminiFunction(
         }
         catch (ArgumentException e)
         {
-            LogRegexCompileFailed(_logger, e);
+            LogRegexCompileFailed(_context.Logger, e);
             return;
         }
 

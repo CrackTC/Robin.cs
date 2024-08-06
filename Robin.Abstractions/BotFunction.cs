@@ -1,23 +1,12 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 
 namespace Robin.Abstractions;
 
-public abstract class BotFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : IHostedService
+public abstract class BotFunction(FunctionContext context) : IHostedService
 {
-    protected readonly IServiceProvider _service = service;
-    protected readonly long _uin = uin;
-    protected readonly IOperationProvider _provider = provider;
-    protected readonly IConfiguration _configuration = configuration;
-    protected readonly IEnumerable<BotFunction> _functions = functions;
+    protected readonly FunctionContext _context = context;
 
     public virtual Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => Task.CompletedTask;
 

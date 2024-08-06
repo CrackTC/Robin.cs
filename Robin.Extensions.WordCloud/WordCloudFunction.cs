@@ -2,10 +2,9 @@ using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -21,19 +20,12 @@ namespace Robin.Extensions.WordCloud;
 [OnCommand("word_cloud")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global
-public partial class WordCloudFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler, ICronHandler
+public partial class WordCloudFunction(FunctionContext context) : BotFunction(context), IFilterHandler, ICronHandler
 {
     private WordCloudOption? _option;
-    private readonly ILogger<WordCloudFunction> _logger = service.GetRequiredService<ILogger<WordCloudFunction>>();
     private static readonly HttpClient _client = new();
 
-    private readonly WordCloudDbContext _db = new(uin);
+    private readonly WordCloudDbContext _db = new(context.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token)
@@ -110,7 +102,7 @@ public partial class WordCloudFunction(
 
         if (!response.IsSuccessStatusCode)
         {
-            LogApiRequestFailed(_logger, groupId);
+            LogApiRequestFailed(_context.Logger, groupId);
             return;
         }
 
@@ -119,19 +111,21 @@ public partial class WordCloudFunction(
 
         if (url is null)
         {
-            LogApiRequestFailed(_logger, groupId);
+            LogApiRequestFailed(_context.Logger, groupId);
             return;
         }
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        if (await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(groupId, [
+                new ImageData(url)
+            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, groupId);
+            LogSendFailed(_context.Logger, groupId);
             return;
         }
 
-        LogWordCloudSent(_logger, groupId);
+        LogWordCloudSent(_context.Logger, groupId);
     }
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
@@ -143,9 +137,9 @@ public partial class WordCloudFunction(
 
     public override async Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<WordCloudOption>() is not { } option)
+        if (_context.Configuration.Get<WordCloudOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return;
         }
 
@@ -176,7 +170,7 @@ public partial class WordCloudFunction(
         }
         catch (Exception e)
         {
-            LogExceptionOccurred(_logger, e);
+            LogExceptionOccurred(_context.Logger, e);
         }
     }
 

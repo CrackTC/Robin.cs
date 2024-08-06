@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -18,19 +17,15 @@ namespace Robin.Extensions.SauceNao;
 // ReSharper disable once UnusedType.Global
 [BotFunctionInfo("sauce_nao", "Saucenao 插画反向搜索")]
 [OnReply, OnCommand("搜图")]
-public partial class SauceNaoFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class SauceNaoFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
+    private SauceNETClient? _client;
+
     public override Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<SauceNaoOption>() is not { } option)
+        if (_context.Configuration.Get<SauceNaoOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return Task.CompletedTask;
         }
 
@@ -45,10 +40,10 @@ public partial class SauceNaoFunction(
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, token)
             is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
-            LogGetMessageFailed(_logger, reply.Id);
+            LogGetMessageFailed(_context.Logger, reply.Id);
             return true;
         }
 
@@ -71,30 +66,29 @@ public partial class SauceNaoFunction(
 
         if (results.Count == 0)
         {
-            if (await new SendGroupMessageRequest(e.GroupId, [new TextData("找不到喵>_<")]).SendAsync(_provider, token) is not { Success: true })
+            if (await new SendGroupMessageRequest(e.GroupId, [
+                    new TextData("找不到喵>_<")
+                ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
             {
-                LogSendMessageFailed(_logger, e.GroupId);
+                LogSendMessageFailed(_context.Logger, e.GroupId);
                 return true;
             }
 
-            LogMessageSent(_logger, e.GroupId);
+            LogMessageSent(_context.Logger, e.GroupId);
             return true;
         }
 
-        var textData = new TextData(string.Join("\n", results));
-
-        if (await new SendGroupMessageRequest(e.GroupId, [textData]).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, [
+                new TextData(string.Join("\n", results))
+            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendMessageFailed(_logger, e.GroupId);
+            LogSendMessageFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogMessageSent(_logger, e.GroupId);
+        LogMessageSent(_context.Logger, e.GroupId);
         return true;
     }
-
-    private readonly ILogger<SauceNaoFunction> _logger = service.GetRequiredService<ILogger<SauceNaoFunction>>();
-    private SauceNETClient? _client;
 
     #region Log
 

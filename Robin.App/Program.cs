@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.App.Context;
 using Robin.App.Services;
@@ -19,7 +20,8 @@ ConfigureBackend();
 
 builder.Services.AddHostedService<BotCreationService>()
     .AddScoped<BotFunctionService>()
-    .AddScoped<BotContext>();
+    .AddScoped<BotContext>()
+    .AddScoped<List<BotFunction>>();
 
 await builder.Build().RunAsync();
 return;

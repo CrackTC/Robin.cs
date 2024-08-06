@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
@@ -17,16 +16,9 @@ namespace Robin.Extensions.RandReply;
 [BotFunctionInfo("rand_reply", "随机回复")]
 [OnAtSelf, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class RandReplyFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class RandReplyFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
     private RandReplyOption? _option;
-    private readonly ILogger<RandReplyFunction> _logger = service.GetRequiredService<ILogger<RandReplyFunction>>();
 
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
@@ -45,21 +37,22 @@ public partial class RandReplyFunction(
                     $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], token))}")
         ];
 
-        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain)
+            .SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, e.GroupId);
+            LogSendFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogReplySent(_logger, e.GroupId);
+        LogReplySent(_context.Logger, e.GroupId);
         return true;
     }
 
     public override Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<RandReplyOption>() is not { } option)
+        if (_context.Configuration.Get<RandReplyOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return Task.CompletedTask;
         }
 

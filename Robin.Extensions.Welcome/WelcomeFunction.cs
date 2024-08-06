@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Notice.Member.Increase;
 using Robin.Abstractions.Message.Entity;
@@ -15,23 +14,15 @@ namespace Robin.Extensions.Welcome;
 
 [BotFunctionInfo("welcome", "入群欢迎")]
 [OnMemberIncrease]
-public partial class WelcomeFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class WelcomeFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<WelcomeFunction> _logger = service.GetRequiredService<ILogger<WelcomeFunction>>();
-
     private WelcomeOption? _option;
 
     public override Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<WelcomeOption>() is not { } option)
+        if (_context.Configuration.Get<WelcomeOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return Task.CompletedTask;
         }
 
@@ -39,7 +30,7 @@ public partial class WelcomeFunction(
 
         foreach (var (groupId, text) in option.WelcomeTexts)
         {
-            LogWelcomeText(_logger, groupId, text);
+            LogWelcomeText(_context.Logger, groupId, text);
         }
 
         return Task.CompletedTask;
@@ -57,13 +48,13 @@ public partial class WelcomeFunction(
             new TextData(parts[0]),
             new AtData(e.UserId),
             new TextData(parts[1]),
-        ]).SendAsync(_provider, token) is not { Success: true })
+        ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendMessageFailed(_logger, e.GroupId);
+            LogSendMessageFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogMessageSent(_logger, e.GroupId);
+        LogMessageSent(_context.Logger, e.GroupId);
         return true;
     }
 

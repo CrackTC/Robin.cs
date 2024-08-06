@@ -1,31 +1,22 @@
 using System.Collections.Frozen;
 using System.Collections.Specialized;
 using System.Reflection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using Quartz.Impl;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 
 namespace Robin.Annotations.Cron;
 
 [BotFunctionInfo("cron", "元功能，在指定的时间执行任务")]
 // ReSharper disable UnusedType.Global
-public partial class CronFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions)
+public partial class CronFunction(FunctionContext context) : BotFunction(context)
 {
     private IScheduler? _scheduler;
-    private readonly ILogger<CronFunction> _logger = service.GetRequiredService<ILogger<CronFunction>>();
     public override async Task StartAsync(CancellationToken token)
     {
-        var handlers = _functions
+        var handlers = _context.Functions
             .OfType<ICronHandler>()
             .Select(handler => (
                 Handler: handler,
@@ -37,27 +28,29 @@ public partial class CronFunction(
 
         _scheduler = await new StdSchedulerFactory(new NameValueCollection
         {
-            [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_uin}"
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_context.Uin}"
         }).GetScheduler(token);
+
         _scheduler.JobFactory = new CronJobFactory(
-            handlers.ToFrozenDictionary(tuple => $"{tuple.Name}-{_uin}", tuple => tuple.Handler),
-            token);
+            handlers.ToFrozenDictionary(tuple => $"{tuple.Name}-{_context.Uin}", tuple => tuple.Handler),
+            token
+        );
 
         foreach (var (_, name, defaultCron) in handlers)
         {
             var job = JobBuilder.Create<CronJob>()
-                .WithIdentity($"{name}-{_uin}", "CronFunction")
+                .WithIdentity($"{name}-{_context.Uin}", "CronFunction")
                 .Build();
 
-            var cron = _configuration[name] ?? defaultCron;
+            var cron = _context.Configuration[name] ?? defaultCron;
 
             var trigger = TriggerBuilder.Create()
-                .WithIdentity($"{name}-{_uin}", "CronFunction")
+                .WithIdentity($"{name}-{_context.Uin}", "CronFunction")
                 .WithCronSchedule(cron)
                 .Build();
 
             await _scheduler.ScheduleJob(job, trigger, token);
-            LogCronJobScheduled(_logger, name);
+            LogCronJobScheduled(_context.Logger, name);
         }
 
         await _scheduler.Start(token);

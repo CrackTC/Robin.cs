@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
@@ -18,16 +16,8 @@ namespace Robin.Extensions.ReplyAction;
 [BotFunctionInfo("reply_action", "把字句制造机")]
 [OnReply]
 // ReSharper disable once UnusedType.Global
-public partial class ReplyActionFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<ReplyActionFunction> _logger = service.GetRequiredService<ILogger<ReplyActionFunction>>();
-
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupMessageEvent e) return false;
@@ -44,19 +34,19 @@ public partial class ReplyActionFunction(
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, token)
             is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
-            LogGetMessageFailed(_logger, reply.Id);
+            LogGetMessageFailed(_context.Logger, reply.Id);
             return true;
         }
 
         var senderId = originalMessage.Message.Sender.UserId;
 
-        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true).SendAsync(_provider, token)
+        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true).SendAsync(_context.OperationProvider, token)
             is not GetGroupMemberInfoResponse { Success: true, Info: not null } info)
         {
-            LogGetGroupMemberInfoFailed(_logger, e.GroupId, senderId);
+            LogGetGroupMemberInfoFailed(_context.Logger, e.GroupId, senderId);
             return true;
         }
 
@@ -68,13 +58,14 @@ public partial class ReplyActionFunction(
             new TextData($"{sourceName} {parts[0]} {targetName}{(parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)}")
         ];
 
-        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain)
+            .SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, e.GroupId);
+            LogSendFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogActionSent(_logger, e.GroupId);
+        LogActionSent(_context.Logger, e.GroupId);
         return true;
     }
 

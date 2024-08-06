@@ -1,20 +1,13 @@
 using System.Collections.Frozen;
 using System.Reflection;
-using Microsoft.Extensions.Configuration;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 
 namespace Robin.Annotations.Filters;
 
 [BotFunctionInfo("filter", "元功能，面向方面订阅和分派事件", typeof(BotEvent))]
-public class EventFilterFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions)
+public class EventFilterFunction(FunctionContext context) : BotFunction(context)
 {
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _nonFallbackHandlers;
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;
@@ -45,7 +38,7 @@ public class EventFilterFunction(
     }
     public override Task StartAsync(CancellationToken token)
     {
-        var attributes = _functions
+        var attributes = _context.Functions
             .OfType<IFilterHandler>()
             .Select(handler => (Handler: handler, Attributes: handler.GetType().GetCustomAttributes<BaseEventFilterAttribute>()))
             .Where(pair => pair.Attributes.Any())

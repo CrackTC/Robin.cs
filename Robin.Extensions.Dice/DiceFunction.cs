@@ -1,9 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
@@ -18,13 +16,7 @@ namespace Robin.Extensions.Dice;
 [BotFunctionInfo("dice", "投个骰子（<次数>d<面数>[+/-<修正>]）")]
 [OnCommand("dice")]
 // ReSharper disable once UnusedType.Global
-public partial class DiceFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
@@ -52,20 +44,18 @@ public partial class DiceFunction(
             new TextData($"Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}")
         };
 
-        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, e.GroupId);
+            LogSendFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogDiceSent(_logger, e.GroupId);
+        LogDiceSent(_context.Logger, e.GroupId);
         return true;
     }
 
     [GeneratedRegex(@"/dice (\d+)?d(\d+)([+-]\d+)?")]
     private static partial Regex DiceRegex();
-
-    private readonly ILogger<DiceFunction> _logger = service.GetRequiredService<ILogger<DiceFunction>>();
 
     #region Log
 

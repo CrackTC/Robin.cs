@@ -13,12 +13,11 @@ namespace Robin.App.Services;
 // scoped, every bot has its own function, **DO NOT register it as IHostedService**
 internal partial class BotFunctionService(
     ILogger<BotFunctionService> logger,
-    IServiceProvider service,
-    BotContext context
+    BotContext context,
+    List<BotFunction> functions
 ) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _eventToFunctions = [];
-    private readonly List<BotFunction> _functions = [];
 
     private async Task RegisterFunctions(CancellationToken token)
     {
@@ -32,27 +31,24 @@ internal partial class BotFunctionService(
             var info = type.GetCustomAttribute<BotFunctionInfoAttribute>()!;
             try
             {
-                context.FunctionConfigurations!.TryGetValue(info.Name, out var config);
-                if (Activator.CreateInstance(
-                        type,
-                        service,
-                        context.Uin,
-                        context.OperationProvider,
-                        config,
-                        _functions
-                    ) is not BotFunction function)
+                var instance = Activator.CreateInstance(
+                    type,
+                    context.CreateFunctionContext(info.Name, type)
+                );
+
+                if (instance is not BotFunction function)
                 {
                     LogFunctionNotRegistered(logger, info.Name);
                     continue;
                 }
 
-                _functions.Add(function);
+                functions.Add(function);
 
                 foreach (var eventType in info.EventTypes)
                 {
                     if (!eventType.IsSubclassOf(typeof(BotEvent)) && eventType != typeof(BotEvent)) continue;
-                    if (_eventToFunctions.TryGetValue(eventType, out var functions))
-                        functions.Add(function);
+                    if (_eventToFunctions.TryGetValue(eventType, out var eventFunctions))
+                        eventFunctions.Add(function);
                     else
                         _eventToFunctions[eventType] = [function];
                 }
@@ -63,7 +59,7 @@ internal partial class BotFunctionService(
             }
         }
 
-        await Task.WhenAll(_functions.Select(function => function.StartAsync(token)));
+        await Task.WhenAll(functions.Select(function => function.StartAsync(token)));
     }
 
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
@@ -82,8 +78,8 @@ internal partial class BotFunctionService(
         var type = @event.GetType();
         while (type != typeof(object))
         {
-            if (_eventToFunctions.TryGetValue(type, out var functions))
-                foreach (var function in functions)
+            if (_eventToFunctions.TryGetValue(type, out var eventFunctions))
+                foreach (var function in eventFunctions)
                 {
                     try
                     {
@@ -120,9 +116,7 @@ internal partial class BotFunctionService(
     public async Task StopAsync(CancellationToken token)
     {
         context.EventInvoker!.OnEventAsync -= OnBotEventAsync;
-        foreach (var (_, functions) in _eventToFunctions)
-            foreach (var function in functions)
-                await function.StopAsync(token);
+        await Task.WhenAll(functions.Select(function => function.StopAsync(token)));
     }
 
     #region Log
@@ -130,7 +124,7 @@ internal partial class BotFunctionService(
     [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Function {Name} is not registered")]
     private static partial void LogFunctionNotRegistered(ILogger logger, string name);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
     private static partial void LogFunctionError(ILogger logger, string name, Exception exception);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid option {Name}")]

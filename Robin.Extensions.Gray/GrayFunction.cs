@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -16,15 +15,8 @@ namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "喜多烧香精神续作（x")]
 [OnReply, OnCommand("送走")]
-public partial class GrayFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class GrayFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<GrayFunction> _logger = service.GetRequiredService<ILogger<GrayFunction>>();
     private GrayOption? _option;
     private static readonly HttpClient _client = new();
 
@@ -32,9 +24,9 @@ public partial class GrayFunction(
 
     public override Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<GrayOption>() is not { } option)
+        if (_context.Configuration.Get<GrayOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return Task.CompletedTask;
         }
 
@@ -57,9 +49,10 @@ public partial class GrayFunction(
 
         var reply = segments.OfType<ReplyData>().First();
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_provider, token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
+        if (await new GetMessageRequest(reply.Id)
+            .SendAsync(_context.OperationProvider, token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
-            LogGetMessageFailed(_logger, reply.Id);
+            LogGetMessageFailed(_context.Logger, reply.Id);
             return true;
         }
 
@@ -68,19 +61,21 @@ public partial class GrayFunction(
         try
         {
             var url = $"{_option!.ApiAddress}/?id={senderId}";
-            if (await new SendGroupMessageRequest(e.GroupId, [new ImageData(url)]).SendAsync(_provider, token) is not { Success: true })
+            if (await new SendGroupMessageRequest(e.GroupId, [
+                    new ImageData(url)
+                ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
             {
-                LogSendFailed(_logger, e.GroupId);
+                LogSendFailed(_context.Logger, e.GroupId);
                 return true;
             }
         }
         catch (Exception ex)
         {
-            LogGetImageFailed(_logger, senderId.ToString(), ex);
+            LogGetImageFailed(_context.Logger, senderId.ToString(), ex);
             return true;
         }
 
-        LogImageSent(_logger, e.GroupId);
+        LogImageSent(_context.Logger, e.GroupId);
         return true;
     }
 

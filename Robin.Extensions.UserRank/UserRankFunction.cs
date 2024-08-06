@@ -3,10 +3,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -23,18 +22,11 @@ namespace Robin.Extensions.UserRank;
 [OnCommand("rank")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global
-public partial class UserRankFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler, ICronHandler
+public partial class UserRankFunction(FunctionContext context) : BotFunction(context), IFilterHandler, ICronHandler
 {
     private UserRankOption? _option;
-    private readonly ILogger<UserRankFunction> _logger = service.GetRequiredService<ILogger<UserRankFunction>>();
 
-    private readonly UserRankDbContext _db = new(uin);
+    private readonly UserRankDbContext _db = new(context.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token) => _db.Database.EnsureCreatedAsync(token);
@@ -154,10 +146,10 @@ public partial class UserRankFunction(
         if (peopleCount == 0 || messageCount == 0) message = "本群暂无发言记录";
         else
         {
-            if (await new GetGroupMemberListRequest(groupId, true).SendAsync(_provider, token)
+            if (await new GetGroupMemberListRequest(groupId, true).SendAsync(_context.OperationProvider, token)
                 is not GetGroupMemberListResponse { Success: true, Members: not null } memberList)
             {
-                LogGetGroupMemberListFailed(_logger, groupId);
+                LogGetGroupMemberListFailed(_context.Logger, groupId);
                 return;
             }
 
@@ -171,13 +163,15 @@ public partial class UserRankFunction(
             message = stringBuilder.ToString();
         }
 
-        if (await new SendGroupMessageRequest(groupId, [new TextData(message)]).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(groupId, [
+                new TextData(message)
+            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, groupId);
+            LogSendFailed(_context.Logger, groupId);
             return;
         }
 
-        LogUserRankSent(_logger, groupId);
+        LogUserRankSent(_context.Logger, groupId);
     }
 
     public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
@@ -188,9 +182,9 @@ public partial class UserRankFunction(
 
     public override async Task StartAsync(CancellationToken token)
     {
-        if (_configuration.Get<UserRankOption>() is not { } option)
+        if (_context.Configuration.Get<UserRankOption>() is not { } option)
         {
-            LogOptionBindingFailed(_logger);
+            LogOptionBindingFailed(_context.Logger);
             return;
         }
 
@@ -213,7 +207,7 @@ public partial class UserRankFunction(
         }
         catch (Exception e)
         {
-            LogExceptionOccurred(_logger, e);
+            LogExceptionOccurred(_context.Logger, e);
         }
     }
 

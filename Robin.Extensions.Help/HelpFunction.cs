@@ -1,10 +1,8 @@
 ﻿using System.Reflection;
 using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
@@ -20,16 +18,8 @@ namespace Robin.Extensions.Help;
 [BotFunctionInfo("help", "帮助信息")]
 [OnCommand("help")]
 // ReSharper disable UnusedType.Global
-public partial class HelpFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<HelpFunction> _logger = service.GetRequiredService<ILogger<HelpFunction>>();
-
     private static string GetTriggerDescription(BotFunctionInfoAttribute info, IEnumerable<TriggerAttribute> triggers)
     {
         var infoText = string.Join(
@@ -66,7 +56,7 @@ public partial class HelpFunction(
 
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
-        var descriptions = _functions
+        var descriptions = _context.Functions
             .Select(f => (info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!, triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()))
             .Select(pair => $"名称: {pair.info.Name}\n描述: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
 
@@ -81,13 +71,13 @@ public partial class HelpFunction(
 
         var id = @event switch { GroupMessageEvent e => e.GroupId, PrivateMessageEvent e => e.UserId, _ => default };
 
-        if (await request.SendAsync(_provider, token) is not { Success: true })
+        if (await request.SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, id);
+            LogSendFailed(_context.Logger, id);
             return true;
         }
 
-        LogHelpSent(_logger, id);
+        LogHelpSent(_context.Logger, id);
         return true;
     }
 

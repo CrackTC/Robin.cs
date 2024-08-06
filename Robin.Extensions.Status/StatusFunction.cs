@@ -1,9 +1,7 @@
 ﻿using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
@@ -17,19 +15,12 @@ namespace Robin.Extensions.Status;
 
 [BotFunctionInfo("status", "当前运行状态")]
 [OnCommand("status")]
-public partial class StatusFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class StatusFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<StatusFunction> _logger = service.GetRequiredService<ILogger<StatusFunction>>();
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         var status = $"Robin Status\n" +
-                     $"QQ号: {_uin}\n" +
+                     $"QQ号: {_context.Uin}\n" +
                      $"运行时间: {DateTime.Now - Process.GetCurrentProcess().StartTime}\n" +
                      $"总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB\n" +
                      $"当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB";
@@ -48,13 +39,13 @@ public partial class StatusFunction(
             _ => default
         };
 
-        if (await request.SendAsync(_provider, token) is not { Success: true })
+        if (await request.SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, id);
+            LogSendFailed(_context.Logger, id);
             return true;
         }
 
-        LogStatusSent(_logger, id);
+        LogStatusSent(_context.Logger, id);
         return true;
     }
 

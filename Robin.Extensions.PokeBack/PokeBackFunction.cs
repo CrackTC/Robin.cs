@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Notice;
 using Robin.Abstractions.Operation;
@@ -15,27 +13,20 @@ namespace Robin.Extensions.PokeBack;
 [BotFunctionInfo("poke_back", "戳回去")]
 [OnPokeSelf]
 // ReSharper disable once UnusedType.Global
-public partial class PokeBackFunction(
-    IServiceProvider service,
-    long uin,
-    IOperationProvider provider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
-) : BotFunction(service, uin, provider, configuration, functions), IFilterHandler
+public partial class PokeBackFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    private readonly ILogger<PokeBackFunction> _logger = service.GetRequiredService<ILogger<PokeBackFunction>>();
-
     public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
     {
         if (@event is not GroupPokeEvent e) return false;
 
-        if (await new SendGroupPokeRequest(e.GroupId, e.SenderId).SendAsync(_provider, token) is not { Success: true })
+        if (await new SendGroupPokeRequest(e.GroupId, e.SenderId)
+            .SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
-            LogSendFailed(_logger, e.GroupId);
+            LogSendFailed(_context.Logger, e.GroupId);
             return true;
         }
 
-        LogPokeSent(_logger, e.GroupId);
+        LogPokeSent(_context.Logger, e.GroupId);
         return true;
     }
 
