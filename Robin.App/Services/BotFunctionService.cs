@@ -23,8 +23,7 @@ internal partial class BotFunctionService(
     {
         var types = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(assembly => assembly.GetExportedTypes())
-            .Where(type => type.IsSubclassOf(typeof(BotFunction))
-                           && type.GetCustomAttribute<BotFunctionInfoAttribute>() is not null);
+            .Where(type => type.IsSubclassOf(typeof(BotFunction)));
 
         foreach (var type in types)
         {
@@ -46,7 +45,7 @@ internal partial class BotFunctionService(
 
                 foreach (var eventType in info.EventTypes)
                 {
-                    if (!eventType.IsSubclassOf(typeof(BotEvent)) && eventType != typeof(BotEvent)) continue;
+                    if (!eventType.IsAssignableTo(typeof(BotEvent))) continue;
                     if (_eventToFunctions.TryGetValue(eventType, out var eventFunctions))
                         eventFunctions.Add(function);
                     else
