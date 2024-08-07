@@ -54,7 +54,7 @@ internal partial class BotFunctionService(
             }
             catch (Exception e)
             {
-                LogFunctionError(logger, info.Name, e);
+                LogCreateFunctionFailed(logger, info.Name, e);
             }
         }
 
@@ -67,31 +67,35 @@ internal partial class BotFunctionService(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
     };
 
-    private async Task OnBotEventAsync(BotEvent @event, CancellationToken token)
+    private async Task InvokeFunction(BotFunction function, BotEvent @event, CancellationToken token)
+    {
+        try
+        {
+            await function.OnEventAsync(context.Uin, @event, token);
+        }
+        catch (Exception e)
+        {
+            var name = function.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!.Name;
+            LogInvokeFunctionFailed(logger, name, e);
+        }
+    }
+
+    private Task OnBotEventAsync(BotEvent @event, CancellationToken token)
     {
         if (@event is not HeartbeatEvent)
         {
             LogReceivedEvent(logger, @event.GetType().Name, JsonSerializer.Serialize(@event, @event.GetType(), _jsonSerializerOptions));
         }
 
-        var type = @event.GetType();
-        while (type != typeof(object))
-        {
-            if (_eventToFunctions.TryGetValue(type, out var eventFunctions))
-                foreach (var function in eventFunctions)
-                {
-                    try
-                    {
-                        await function.OnEventAsync(context.Uin, @event, token);
-                    }
-                    catch (Exception e)
-                    {
-                        LogFunctionError(logger, function.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!.Name, e);
-                    }
-                }
+        var tasks = new List<Task>();
 
-            type = type.BaseType!;
+        for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
+        {
+            if (!_eventToFunctions.TryGetValue(type, out var eventFunctions)) continue;
+            tasks.AddRange(eventFunctions.Select(function => InvokeFunction(function, @event, token)));
         }
+
+        return Task.WhenAll(tasks);
     }
 
     public async Task StartAsync(CancellationToken token)
@@ -124,13 +128,16 @@ internal partial class BotFunctionService(
     private static partial void LogFunctionNotRegistered(ILogger logger, string name);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
-    private static partial void LogFunctionError(ILogger logger, string name, Exception exception);
+    private static partial void LogCreateFunctionFailed(ILogger logger, string name, Exception exception);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid option {Name}")]
     private static partial void LogInvalidOption(ILogger logger, string name);
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
     private static partial void LogReceivedEvent(ILogger logger, string type, string @event);
+
+    [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
+    private static partial void LogInvokeFunctionFailed(ILogger logger, string name, Exception exception);
 
     #endregion
 }
