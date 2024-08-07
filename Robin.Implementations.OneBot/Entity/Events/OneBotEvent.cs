@@ -29,7 +29,6 @@ internal abstract class OneBotEvent
 
         foreach (var (type, eventTypeAttribute, postTypeAttribute) in types)
         {
-            Console.WriteLine($"OneBot: ({postTypeAttribute!.Type}, {eventTypeAttribute!.Type}) -> {type}");
             _eventTypeToType[(postTypeAttribute.Type, eventTypeAttribute.Type)] = type;
         }
     }
