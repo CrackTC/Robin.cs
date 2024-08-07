@@ -128,7 +128,7 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         LogWordCloudSent(_context.Logger, groupId);
     }
 
-    public override async Task OnEventAsync(EventContext eventContext)
+    public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return;
 
@@ -155,7 +155,7 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         await _db.DisposeAsync();
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
         await SendWordCloudAsync(e.GroupId, token: eventContext.Token);

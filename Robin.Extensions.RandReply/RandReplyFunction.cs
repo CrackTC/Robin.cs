@@ -20,7 +20,7 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
 {
     private RandReplyOption? _option;
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
 

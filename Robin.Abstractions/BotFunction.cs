@@ -8,7 +8,7 @@ public abstract class BotFunction(FunctionContext context) : IHostedService
 {
     protected readonly FunctionContext _context = context;
 
-    public virtual Task OnEventAsync(EventContext eventContext) => Task.CompletedTask;
+    public virtual Task OnEventAsync(EventContext<BotEvent> eventContext) => Task.CompletedTask;
 
     public virtual Task StartAsync(CancellationToken token) => Task.CompletedTask;
 

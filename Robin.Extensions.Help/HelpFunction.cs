@@ -53,7 +53,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         return builder.ToString();
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         var descriptions = _context.Functions
             .Select(f => (

@@ -174,7 +174,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
         LogUserRankSent(_context.Logger, groupId);
     }
 
-    public override async Task OnEventAsync(EventContext eventContext)
+    public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return;
         await InsertDataAsync(e.GroupId, e.UserId, eventContext.Token);
@@ -214,7 +214,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     [GeneratedRegex(@"/rank\s*(\d+)?")]
     private static partial Regex RankRegex();
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
 

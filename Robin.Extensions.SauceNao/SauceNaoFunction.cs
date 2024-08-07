@@ -34,7 +34,7 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
         return Task.CompletedTask;
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
 

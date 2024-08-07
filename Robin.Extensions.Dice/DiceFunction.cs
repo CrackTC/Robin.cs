@@ -18,7 +18,7 @@ namespace Robin.Extensions.Dice;
 // ReSharper disable once UnusedType.Global
 public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
 

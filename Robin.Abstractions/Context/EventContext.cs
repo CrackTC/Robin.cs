@@ -2,13 +2,13 @@ using Robin.Abstractions.Event;
 
 namespace Robin.Abstractions.Context;
 
-public class EventContext(
+public class EventContext<TEvent>(
     long uin,
-    BotEvent @event,
+    TEvent @event,
     CancellationToken token
-)
+) where TEvent : BotEvent
 {
     public long Uin => uin;
-    public BotEvent Event => @event;
+    public TEvent Event => @event;
     public CancellationToken Token => token;
 }

@@ -1,4 +1,5 @@
 using Robin.Abstractions.Context;
+using Robin.Abstractions.Event;
 
 namespace Robin.Annotations.Filters;
 
@@ -7,5 +8,5 @@ public abstract class BaseEventFilterAttribute(int filterGroup) : TriggerAttribu
 {
     public int FilterGroup { get; } = filterGroup;
 
-    public abstract bool FilterEvent(EventContext eventContext);
+    public abstract bool FilterEvent(EventContext<BotEvent> eventContext);
 }

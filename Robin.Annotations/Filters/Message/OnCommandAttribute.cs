@@ -1,4 +1,5 @@
 using Robin.Abstractions.Context;
+using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 
@@ -10,7 +11,7 @@ public class OnCommandAttribute(
     int filterGroup = 0
 ) : BaseEventFilterAttribute(filterGroup)
 {
-    public override bool FilterEvent(EventContext eventContext)
+    public override bool FilterEvent(EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not MessageEvent e) return false;
         return e.Message.Any(segment => segment is TextData data && data.Text

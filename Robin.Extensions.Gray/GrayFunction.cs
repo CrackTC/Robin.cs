@@ -40,7 +40,7 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
     }
 
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupMessageEvent e) return false;
 

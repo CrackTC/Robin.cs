@@ -229,7 +229,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     }
 
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not PrivateMessageEvent e) return false;
         if (e.UserId == eventContext.Uin) return false;

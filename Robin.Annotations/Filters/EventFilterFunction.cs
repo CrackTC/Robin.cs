@@ -12,7 +12,7 @@ public class EventFilterFunction(FunctionContext context) : BotFunction(context)
 {
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _nonFallbackHandlers;
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;
-    public override async Task OnEventAsync(EventContext eventContext)
+    public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         var tasks = new List<Task<bool>>();
         foreach (var (filterGroups, handler) in _nonFallbackHandlers!)

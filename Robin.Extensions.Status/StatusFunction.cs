@@ -17,7 +17,7 @@ namespace Robin.Extensions.Status;
 [OnCommand("status")]
 public partial class StatusFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
     {
         var status = $"Robin Status\n" +
                      $"QQ号: {_context.Uin}\n" +

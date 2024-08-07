@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
+using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Notice.Member.Increase;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
@@ -33,7 +34,7 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
         return Task.CompletedTask;
     }
 
-    public override async Task OnEventAsync(EventContext eventContext)
+    public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         if (eventContext.Event is not GroupIncreaseEvent e) return;
 
