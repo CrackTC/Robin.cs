@@ -128,11 +128,11 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         LogWordCloudSent(_context.Logger, groupId);
     }
 
-    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return;
+        if (eventContext.Event is not GroupMessageEvent e) return;
 
-        await InsertDataAsync(e.GroupId, string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), token);
+        await InsertDataAsync(e.GroupId, string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)), eventContext.Token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -155,10 +155,10 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         await _db.DisposeAsync();
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
-        await SendWordCloudAsync(e.GroupId, token: token);
+        if (eventContext.Event is not GroupMessageEvent e) return false;
+        await SendWordCloudAsync(e.GroupId, token: eventContext.Token);
         return true;
     }
 

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
-using Robin.App.Context;
+using Robin.Abstractions.Context;
 using Robin.App.Services;
 
 var builder = Host.CreateApplicationBuilder(args);

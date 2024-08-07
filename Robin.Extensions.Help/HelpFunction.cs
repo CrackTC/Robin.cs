@@ -53,24 +53,33 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         return builder.ToString();
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
         var descriptions = _context.Functions
-            .Select(f => (info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!, triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()))
-            .Select(pair => $"名称: {pair.info.Name}\n描述: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
+            .Select(f => (
+                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
+                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>())
+            )
+            .Select(pair =>
+                $"名称: {pair.info.Name}\n描述: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
 
         MessageChain chain = [new TextData(string.Join("\n\n", descriptions))];
 
-        Request? request = @event switch
+        Request? request = eventContext.Event switch
         {
             GroupMessageEvent e => new SendGroupMessageRequest(e.GroupId, chain),
             PrivateMessageEvent e => new SendPrivateMessageRequest(e.UserId, chain),
             _ => default
         };
 
-        var id = @event switch { GroupMessageEvent e => e.GroupId, PrivateMessageEvent e => e.UserId, _ => default };
+        var id = eventContext.Event switch
+        {
+            GroupMessageEvent e => e.GroupId,
+            PrivateMessageEvent e => e.UserId,
+            _ => default
+        };
 
-        if (await request.SendAsync(_context.OperationProvider, token) is not { Success: true })
+        if (await request.SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, id);
             return true;

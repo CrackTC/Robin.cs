@@ -174,10 +174,10 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
         LogUserRankSent(_context.Logger, groupId);
     }
 
-    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return;
-        await InsertDataAsync(e.GroupId, e.UserId, token);
+        if (eventContext.Event is not GroupMessageEvent e) return;
+        await InsertDataAsync(e.GroupId, e.UserId, eventContext.Token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -214,16 +214,16 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     [GeneratedRegex(@"/rank\s*(\d+)?")]
     private static partial Regex RankRegex();
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var match = RankRegex().Match(e.Message.OfType<TextData>().First().Text);
         if (!match.Success) return false;
 
         if (match.Groups.Count > 1 && int.TryParse(match.Groups[1].Value, out var n))
-            await SendUserRankAsync(e.GroupId, int.Min(n, 50), token: token);
-        else await SendUserRankAsync(e.GroupId, token: token);
+            await SendUserRankAsync(e.GroupId, int.Min(n, 50), token: eventContext.Token);
+        else await SendUserRankAsync(e.GroupId, token: eventContext.Token);
         return true;
     }
 

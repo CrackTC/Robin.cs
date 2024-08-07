@@ -20,9 +20,9 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
 {
     private RandReplyOption? _option;
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var textCount = _option!.Texts?.Count ?? 0;
         var imageCount = _option.ImagePaths?.Count ?? 0;
@@ -34,11 +34,13 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
             index < textCount
                 ? new TextData(_option.Texts![index])
                 : new ImageData(
-                    $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], token))}")
+                    $"base64://{Convert.ToBase64String(
+                            await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], eventContext.Token)
+                        )}")
         ];
 
         if (await new SendGroupMessageRequest(e.GroupId, chain)
-            .SendAsync(_context.OperationProvider, token) is not { Success: true })
+            .SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, e.GroupId);
             return true;

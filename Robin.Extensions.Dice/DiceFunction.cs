@@ -18,9 +18,9 @@ namespace Robin.Extensions.Dice;
 // ReSharper disable once UnusedType.Global
 public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var text = string.Join("", e.Message
             .OfType<TextData>()
@@ -44,7 +44,7 @@ public partial class DiceFunction(FunctionContext context) : BotFunction(context
             new TextData($"Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}")
         };
 
-        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_context.OperationProvider, token) is not { Success: true })
+        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, e.GroupId);
             return true;

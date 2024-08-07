@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Robin.Abstractions.Event.Meta;
-using Robin.App.Context;
+using Robin.Abstractions.Context;
 
 namespace Robin.App.Services;
 
@@ -67,11 +67,11 @@ internal partial class BotFunctionService(
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
     };
 
-    private async Task InvokeFunction(BotFunction function, BotEvent @event, CancellationToken token)
+    private async Task InvokeFunction(BotFunction function, EventContext eventContext)
     {
         try
         {
-            await function.OnEventAsync(context.Uin, @event, token);
+            await function.OnEventAsync(eventContext);
         }
         catch (Exception e)
         {
@@ -88,11 +88,12 @@ internal partial class BotFunctionService(
         }
 
         var tasks = new List<Task>();
+        var eventContext = new EventContext(context.Uin, @event, token);
 
         for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
         {
             if (!_eventToFunctions.TryGetValue(type, out var eventFunctions)) continue;
-            tasks.AddRange(eventFunctions.Select(function => InvokeFunction(function, @event, token)));
+            tasks.AddRange(eventFunctions.Select(function => InvokeFunction(function, eventContext)));
         }
 
         return Task.WhenAll(tasks);

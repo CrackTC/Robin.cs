@@ -34,13 +34,13 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
         return Task.CompletedTask;
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, token)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, eventContext.Token)
             is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_context.Logger, reply.Id);
@@ -68,7 +68,7 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
         {
             if (await new SendGroupMessageRequest(e.GroupId, [
                     new TextData("找不到喵>_<")
-                ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+                ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
             {
                 LogSendMessageFailed(_context.Logger, e.GroupId);
                 return true;
@@ -80,7 +80,7 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 
         if (await new SendGroupMessageRequest(e.GroupId, [
                 new TextData(string.Join("\n", results))
-            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+            ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendMessageFailed(_context.Logger, e.GroupId);
             return true;

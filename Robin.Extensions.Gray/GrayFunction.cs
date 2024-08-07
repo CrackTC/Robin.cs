@@ -15,12 +15,11 @@ namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "喜多烧香精神续作（x")]
 [OnReply, OnCommand("送走")]
+// ReSharper disable once UnusedType.Global
 public partial class GrayFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
     private GrayOption? _option;
     private static readonly HttpClient _client = new();
-
-    public override Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token) => throw new InvalidOperationException();
 
     public override Task StartAsync(CancellationToken token)
     {
@@ -41,16 +40,16 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
     }
 
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var segments = e.Message;
 
         var reply = segments.OfType<ReplyData>().First();
 
         if (await new GetMessageRequest(reply.Id)
-            .SendAsync(_context.OperationProvider, token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
+            .SendAsync(_context.OperationProvider, eventContext.Token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_context.Logger, reply.Id);
             return true;
@@ -63,7 +62,7 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
             var url = $"{_option!.ApiAddress}/?id={senderId}";
             if (await new SendGroupMessageRequest(e.GroupId, [
                     new ImageData(url)
-                ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+                ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
             {
                 LogSendFailed(_context.Logger, e.GroupId);
                 return true;

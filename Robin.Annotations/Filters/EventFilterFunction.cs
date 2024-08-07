@@ -12,15 +12,15 @@ public class EventFilterFunction(FunctionContext context) : BotFunction(context)
 {
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _nonFallbackHandlers;
     private FrozenSet<(FrozenSet<FrozenSet<BaseEventFilterAttribute>> FilterGroups, IFilterHandler Handler)>? _fallbackHandlers;
-    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(EventContext eventContext)
     {
         var tasks = new List<Task<bool>>();
         foreach (var (filterGroups, handler) in _nonFallbackHandlers!)
         {
             if (filterGroups.FirstOrDefault(filterGroup =>
-                    filterGroup.All(filter => filter.FilterEvent(selfId, @event))) is { } group)
+                    filterGroup.All(filter => filter.FilterEvent(eventContext))) is { } group)
             {
-                tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, selfId, @event, token));
+                tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, eventContext));
             }
         }
 
@@ -29,9 +29,9 @@ public class EventFilterFunction(FunctionContext context) : BotFunction(context)
         foreach (var (filterGroups, handler) in _fallbackHandlers!)
         {
             if (filterGroups.FirstOrDefault(filterGroup =>
-                    filterGroup.All(filter => filter.FilterEvent(selfId, @event))) is not
+                    filterGroup.All(filter => filter.FilterEvent(eventContext))) is not
                     { } group) continue;
-            tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, selfId, @event, token));
+            tasks.Add(handler.OnFilteredEventAsync(group.First().FilterGroup, eventContext));
             break;
         }
 

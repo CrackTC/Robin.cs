@@ -17,7 +17,7 @@ namespace Robin.Extensions.Status;
 [OnCommand("status")]
 public partial class StatusFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
         var status = $"Robin Status\n" +
                      $"QQ号: {_context.Uin}\n" +
@@ -25,21 +25,21 @@ public partial class StatusFunction(FunctionContext context) : BotFunction(conte
                      $"总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB\n" +
                      $"当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB";
         MessageChain chain = [new TextData(status)];
-        Request? request = @event switch
+        Request? request = eventContext.Event switch
         {
             PrivateMessageEvent e => new SendPrivateMessageRequest(e.UserId, chain),
             GroupMessageEvent e => new SendGroupMessageRequest(e.GroupId, chain),
             _ => default
         };
 
-        var id = @event switch
+        var id = eventContext.Event switch
         {
             PrivateMessageEvent e => e.UserId,
             GroupMessageEvent e => e.GroupId,
             _ => default
         };
 
-        if (await request.SendAsync(_context.OperationProvider, token) is not { Success: true })
+        if (await request.SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, id);
             return true;

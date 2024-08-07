@@ -229,48 +229,48 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     }
 
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not PrivateMessageEvent e) return false;
-        if (e.UserId == selfId) return false;
+        if (eventContext.Event is not PrivateMessageEvent e) return false;
+        if (e.UserId == eventContext.Uin) return false;
 
         var text = string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)).Trim();
         if (text.Length == 0) return false;
 
         if (_clearRegex!.IsMatch(text))
         {
-            await RemoveAllAsync(e.UserId, token);
-            await SendReplyAsync(e.UserId, _option!.ClearReply, token);
+            await RemoveAllAsync(e.UserId, eventContext.Token);
+            await SendReplyAsync(e.UserId, _option!.ClearReply, eventContext.Token);
             return true;
         }
 
         if (_rollbackRegex!.IsMatch(text))
         {
-            await RemoveLastAsync(e.UserId, token);
-            await SendReplyAsync(e.UserId, _option!.RollbackReply, token);
+            await RemoveLastAsync(e.UserId, eventContext.Token);
+            await SendReplyAsync(e.UserId, _option!.RollbackReply, eventContext.Token);
             return true;
         }
 
         if (_modelRegex!.Match(text) is { Success: true, Groups: { Count: 2 } modelGroups })
         {
-            await SetModelAsync(e.UserId, modelGroups[1].Value, token);
-            await SendReplyAsync(e.UserId, _option!.ModelReply, token);
+            await SetModelAsync(e.UserId, modelGroups[1].Value, eventContext.Token);
+            await SendReplyAsync(e.UserId, _option!.ModelReply, eventContext.Token);
             return true;
         }
 
         if (_systemRegex!.Match(text) is { Success: true, Groups: { Count: 2 } systemGroups })
         {
-            await SetSystemAsync(e.UserId, systemGroups[1].Value, token);
-            await SendReplyAsync(e.UserId, _option!.SystemReply, token);
+            await SetSystemAsync(e.UserId, systemGroups[1].Value, eventContext.Token);
+            await SendReplyAsync(e.UserId, _option!.SystemReply, eventContext.Token);
             return true;
         }
 
-        var model = await GetModelAsync(e.UserId, token);
-        var system = await GetSystem(e.UserId, token);
+        var model = await GetModelAsync(e.UserId, eventContext.Token);
+        var system = await GetSystem(e.UserId, eventContext.Token);
 
         List<GeminiContent> contents =
         [
-            .. await GetHistoryAsync(e.UserId, token),
+            .. await GetHistoryAsync(e.UserId, eventContext.Token),
             new GeminiContent
             {
                 Parts =
@@ -301,24 +301,24 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                             }
                         ]
                     }
-        }, token) is not { } response)
+        }, eventContext.Token) is not { } response)
         {
             LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, _option!.ErrorReply, token);
+            await SendReplyAsync(e.UserId, _option!.ErrorReply, eventContext.Token);
             return true;
         }
 
         if (response is GeminiErrorResponse errorResponse)
         {
             LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, JsonSerializer.Serialize(errorResponse), token);
+            await SendReplyAsync(e.UserId, JsonSerializer.Serialize(errorResponse), eventContext.Token);
             return true;
         }
 
         if (response is not GeminiGenerateDataResponse { Candidates.Count: > 0 } r)
         {
             LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, _option!.FilteredReply, token);
+            await SendReplyAsync(e.UserId, _option!.FilteredReply, eventContext.Token);
             return true;
         }
 
@@ -328,10 +328,10 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
             reply = p.Text;
         }
 
-        if (!await SendReplyAsync(e.UserId, reply, token)) return true;
+        if (!await SendReplyAsync(e.UserId, reply, eventContext.Token)) return true;
 
-        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, token);
-        await AddHistoryAsync(e.UserId, GeminiRole.Model, reply, now, token);
+        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, eventContext.Token);
+        await AddHistoryAsync(e.UserId, GeminiRole.Model, reply, now, eventContext.Token);
         return true;
     }
 

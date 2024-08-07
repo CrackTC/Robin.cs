@@ -18,9 +18,9 @@ namespace Robin.Extensions.ReplyAction;
 // ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupMessageEvent e) return false;
+        if (eventContext.Event is not GroupMessageEvent e) return false;
 
         var text = string.Join(' ', e.Message
             .OfType<TextData>()
@@ -34,7 +34,7 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
 
         var reply = e.Message.OfType<ReplyData>().First();
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, token)
+        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, eventContext.Token)
             is not GetMessageResponse { Success: true, Message: not null } originalMessage)
         {
             LogGetMessageFailed(_context.Logger, reply.Id);
@@ -43,7 +43,8 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
 
         var senderId = originalMessage.Message.Sender.UserId;
 
-        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true).SendAsync(_context.OperationProvider, token)
+        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true)
+                .SendAsync(_context.OperationProvider, eventContext.Token)
             is not GetGroupMemberInfoResponse { Success: true, Info: not null } info)
         {
             LogGetGroupMemberInfoFailed(_context.Logger, e.GroupId, senderId);
@@ -59,7 +60,7 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
         ];
 
         if (await new SendGroupMessageRequest(e.GroupId, chain)
-            .SendAsync(_context.OperationProvider, token) is not { Success: true })
+            .SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, e.GroupId);
             return true;

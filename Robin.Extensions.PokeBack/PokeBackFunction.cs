@@ -15,12 +15,12 @@ namespace Robin.Extensions.PokeBack;
 // ReSharper disable once UnusedType.Global
 public partial class PokeBackFunction(FunctionContext context) : BotFunction(context), IFilterHandler
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext eventContext)
     {
-        if (@event is not GroupPokeEvent e) return false;
+        if (eventContext.Event is not GroupPokeEvent e) return false;
 
         if (await new SendGroupPokeRequest(e.GroupId, e.SenderId)
-            .SendAsync(_context.OperationProvider, token) is not { Success: true })
+            .SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
         {
             LogSendFailed(_context.Logger, e.GroupId);
             return true;

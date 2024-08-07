@@ -2,14 +2,12 @@ using System.Collections.Frozen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Robin.Abstractions;
 using Robin.Abstractions.Communication;
-using Robin.Abstractions.Context;
 
-namespace Robin.App.Context;
+namespace Robin.Abstractions.Context;
 
 // scoped, every bot has its own option
-internal class BotContext(
+public class BotContext(
     IServiceProvider serviceProvider,
     List<BotFunction> functions
 ) : IDisposable
