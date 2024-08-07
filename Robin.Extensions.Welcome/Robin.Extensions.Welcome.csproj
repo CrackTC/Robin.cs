@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Robin.Abstractions\Robin.Abstractions.csproj" />
-    <ProjectReference Include="..\Robin.Annotations\Robin.Annotations.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

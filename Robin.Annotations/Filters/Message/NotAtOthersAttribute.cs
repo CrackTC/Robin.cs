@@ -4,15 +4,13 @@ using Robin.Abstractions.Message.Entity;
 
 namespace Robin.Annotations.Filters.Message;
 
-public class NotAtOthersAttribute(int filterGroup = 0) : OnMessageAttribute(filterGroup)
+// ReSharper disable once UnusedType.Global
+public class NotAtOthersAttribute(int filterGroup = 0) : BaseEventFilterAttribute(filterGroup)
 {
-    public override bool FilterEvent(long selfId, BotEvent @event)
-    {
-        if (!base.FilterEvent(selfId, @event)) return false;
-
-        var e = @event as MessageEvent;
-        return e!.Message.All(segment => segment is not AtData at || at.Uin == selfId);
-    }
+    public override bool FilterEvent(long selfId, BotEvent @event) =>
+        @event is MessageEvent e
+        && e.Message.All(segment => segment is not AtData at
+                                    || at.Uin == selfId);
 
     public override string GetDescription() => "消息未@其他人";
 }

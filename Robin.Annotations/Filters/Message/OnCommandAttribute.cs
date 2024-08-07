@@ -8,14 +8,12 @@ public class OnCommandAttribute(
     string command,
     char prefix = '/',
     int filterGroup = 0
-) : OnMessageAttribute(filterGroup)
+) : BaseEventFilterAttribute(filterGroup)
 {
     public override bool FilterEvent(long selfId, BotEvent @event)
     {
-        if (!base.FilterEvent(selfId, @event)) return false;
-
-        var e = @event as MessageEvent;
-        return e!.Message.Any(segment => segment is TextData data && data.Text
+        if (@event is not MessageEvent e) return false;
+        return e.Message.Any(segment => segment is TextData data && data.Text
             .Trim()
             .Split(null)
             .Any(text => text == $"{prefix}{command}"));

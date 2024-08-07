@@ -26,7 +26,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
             " 或 ",
             info.EventTypes.Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
         var triggerText = string.Join("\n• ", triggers
-            .GroupBy(trigger => (trigger is BaseEventFilterAttribute attr) ? attr.FilterGroup : -1)
+            .GroupBy(trigger => trigger is BaseEventFilterAttribute attr ? attr.FilterGroup : -1)
             .SelectMany(group => group.Key is -1 ? group.Select(trigger => Enumerable.Repeat(trigger, 1)) : [group])
             .Select(triggerGroup => string.Join(" 且 ", triggerGroup.Select(trigger => trigger.GetDescription()))));
 
@@ -45,11 +45,10 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         }
 
 
-        if (!string.IsNullOrEmpty(triggerText))
-        {
-            builder.Append("满足以下几组条件之一：\n• ");
-            builder.Append(triggerText);
-        }
+        if (string.IsNullOrEmpty(triggerText)) return builder.ToString();
+
+        builder.Append("满足以下几组条件之一：\n• ");
+        builder.Append(triggerText);
 
         return builder.ToString();
     }

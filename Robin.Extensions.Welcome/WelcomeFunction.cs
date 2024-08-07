@@ -7,14 +7,12 @@ using Robin.Abstractions.Event.Notice.Member.Increase;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Notice;
 
 namespace Robin.Extensions.Welcome;
 
-[BotFunctionInfo("welcome", "入群欢迎")]
-[OnMemberIncrease]
-public partial class WelcomeFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+[BotFunctionInfo("welcome", "入群欢迎", typeof(GroupIncreaseEvent))]
+// ReSharper disable once UnusedType.Global
+public partial class WelcomeFunction(FunctionContext context) : BotFunction(context)
 {
     private WelcomeOption? _option;
 
@@ -36,11 +34,11 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
         return Task.CompletedTask;
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, long selfId, BotEvent @event, CancellationToken token)
+    public override async Task OnEventAsync(long selfId, BotEvent @event, CancellationToken token)
     {
-        if (@event is not GroupIncreaseEvent e) return false;
+        if (@event is not GroupIncreaseEvent e) return;
 
-        if (_option?.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text) is not true) return true;
+        if (_option?.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text) is not true) return;
 
         var parts = text.Split("{at}");
 
@@ -51,11 +49,10 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
         ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
         {
             LogSendMessageFailed(_context.Logger, e.GroupId);
-            return true;
+            return;
         }
 
         LogMessageSent(_context.Logger, e.GroupId);
-        return true;
     }
 
     #region Log
