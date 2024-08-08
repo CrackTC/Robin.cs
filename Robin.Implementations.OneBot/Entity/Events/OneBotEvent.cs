@@ -29,7 +29,7 @@ internal abstract class OneBotEvent
 
         foreach (var (type, eventTypeAttribute, postTypeAttribute) in types)
         {
-            _eventTypeToType[(postTypeAttribute.Type, eventTypeAttribute.Type)] = type;
+            _eventTypeToType[(postTypeAttribute!.Type, eventTypeAttribute!.Type)] = type;
         }
     }
 

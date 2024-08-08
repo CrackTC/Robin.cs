@@ -2,60 +2,58 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.Dice;
 
 [BotFunctionInfo("dice", "投个骰子（<次数>d<面数>[+/-<修正>]）")]
-[OnCommand("dice")]
 // ReSharper disable once UnusedType.Global
-public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
-    {
-        if (eventContext.Event is not GroupMessageEvent e) return false;
+    public string? Description { get; set; }
 
-        var text = string.Join("", e.Message
-            .OfType<TextData>()
-            .Select(data => data.Text.Trim())).Trim();
-
-        if (string.IsNullOrEmpty(text)) return false;
-
-        var match = DiceRegex().Match(text);
-        if (!match.Success) return false;
-
-        var count = int.Min(match.Groups[1].Success ? int.Parse(match.Groups[1].Value) : 1, 20);
-        var sides = int.Parse(match.Groups[2].Value);
-        var modifier = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
-
-        var rolls = Enumerable.Range(0, count).Select(_ => Random.Shared.Next(1, sides + 1)).ToArray();
-        var sum = rolls.Sum() + modifier;
-
-        var chain = new MessageChain
-        {
-            new TextData($"Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...\n"),
-            new TextData($"Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}")
-        };
-
-        if (await new SendGroupMessageRequest(e.GroupId, chain).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, e.GroupId);
-            return true;
-        }
-
-        LogDiceSent(_context.Logger, e.GroupId);
-        return true;
-    }
-
-    [GeneratedRegex(@"/dice (\d+)?d(\d+)([+-]\d+)?")]
+    [GeneratedRegex(@"/dice (?<count>\d+)d(?<sides>\d+)(?<modifier>[+-]\d+)?")]
     private static partial Regex DiceRegex();
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
+    {
+        builder.On<MessageEvent>()
+            .OnRegex(DiceRegex())
+            .Do(async t =>
+            {
+                var (ctx, match) = t;
+
+                var count = int.Min(int.Parse(match.Groups["count"].Value), 20);
+                var sides = int.Parse(match.Groups["sides"].Value);
+                var modifier = match.Groups["modifier"].Success
+                    ? int.Parse(match.Groups["modifier"].Value)
+                    : 0;
+
+                var rolls = Enumerable.Range(0, count).Select(_ => Random.Shared.Next(1, sides + 1)).ToArray();
+                var sum = rolls.Sum() + modifier;
+
+                if (await ctx.Event.NewMessageRequest([
+                        new TextData(
+                            $"""
+                            Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...
+                            Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}
+                            """
+                        )
+                    ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
+                {
+                    LogSendFailed(_context.Logger, ctx.Event.SourceId);
+                    return;
+                }
+
+                LogDiceSent(_context.Logger, ctx.Event.SourceId);
+            });
+
+        return Task.CompletedTask;
+    }
 
     #region Log
 

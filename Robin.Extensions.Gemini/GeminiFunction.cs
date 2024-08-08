@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation.Requests;
@@ -10,16 +9,15 @@ using Robin.Extensions.Gemini.Entity.Responses;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Robin.Abstractions.Operation;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
 using Robin.Abstractions.Context;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.Gemini;
 
 [BotFunctionInfo("gemini", "Gemini 聊天机器人")]
-[OnPrivateMessage, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class GeminiFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class GeminiFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     private GeminiOption? _option;
 
@@ -27,6 +25,160 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     private Regex? _systemRegex;
     private Regex? _clearRegex;
     private Regex? _rollbackRegex;
+
+    public string? Description { get; set; }
+
+    public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
+    {
+        if (_context.Configuration.Get<GeminiOption>() is not { } option)
+        {
+            LogOptionBindingFailed(_context.Logger);
+            return;
+        }
+
+        _option = option;
+
+        try
+        {
+            _modelRegex = new Regex(option.ModelRegexString, RegexOptions.Compiled);
+            _systemRegex = new Regex(option.SystemRegexString, RegexOptions.Compiled);
+            _clearRegex = new Regex(option.ClearRegexString, RegexOptions.Compiled);
+            _rollbackRegex = new Regex(option.RollbackRegexString, RegexOptions.Compiled);
+        }
+        catch (ArgumentException e)
+        {
+            LogRegexCompileFailed(_context.Logger, e);
+            return;
+        }
+
+        await CreateTablesAsync(token);
+
+        builder
+            .On<PrivateMessageEvent>()
+            .OnRegex(_clearRegex)
+            .Do(async tuple =>
+            {
+                var (ctx, _) = tuple;
+                var (e, t) = ctx;
+                await RemoveAllAsync(e.UserId, t);
+                await SendReplyAsync(e.UserId, _option.ClearReply, t);
+            })
+
+            .On<PrivateMessageEvent>()
+            .OnRegex(_rollbackRegex)
+            .Do(async tuple =>
+            {
+                var (ctx, _) = tuple;
+                var (e, t) = ctx;
+                await RemoveLastAsync(e.UserId, t);
+                await SendReplyAsync(e.UserId, _option.RollbackReply, t);
+            })
+
+            .On<PrivateMessageEvent>()
+            .OnRegex(_modelRegex)
+            .Do(async tuple =>
+            {
+                var (ctx, match) = tuple;
+                var (e, t) = ctx;
+                await SetModelAsync(e.UserId, match.Groups[1].Value, t);
+                await SendReplyAsync(e.UserId, _option.ModelReply, t);
+            })
+            .On<PrivateMessageEvent>()
+            .OnRegex(_systemRegex)
+            .Do(async tuple =>
+            {
+                var (ctx, match) = tuple;
+                var (e, t) = ctx;
+                await SetSystemAsync(e.UserId, match.Groups[1].Value, t);
+                await SendReplyAsync(e.UserId, _option.SystemReply, t);
+            })
+            .On<PrivateMessageEvent>()
+            .OnText()
+            .AsFallback()
+            .Do(async tuple =>
+            {
+                var (ctx, text) = tuple;
+                var (e, t) = ctx;
+
+                var model = await GetModelAsync(e.UserId, t);
+                var system = await GetSystem(e.UserId, t);
+
+                List<GeminiContent> contents =
+                [
+                    .. await GetHistoryAsync(e.UserId, t),
+                    new GeminiContent
+                    {
+                        Parts = [new GeminiPart { Text = text }],
+                        Role = GeminiRole.User
+                    }
+                ];
+
+                var now = DateTimeOffset.Now.ToUnixTimeSeconds();
+                var request = new GeminiRequest(_option.ApiKey, model: model);
+                if (await request.GenerateContentAsync(
+                        new GeminiRequestBody
+                        {
+                            Contents = contents,
+                            SystemInstruction = string.IsNullOrEmpty(system)
+                                    ? null
+                                    : new GeminiContent { Parts = [new GeminiPart { Text = system }] }
+                        },
+                        t
+                    ) is not { } response)
+                {
+                    LogGenerateContentFailed(_context.Logger, e.UserId);
+                    await SendReplyAsync(e.UserId, _option.ErrorReply, t);
+                    return;
+                }
+
+                if (response is GeminiErrorResponse errorResponse)
+                {
+                    LogGenerateContentFailed(_context.Logger, e.UserId);
+                    await SendReplyAsync(e.UserId, JsonSerializer.Serialize(errorResponse), t);
+                    return;
+                }
+
+                if (response is not GeminiGenerateDataResponse { Candidates: { Count: > 0 } candidates })
+                {
+                    LogGenerateContentFailed(_context.Logger, e.UserId);
+                    await SendReplyAsync(e.UserId, _option.FilteredReply, t);
+                    return;
+                }
+
+                if (candidates[0].Content.Parts[0] is { Text: { } reply })
+                {
+                    if (!await SendReplyAsync(e.UserId, reply, t)) return;
+                    await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, t);
+                    await AddHistoryAsync(e.UserId, GeminiRole.Model, reply, now, t);
+                }
+                else
+                {
+                    await SendReplyAsync(e.UserId, "Invalid response", t);
+                }
+            });
+    }
+
+    private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token)
+    {
+        if (await new SendPrivateMessageRequest(userId, [
+                new TextData(reply)
+            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+        {
+            LogSendFailed(_context.Logger, userId);
+            return false;
+        }
+
+        LogReplySent(_context.Logger, userId);
+        return true;
+    }
+
+    public override async Task StopAsync(CancellationToken token)
+    {
+        _semaphore.Dispose();
+        await _db.DisposeAsync();
+    }
+
+    #region Database
 
     private readonly GeminiDbContext _db = new(context.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
@@ -78,13 +230,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 .Where(msg => msg.User.UserId == userId)
                 .Select(msg => new GeminiContent
                 {
-                    Parts = new List<GeminiPart>
-                    {
-                        new()
-                        {
-                            Text = msg.Content
-                        }
-                    },
+                    Parts = new List<GeminiPart> { new() { Text = msg.Content } },
                     Role = msg.Role
                 });
         }
@@ -214,158 +360,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
         }
     }
 
-    private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token)
-    {
-        if (await new SendPrivateMessageRequest(userId, [
-                new TextData(reply)
-            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, userId);
-            return false;
-        }
-
-        LogReplySent(_context.Logger, userId);
-        return true;
-    }
-
-
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
-    {
-        if (eventContext.Event is not PrivateMessageEvent e) return false;
-        if (e.UserId == eventContext.Uin) return false;
-
-        var text = string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)).Trim();
-        if (text.Length == 0) return false;
-
-        if (_clearRegex!.IsMatch(text))
-        {
-            await RemoveAllAsync(e.UserId, eventContext.Token);
-            await SendReplyAsync(e.UserId, _option!.ClearReply, eventContext.Token);
-            return true;
-        }
-
-        if (_rollbackRegex!.IsMatch(text))
-        {
-            await RemoveLastAsync(e.UserId, eventContext.Token);
-            await SendReplyAsync(e.UserId, _option!.RollbackReply, eventContext.Token);
-            return true;
-        }
-
-        if (_modelRegex!.Match(text) is { Success: true, Groups: { Count: 2 } modelGroups })
-        {
-            await SetModelAsync(e.UserId, modelGroups[1].Value, eventContext.Token);
-            await SendReplyAsync(e.UserId, _option!.ModelReply, eventContext.Token);
-            return true;
-        }
-
-        if (_systemRegex!.Match(text) is { Success: true, Groups: { Count: 2 } systemGroups })
-        {
-            await SetSystemAsync(e.UserId, systemGroups[1].Value, eventContext.Token);
-            await SendReplyAsync(e.UserId, _option!.SystemReply, eventContext.Token);
-            return true;
-        }
-
-        var model = await GetModelAsync(e.UserId, eventContext.Token);
-        var system = await GetSystem(e.UserId, eventContext.Token);
-
-        List<GeminiContent> contents =
-        [
-            .. await GetHistoryAsync(e.UserId, eventContext.Token),
-            new GeminiContent
-            {
-                Parts =
-                [
-                    new GeminiPart
-                    {
-                        Text = text
-                    }
-                ],
-                Role = GeminiRole.User
-            }
-        ];
-
-        var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-        var request = new GeminiRequest(_option!.ApiKey, model: model);
-        if (await request.GenerateContentAsync(new GeminiRequestBody
-        {
-            Contents = contents,
-            SystemInstruction = string.IsNullOrEmpty(system)
-                    ? null
-                    : new GeminiContent
-                    {
-                        Parts =
-                        [
-                            new GeminiPart
-                            {
-                                Text = system
-                            }
-                        ]
-                    }
-        }, eventContext.Token) is not { } response)
-        {
-            LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, _option!.ErrorReply, eventContext.Token);
-            return true;
-        }
-
-        if (response is GeminiErrorResponse errorResponse)
-        {
-            LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, JsonSerializer.Serialize(errorResponse), eventContext.Token);
-            return true;
-        }
-
-        if (response is not GeminiGenerateDataResponse { Candidates.Count: > 0 } r)
-        {
-            LogGenerateContentFailed(_context.Logger, e.UserId);
-            await SendReplyAsync(e.UserId, _option!.FilteredReply, eventContext.Token);
-            return true;
-        }
-
-        var reply = "Invalid response";
-        if (r.Candidates[0].Content.Parts[0] is { Text: not null } p)
-        {
-            reply = p.Text;
-        }
-
-        if (!await SendReplyAsync(e.UserId, reply, eventContext.Token)) return true;
-
-        await AddHistoryAsync(e.UserId, GeminiRole.User, text, now, eventContext.Token);
-        await AddHistoryAsync(e.UserId, GeminiRole.Model, reply, now, eventContext.Token);
-        return true;
-    }
-
-    public override async Task StartAsync(CancellationToken token)
-    {
-        if (_context.Configuration.Get<GeminiOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return;
-        }
-
-        _option = option;
-
-        try
-        {
-            _modelRegex = new Regex(option.ModelRegexString, RegexOptions.Compiled);
-            _systemRegex = new Regex(option.SystemRegexString, RegexOptions.Compiled);
-            _clearRegex = new Regex(option.ClearRegexString, RegexOptions.Compiled);
-            _rollbackRegex = new Regex(option.RollbackRegexString, RegexOptions.Compiled);
-        }
-        catch (ArgumentException e)
-        {
-            LogRegexCompileFailed(_context.Logger, e);
-            return;
-        }
-
-        await CreateTablesAsync(token);
-    }
-
-    public override async Task StopAsync(CancellationToken token)
-    {
-        _semaphore.Dispose();
-        await _db.DisposeAsync();
-    }
+    #endregion
 
     #region Log
 

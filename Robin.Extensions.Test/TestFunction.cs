@@ -10,20 +10,22 @@ using Robin.Fluent.Builder;
 namespace Robin.Extensions.Test;
 
 [BotFunctionInfo("test", "测试功能")]
+// ReSharper disable once UnusedType.Global
 public class TestFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public IEnumerable<string> Descriptions { get; set; } = [];
+    public string? Description { get; set; }
 
-    public void OnCreating(FunctionBuilder functionBuilder)
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        functionBuilder.On<GroupMessageEvent>()
+        builder.On<GroupMessageEvent>()
             .Where(ctx => ctx.Event.Message.Any(segment => segment is TextData { Text: "/test" }))
             .Select(ctx => (ctx.Event.GroupId, ctx.Token))
-            .Do(async ctx =>
-            {
-                await new SendGroupMessageRequest(ctx.GroupId, [
+            .Do(ctx =>
+                new SendGroupMessageRequest(ctx.GroupId, [
                     new TextData("Hello, world")
-                ]).SendAsync(_context.OperationProvider, ctx.Token);
-            });
+                ]).SendAsync(_context.OperationProvider, ctx.Token)
+            );
+
+        return Task.CompletedTask;
     }
 }

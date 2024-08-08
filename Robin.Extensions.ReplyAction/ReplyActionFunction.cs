@@ -1,73 +1,96 @@
 ﻿using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
+using System.Text.RegularExpressions;
 
 namespace Robin.Extensions.ReplyAction;
 
 [BotFunctionInfo("reply_action", "把字句制造机")]
-[OnReply, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
+    public string? Description { get; set; }
+
+    [GeneratedRegex(@"^/\S")]
+    private static partial Regex IsAction();
+
+    [GeneratedRegex(@"^/(?<verb>\S+)(?:\s+(?<adverb>.*))?")]
+    private static partial Regex ActionParts();
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        if (eventContext.Event is not GroupMessageEvent e) return false;
+        builder.On<GroupMessageEvent>()
+            .OnRegex(IsAction())
+            .Select(e => e.EventContext)
+            .OnReply()
+            .AsFallback()
+            .Do(async t =>
+            {
+                var (ctx, msgId) = t;
+                var (e, token) = ctx;
 
-        var text = string.Join(' ', e.Message
-            .OfType<TextData>()
-            .Select(segment => segment.Text.Trim())
-            .Where(text => !string.IsNullOrEmpty(text)));
+                var match = ActionParts().Match(
+                    string.Join(
+                        null,
+                        e.Message.OfType<TextData>()
+                            .Select(data => data.Text.Trim())
+                    )
+                );
 
-        if (!text.StartsWith('/')) return false;
+                var verb = match.Groups["verb"];
+                var adverb = match.Groups["adverb"];
 
-        var parts = text[1..].Split(' ');
-        if (parts.Length == 0) return false;
+                if (await new GetMessageRequest(msgId).SendAsync(_context.OperationProvider, token)
+                    is not GetMessageResponse { Success: true, Message: { } origMsg })
+                {
+                    LogGetMessageFailed(_context.Logger, msgId);
+                    return;
+                }
 
-        var reply = e.Message.OfType<ReplyData>().First();
+                var senderId = origMsg.Sender.UserId;
 
-        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, eventContext.Token)
-            is not GetMessageResponse { Success: true, Message: not null } originalMessage)
-        {
-            LogGetMessageFailed(_context.Logger, reply.Id);
-            return true;
-        }
+                if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true)
+                        .SendAsync(_context.OperationProvider, token)
+                    is not GetGroupMemberInfoResponse { Success: true, Info: { } info })
+                {
+                    LogGetGroupMemberInfoFailed(_context.Logger, e.GroupId, senderId);
+                    return;
+                }
 
-        var senderId = originalMessage.Message.Sender.UserId;
+                var sourceName = e.Sender.Card switch
+                {
+                    null or "" => e.Sender.Nickname,
+                    _ => e.Sender.Card
+                };
 
-        if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true)
-                .SendAsync(_context.OperationProvider, eventContext.Token)
-            is not GetGroupMemberInfoResponse { Success: true, Info: not null } info)
-        {
-            LogGetGroupMemberInfoFailed(_context.Logger, e.GroupId, senderId);
-            return true;
-        }
+                var targetName = info.Card switch
+                {
+                    null or "" => info.Nickname,
+                    _ => info.Card
+                };
 
-        var sourceName = string.IsNullOrEmpty(e.Sender.Card) ? e.Sender.Nickname : e.Sender.Card;
-        var targetName = string.IsNullOrEmpty(info.Info.Card) ? info.Info.Nickname : info.Info.Card;
 
-        MessageChain chain =
-        [
-            new TextData($"{sourceName} {parts[0]} {targetName}{(parts.Length > 1 ? " " + string.Join(' ', parts[1..]) : string.Empty)}")
-        ];
+                if (await e.NewMessageRequest([
+                        new TextData($"{sourceName} {verb.Value} {targetName}{(
+                            adverb.Success ? ' ' + adverb.Value : string.Empty
+                        )}")
+                    ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+                {
+                    LogSendFailed(_context.Logger, e.GroupId);
+                    return;
+                }
 
-        if (await new SendGroupMessageRequest(e.GroupId, chain)
-            .SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, e.GroupId);
-            return true;
-        }
+                LogActionSent(_context.Logger, e.GroupId);
+            });
 
-        LogActionSent(_context.Logger, e.GroupId);
-        return true;
+        return Task.CompletedTask;
     }
 
     #region Log

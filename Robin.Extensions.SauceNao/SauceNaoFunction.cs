@@ -2,26 +2,26 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 using SauceNET;
 
 namespace Robin.Extensions.SauceNao;
 
 // ReSharper disable once UnusedType.Global
 [BotFunctionInfo("sauce_nao", "Saucenao 插画反向搜索")]
-[OnReply, OnCommand("搜图")]
-public partial class SauceNaoFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class SauceNaoFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     private SauceNETClient? _client;
 
-    public override Task StartAsync(CancellationToken token)
+    public string? Description { get; set; }
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         if (_context.Configuration.Get<SauceNaoOption>() is not { } option)
         {
@@ -31,63 +31,64 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 
         _client = new SauceNETClient(option.ApiKey);
 
-        return Task.CompletedTask;
-    }
-
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
-    {
-        if (eventContext.Event is not GroupMessageEvent e) return false;
-
-        var reply = e.Message.OfType<ReplyData>().First();
-
-        if (await new GetMessageRequest(reply.Id).SendAsync(_context.OperationProvider, eventContext.Token)
-            is not GetMessageResponse { Success: true, Message: not null } originalMessage)
-        {
-            LogGetMessageFailed(_context.Logger, reply.Id);
-            return true;
-        }
-
-        if (originalMessage.Message.Message.FirstOrDefault(segment => segment is ImageData) is not ImageData image)
-            return true;
-
-        var sauce = await _client!.GetSauceAsync(image.Url);
-        var results = sauce.Results
-            .Where(result => double.TryParse(result.Similarity, out var s) && s >= 70.0)
-            .Take(3)
-            .Select(result =>
-                string.Join(
-                    '\n',
-                    $"标题: {result.Name}",
-                    $"链接: {result.SourceURL}",
-                    $"相似度: {result.Similarity}%",
-                    $"来源: {result.DatabaseName}"
-                )
-            ).ToList();
-
-        if (results.Count == 0)
-        {
-            if (await new SendGroupMessageRequest(e.GroupId, [
-                    new TextData("找不到喵>_<")
-                ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
+        builder.On<MessageEvent>()
+            .OnCommand("搜图")
+            .OnReply()
+            .Do(async t =>
             {
-                LogSendMessageFailed(_context.Logger, e.GroupId);
-                return true;
-            }
+                var (ctx, msgId) = t;
+                var (e, token) = ctx;
 
-            LogMessageSent(_context.Logger, e.GroupId);
-            return true;
-        }
+                if (await new GetMessageRequest(msgId)
+                    .SendAsync(_context.OperationProvider, token)
+                    is not GetMessageResponse { Success: true, Message: { } origMsg })
+                {
+                    LogGetMessageFailed(_context.Logger, msgId);
+                    return;
+                }
 
-        if (await new SendGroupMessageRequest(e.GroupId, [
-                new TextData(string.Join("\n", results))
-            ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendMessageFailed(_context.Logger, e.GroupId);
-            return true;
-        }
+                if (origMsg.Message.OfType<ImageData>().FirstOrDefault() is not { Url: { } url })
+                    return;
 
-        LogMessageSent(_context.Logger, e.GroupId);
-        return true;
+                var results = (await _client.GetSauceAsync(url)).Results
+                    .Where(result => double.TryParse(result.Similarity, out var s) && s >= 70.0)
+                    .Take(3)
+                    .Select(result =>
+                        $"""
+                        标题: {result.Name}
+                        链接: {result.SourceURL}
+                        相似度: {result.Similarity}%
+                        来源: {result.DatabaseName}
+                        """
+                    )
+                    .ToList();
+
+                if (results.Count is 0)
+                {
+                    if (await e.NewMessageRequest([
+                            new TextData("找不到喵>_<")
+                        ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+                    {
+                        LogSendMessageFailed(_context.Logger, e.SourceId);
+                        return;
+                    }
+
+                    LogMessageSent(_context.Logger, e.SourceId);
+                    return;
+                }
+
+                if (await e.NewMessageRequest([
+                        new TextData(string.Join("\n", results))
+                    ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
+                {
+                    LogSendMessageFailed(_context.Logger, e.SourceId);
+                    return;
+                }
+
+                LogMessageSent(_context.Logger, e.SourceId);
+            });
+
+        return Task.CompletedTask;
     }
 
     #region Log

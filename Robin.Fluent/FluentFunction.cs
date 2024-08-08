@@ -6,26 +6,34 @@ using Robin.Fluent.Builder;
 namespace Robin.Fluent;
 
 [BotFunctionInfo("fluent", "元功能，流式扩展接口", typeof(BotEvent))]
+// ReSharper disable once UnusedType.Global
 public class FluentFunction(FunctionContext context) : BotFunction(context)
 {
     private IEnumerable<IEnumerable<TunnelInfo>> _tunnelLists = [];
+    private IEnumerable<TunnelInfo> _alwaysFiredTunnels = [];
 
-    public override Task StartAsync(CancellationToken token)
+    public override async Task StartAsync(CancellationToken token)
     {
         var tunnelLists = new SortedList<int, List<TunnelInfo>>();
+        var alwaysFiredTunnels = new List<TunnelInfo>();
+
         foreach (var function in _context.Functions.OfType<IFluentFunction>())
         {
             var functionBuilder = new FunctionBuilder();
 
-            function.OnCreating(functionBuilder);
+            await function.OnCreatingAsync(functionBuilder, token);
 
-            var infos = functionBuilder.Build();
+            var infos = functionBuilder.Build().ToList();
 
-            function.Descriptions = infos.Select(info => string.Join(' ', info.Descriptions)).ToArray();
+            function.Description = string.Join('\n', infos.Select(info => "• " + string.Join(" 且 ", info.Descriptions)));
 
             foreach (var info in infos)
             {
-                if (!tunnelLists.TryGetValue(info.Priority, out List<TunnelInfo>? list))
+                if (info.Priority == int.MinValue)
+                {
+                    alwaysFiredTunnels.Add(info);
+                }
+                else if (!tunnelLists.TryGetValue(info.Priority, out var list))
                 {
                     tunnelLists[info.Priority] = [info];
                 }
@@ -37,25 +45,33 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
         }
 
         _tunnelLists = tunnelLists.Values;
-        return Task.CompletedTask;
+        _alwaysFiredTunnels = alwaysFiredTunnels;
     }
 
     public override Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
+        var tasks = new List<Task>();
+
+        tasks.AddRange(_alwaysFiredTunnels
+            .Select(tunnel => tunnel.Tunnel(eventContext))
+            .Where(res => res.Accept)
+            .Select(res => res.Data!));
+
         foreach (var list in _tunnelLists)
         {
-            var tasks = list
+            var fired = list
                 .Select(tunnel => tunnel.Tunnel(eventContext))
                 .Where(res => res.Accept)
                 .Select(res => res.Data!)
                 .ToList();
 
-            if (tasks.Count is not 0)
+            if (fired.Count is not 0)
             {
-                return Task.WhenAll(tasks);
+                tasks.AddRange(fired);
+                break;
             }
         }
 
-        return Task.CompletedTask;
+        return Task.WhenAll(tasks);
     }
 }

@@ -2,51 +2,46 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.Status;
 
 [BotFunctionInfo("status", "当前运行状态")]
-[OnCommand("status")]
-public partial class StatusFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+// ReSharper disable once UnusedType.Global
+public partial class StatusFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
+    public string? Description { get; set; }
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        var status = $"Robin Status\n" +
-                     $"QQ号: {_context.Uin}\n" +
-                     $"运行时间: {DateTime.Now - Process.GetCurrentProcess().StartTime}\n" +
-                     $"总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB\n" +
-                     $"当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB";
-        MessageChain chain = [new TextData(status)];
-        Request? request = eventContext.Event switch
-        {
-            PrivateMessageEvent e => new SendPrivateMessageRequest(e.UserId, chain),
-            GroupMessageEvent e => new SendGroupMessageRequest(e.GroupId, chain),
-            _ => default
-        };
+        builder.On<MessageEvent>()
+            .OnCommand("status")
+            .Do(async ctx =>
+            {
+                if (await ctx.Event.NewMessageRequest([
+                        new TextData(
+                            $"""
+                            Robin Status
+                            QQ号: {_context.Uin}
+                            运行时间: {DateTime.Now - Process.GetCurrentProcess().StartTime}
+                            总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB
+                            当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB
+                            """
+                        )
+                    ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
+                {
+                    LogSendFailed(_context.Logger, ctx.Event.SourceId);
+                    return;
+                }
 
-        var id = eventContext.Event switch
-        {
-            PrivateMessageEvent e => e.UserId,
-            GroupMessageEvent e => e.GroupId,
-            _ => default
-        };
+                LogStatusSent(_context.Logger, ctx.Event.SourceId);
+            });
 
-        if (await request.SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, id);
-            return true;
-        }
-
-        LogStatusSent(_context.Logger, id);
-        return true;
+        return Task.CompletedTask;
     }
 
     #region Log

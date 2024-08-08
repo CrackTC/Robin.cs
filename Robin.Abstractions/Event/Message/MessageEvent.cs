@@ -9,4 +9,9 @@ public abstract record MessageEvent(
     long UserId,
     MessageChain Message,
     int Font
-) : BotEvent(Time);
+) : BotEvent(Time)
+{
+    public abstract long SourceId { get; }
+
+    public abstract Operation.Request NewMessageRequest(MessageChain chain);
+};

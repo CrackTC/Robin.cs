@@ -1,5 +1,6 @@
 using Robin.Abstractions.Entity;
 using Robin.Abstractions.Message;
+using Robin.Abstractions.Operation.Requests;
 
 namespace Robin.Abstractions.Event.Message;
 
@@ -11,4 +12,10 @@ public record PrivateMessageEvent(
     MessageChain Message,
     int Font,
     MessageSender Sender
-) : MessageEvent(Time, MessageId, UserId, Message, Font);
+) : MessageEvent(Time, MessageId, UserId, Message, Font)
+{
+    public override long SourceId => UserId;
+
+    public override Operation.Request NewMessageRequest(MessageChain chain) =>
+        new SendPrivateMessageRequest(SourceId, chain);
+};

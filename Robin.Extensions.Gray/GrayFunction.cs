@@ -2,26 +2,25 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "喜多烧香精神续作（x")]
-[OnReply, OnCommand("送走")]
 // ReSharper disable once UnusedType.Global
-public partial class GrayFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class GrayFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     private GrayOption? _option;
-    private static readonly HttpClient _client = new();
 
-    public override Task StartAsync(CancellationToken token)
+    public string? Description { get; set; }
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         if (_context.Configuration.Get<GrayOption>() is not { } option)
         {
@@ -30,52 +29,44 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
         }
 
         _option = option;
-        return Task.CompletedTask;
-    }
 
-    public override Task StopAsync(CancellationToken token)
-    {
-        _client.Dispose();
-        return Task.CompletedTask;
-    }
-
-
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
-    {
-        if (eventContext.Event is not GroupMessageEvent e) return false;
-
-        var segments = e.Message;
-
-        var reply = segments.OfType<ReplyData>().First();
-
-        if (await new GetMessageRequest(reply.Id)
-            .SendAsync(_context.OperationProvider, eventContext.Token) is not GetMessageResponse { Success: true, Message: not null } originalMessage)
-        {
-            LogGetMessageFailed(_context.Logger, reply.Id);
-            return true;
-        }
-
-        var senderId = originalMessage.Message.Sender.UserId;
-
-        try
-        {
-            var url = $"{_option!.ApiAddress}/?id={senderId}";
-            if (await new SendGroupMessageRequest(e.GroupId, [
-                    new ImageData(url)
-                ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
+        builder.On<GroupMessageEvent>()
+            .OnCommand("送走")
+            .OnReply()
+            .Do(async t =>
             {
-                LogSendFailed(_context.Logger, e.GroupId);
-                return true;
-            }
-        }
-        catch (Exception ex)
-        {
-            LogGetImageFailed(_context.Logger, senderId.ToString(), ex);
-            return true;
-        }
+                var (ctx, msgId) = t;
+                if (await new GetMessageRequest(msgId)
+                    .SendAsync(_context.OperationProvider, ctx.Token)
+                    is not GetMessageResponse { Success: true, Message: { } origMsg })
+                {
+                    LogGetMessageFailed(_context.Logger, msgId);
+                    return;
+                }
 
-        LogImageSent(_context.Logger, e.GroupId);
-        return true;
+                var senderId = origMsg.Sender.UserId;
+
+                try
+                {
+                    var url = $"{_option.ApiAddress}/?id={senderId}";
+                    if (await ctx.Event.NewMessageRequest([
+                            new ImageData(url)
+                        ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
+                    {
+                        LogSendFailed(_context.Logger, ctx.Event.GroupId);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogGetImageFailed(_context.Logger, senderId, ex);
+                    return;
+                }
+
+                LogImageSent(_context.Logger, ctx.Event.GroupId);
+            });
+
+        return Task.CompletedTask;
     }
 
     #region Log
@@ -93,7 +84,7 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
     private static partial void LogGetMessageFailed(ILogger logger, string id);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "Failed to get image {Id}")]
-    private static partial void LogGetImageFailed(ILogger logger, string id, Exception ex);
+    private static partial void LogGetImageFailed(ILogger logger, long id, Exception ex);
 
     #endregion
 }

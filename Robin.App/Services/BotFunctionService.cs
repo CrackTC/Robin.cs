@@ -88,7 +88,7 @@ internal partial class BotFunctionService(
         }
 
         var tasks = new List<Task>();
-        var eventContext = new EventContext<BotEvent>(context.Uin, @event, token);
+        var eventContext = new EventContext<BotEvent>(@event, token);
 
         for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
         {

@@ -2,55 +2,24 @@
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.RandReply;
 
 [BotFunctionInfo("rand_reply", "随机回复")]
-[OnAtSelf, Fallback]
 // ReSharper disable once UnusedType.Global
-public partial class RandReplyFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class RandReplyFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     private RandReplyOption? _option;
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
-    {
-        if (eventContext.Event is not GroupMessageEvent e) return false;
+    public string? Description { get; set; }
 
-        var textCount = _option!.Texts?.Count ?? 0;
-        var imageCount = _option.ImagePaths?.Count ?? 0;
-        var index = Random.Shared.Next(textCount + imageCount);
-
-        MessageChain chain =
-        [
-            new ReplyData(e.MessageId),
-            index < textCount
-                ? new TextData(_option.Texts![index])
-                : new ImageData(
-                    $"base64://{Convert.ToBase64String(
-                            await File.ReadAllBytesAsync(_option.ImagePaths![index - textCount], eventContext.Token)
-                        )}")
-        ];
-
-        if (await new SendGroupMessageRequest(e.GroupId, chain)
-            .SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, e.GroupId);
-            return true;
-        }
-
-        LogReplySent(_context.Logger, e.GroupId);
-        return true;
-    }
-
-    public override Task StartAsync(CancellationToken token)
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         if (_context.Configuration.Get<RandReplyOption>() is not { } option)
         {
@@ -59,6 +28,34 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
         }
 
         _option = option;
+
+        builder.On<GroupMessageEvent>()
+            .OnAtSelf(_context.Uin)
+            .AsFallback()
+            .Do(async ctx =>
+            {
+
+                var textCount = _option.Texts?.Count ?? 0;
+                var imageCount = _option.ImagePaths?.Count ?? 0;
+                var index = Random.Shared.Next(textCount + imageCount);
+
+                SegmentData content = index < textCount
+                    ? new TextData(_option.Texts![index])
+                    : new ImageData($"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(
+                        _option.ImagePaths![index - textCount],
+                        ctx.Token
+                    ))}");
+
+                if (await ctx.Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
+                        .SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
+                {
+                    LogSendFailed(_context.Logger, ctx.Event.GroupId);
+                    return;
+                }
+
+                LogReplySent(_context.Logger, ctx.Event.GroupId);
+            });
+
         return Task.CompletedTask;
     }
 

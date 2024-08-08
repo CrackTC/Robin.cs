@@ -4,7 +4,7 @@ namespace Robin.Fluent;
 
 public interface IFluentFunction
 {
-    void OnCreating(FunctionBuilder functionBuilder);
+    Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token);
 
-    IEnumerable<string> Descriptions { get; set; }
+    string? Description { get; set; }
 }

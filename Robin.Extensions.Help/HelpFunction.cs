@@ -5,30 +5,33 @@ using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
-using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Abstractions.Operation.Requests;
 using Robin.Annotations;
-using Robin.Annotations.Filters;
-using Robin.Annotations.Filters.Message;
+using Robin.Fluent;
+using Robin.Fluent.Builder;
 
 namespace Robin.Extensions.Help;
 
 [BotFunctionInfo("help", "帮助信息")]
-[OnCommand("help")]
 // ReSharper disable UnusedType.Global
-public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFilterHandler
+public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    private static string GetTriggerDescription(BotFunctionInfoAttribute info, IEnumerable<TriggerAttribute> triggers)
+    public string? Description { get; set; }
+
+    private static string GetTriggerDescription(
+        BotFunction function,
+        BotFunctionInfoAttribute info,
+        IEnumerable<TriggerAttribute> triggers
+    )
     {
-        var infoText = string.Join(
-            " 或 ",
-            info.EventTypes.Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
-        var triggerText = string.Join("\n• ", triggers
-            .GroupBy(trigger => trigger is BaseEventFilterAttribute attr ? attr.FilterGroup : -1)
-            .SelectMany(group => group.Key is -1 ? group.Select(trigger => Enumerable.Repeat(trigger, 1)) : [group])
-            .Select(triggerGroup => string.Join(" 且 ", triggerGroup.Select(trigger => trigger.GetDescription()))));
+        var infoText = string.Join(" 或 ", info.EventTypes
+            .Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
+
+        var triggerText = string.Join(null, triggers
+            .Select(trigger => $"• {trigger.GetDescription()}\n"));
+
+        triggerText += (function as IFluentFunction)?.Description;
 
         if (string.IsNullOrEmpty(infoText) && string.IsNullOrEmpty(triggerText)) return string.Empty;
 
@@ -44,49 +47,46 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
             }
         }
 
-
         if (string.IsNullOrEmpty(triggerText)) return builder.ToString();
 
-        builder.Append("满足以下几组条件之一：\n• ");
+        builder.AppendLine("满足以下几组条件之一：");
         builder.Append(triggerText);
 
         return builder.ToString();
     }
 
-    public async Task<bool> OnFilteredEventAsync(int filterGroup, EventContext<BotEvent> eventContext)
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        var descriptions = _context.Functions
-            .Select(f => (
-                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
-                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>())
-            )
-            .Select(pair =>
-                $"名称: {pair.info.Name}\n描述: {pair.info.Description}{GetTriggerDescription(pair.info, pair.triggers)}");
+        builder.On<MessageEvent>()
+            .OnCommand("help")
+            .Do(async ctx =>
+            {
 
-        MessageChain chain = [new TextData(string.Join("\n\n", descriptions))];
+                if (await ctx.Event.NewMessageRequest([
+                        new TextData(string.Join("\n\n", _context.Functions
+                            .Select(f => (
+                                    function: f,
+                                    info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
+                                    triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
+                                )
+                            )
+                            .Select(pair =>
+                                $"""
+                                名称: {pair.info.Name}
+                                描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
+                                """
+                            )
+                        ))
+                    ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
+                {
+                    LogSendFailed(_context.Logger, ctx.Event.SourceId);
+                    return;
+                }
 
-        Request? request = eventContext.Event switch
-        {
-            GroupMessageEvent e => new SendGroupMessageRequest(e.GroupId, chain),
-            PrivateMessageEvent e => new SendPrivateMessageRequest(e.UserId, chain),
-            _ => default
-        };
+                LogHelpSent(_context.Logger, ctx.Event.SourceId);
+            });
 
-        var id = eventContext.Event switch
-        {
-            GroupMessageEvent e => e.GroupId,
-            PrivateMessageEvent e => e.UserId,
-            _ => default
-        };
-
-        if (await request.SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, id);
-            return true;
-        }
-
-        LogHelpSent(_context.Logger, id);
-        return true;
+        return Task.CompletedTask;
     }
 
     #region Log

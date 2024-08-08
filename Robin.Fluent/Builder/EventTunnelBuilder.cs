@@ -38,6 +38,8 @@ public class EventTunnelBuilder<TEvent, TOut> where TEvent : BotEvent
 
     public EventTunnelBuilder<TEvent, TOut> AsFallback() => WithPriority(int.MaxValue);
 
+    public EventTunnelBuilder<TEvent, TOut> AsAlwaysFired() => WithPriority(int.MinValue);
+
     internal EventTunnelBuilder<TEvent, TOut> WithDescription(string description) =>
         new(_funcBuilder, _tunBuilder, _priority, [.. _descriptions, description]);
 
