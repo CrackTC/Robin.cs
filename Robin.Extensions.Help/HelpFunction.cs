@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
@@ -15,7 +14,7 @@ namespace Robin.Extensions.Help;
 
 [BotFunctionInfo("help", "帮助信息")]
 // ReSharper disable UnusedType.Global
-public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
+public class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     public string? Description { get; set; }
 
@@ -61,41 +60,24 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
             .OnCommand("help")
             .Do(async ctx =>
             {
-
-                if (await ctx.Event.NewMessageRequest([
-                        new TextData(string.Join("\n\n", _context.Functions
-                            .Select(f => (
-                                    function: f,
-                                    info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
-                                    triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
-                                )
+                await ctx.Event.NewMessageRequest([
+                    new TextData(string.Join("\n\n", _context.Functions
+                        .Select(f => (
+                                function: f,
+                                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
+                                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
                             )
-                            .Select(pair =>
-                                $"""
-                                名称: {pair.info.Name}
-                                描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
-                                """
-                            )
-                        ))
-                    ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
-                {
-                    LogSendFailed(_context.Logger, ctx.Event.SourceId);
-                    return;
-                }
-
-                LogHelpSent(_context.Logger, ctx.Event.SourceId);
+                        )
+                        .Select(pair =>
+                            $"""
+                             名称: {pair.info.Name}
+                             描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
+                             """
+                        )
+                    ))
+                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token);
             });
 
         return Task.CompletedTask;
     }
-
-    #region Log
-
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Send message failed for {Id}")]
-    private static partial void LogSendFailed(ILogger logger, long id);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Help sent for {Id}")]
-    private static partial void LogHelpSent(ILogger logger, long id);
-
-    #endregion
 }

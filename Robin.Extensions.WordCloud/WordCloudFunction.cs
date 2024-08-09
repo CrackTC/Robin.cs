@@ -85,15 +85,9 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        if (await new SendGroupMessageRequest(groupId, [
-                new ImageData(url)
-            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, groupId);
-            return;
-        }
-
-        LogWordCloudSent(_context.Logger, groupId);
+        await new SendGroupMessageRequest(groupId, [
+            new ImageData(url)
+        ]).SendAsync(_context.OperationProvider, _context.Logger, token);
     }
 
     public override async Task StopAsync(CancellationToken token)
@@ -193,13 +187,7 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         Message = "Word cloud api request failed for group {GroupId}")]
     private static partial void LogApiRequestFailed(ILogger logger, long groupId);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Word cloud sent for group {GroupId}")]
-    private static partial void LogWordCloudSent(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion

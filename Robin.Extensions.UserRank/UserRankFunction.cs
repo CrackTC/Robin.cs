@@ -54,12 +54,9 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
         else
         {
             if (await new GetGroupMemberListRequest(groupId, true)
-                .SendAsync(_context.OperationProvider, token)
-                is not GetGroupMemberListResponse { Success: true, Members: { } members })
-            {
-                LogGetGroupMemberListFailed(_context.Logger, groupId);
+                .SendAsync<GetGroupMemberListResponse>(_context.OperationProvider, _context.Logger, token)
+                is not { Members: { } members })
                 return;
-            }
 
             var dict = members
                 .Select(member => (
@@ -86,15 +83,9 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
             message = stringBuilder.ToString();
         }
 
-        if (await new SendGroupMessageRequest(groupId, [
-                new TextData(message)
-            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, groupId);
-            return;
-        }
-
-        LogUserRankSent(_context.Logger, groupId);
+        await new SendGroupMessageRequest(groupId, [
+            new TextData(message)
+        ]).SendAsync(_context.OperationProvider, _context.Logger, token);
     }
 
 
@@ -254,16 +245,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Get group member list failed for group {GroupId}")]
-    private static partial void LogGetGroupMemberListFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "User rank sent for group {GroupId}")]
-    private static partial void LogUserRankSent(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion

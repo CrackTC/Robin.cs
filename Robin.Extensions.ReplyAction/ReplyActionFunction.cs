@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Robin.Abstractions;
+﻿using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
@@ -47,22 +46,15 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                 var verb = match.Groups["verb"];
                 var adverb = match.Groups["adverb"];
 
-                if (await new GetMessageRequest(msgId).SendAsync(_context.OperationProvider, token)
-                    is not GetMessageResponse { Success: true, Message: { } origMsg })
-                {
-                    LogGetMessageFailed(_context.Logger, msgId);
+                if (await new GetMessageRequest(msgId)
+                        .SendAsync<GetMessageResponse>(_context.OperationProvider, _context.Logger, token)
+                    is not { Message.Sender.UserId: var senderId })
                     return;
-                }
-
-                var senderId = origMsg.Sender.UserId;
 
                 if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true)
-                        .SendAsync(_context.OperationProvider, token)
-                    is not GetGroupMemberInfoResponse { Success: true, Info: { } info })
-                {
-                    LogGetGroupMemberInfoFailed(_context.Logger, e.GroupId, senderId);
+                        .SendAsync<GetGroupMemberInfoResponse>(_context.OperationProvider, _context.Logger, token)
+                    is not { Info: { } info })
                     return;
-                }
 
                 var sourceName = e.Sender.Card switch
                 {
@@ -76,37 +68,13 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                     _ => info.Card
                 };
 
-
-                if (await e.NewMessageRequest([
-                        new TextData($"{sourceName} {verb.Value} {targetName}{(
-                            adverb.Success ? ' ' + adverb.Value : string.Empty
-                        )}")
-                    ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-                {
-                    LogSendFailed(_context.Logger, e.GroupId);
-                    return;
-                }
-
-                LogActionSent(_context.Logger, e.GroupId);
+                await e.NewMessageRequest([
+                    new TextData($"{sourceName} {verb.Value} {targetName}{(
+                        adverb.Success ? ' ' + adverb.Value : string.Empty
+                    )}")
+                ]).SendAsync(_context.OperationProvider, _context.Logger, token);
             });
 
         return Task.CompletedTask;
     }
-
-    #region Log
-
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Failed to get message {Id}")]
-    private static partial void LogGetMessageFailed(ILogger logger, string id);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning,
-        Message = "Failed to get group member info {GroupId} {UserId}")]
-    private static partial void LogGetGroupMemberInfoFailed(ILogger logger, long groupId, long userId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Action sent for group {GroupId}")]
-    private static partial void LogActionSent(ILogger logger, long groupId);
-
-    #endregion
 }

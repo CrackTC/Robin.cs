@@ -42,17 +42,11 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
 
         var parts = text.Split("{at}");
 
-        if (await new SendGroupMessageRequest(e.GroupId, [
+        await new SendGroupMessageRequest(e.GroupId, [
             new TextData(parts[0]),
             new AtData(e.UserId),
-            new TextData(parts[1]),
-        ]).SendAsync(_context.OperationProvider, eventContext.Token) is not { Success: true })
-        {
-            LogSendMessageFailed(_context.Logger, e.GroupId);
-            return;
-        }
-
-        LogMessageSent(_context.Logger, e.GroupId);
+            new TextData(parts[1])
+        ]).SendAsync(_context.OperationProvider, _context.Logger, eventContext.Token);
     }
 
     #region Log
@@ -60,13 +54,7 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
     [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Message sent to {GroupId}")]
-    private static partial void LogMessageSent(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to send message to {GroupId}")]
-    private static partial void LogSendMessageFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Welcome text for {GroupId}: {Text}")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Welcome text for {GroupId}: {Text}")]
     private static partial void LogWelcomeText(ILogger logger, string groupId, string text);
 
     #endregion

@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
@@ -33,35 +32,19 @@ public partial class DiceFunction(FunctionContext context) : BotFunction(context
                     ? int.Parse(match.Groups["modifier"].Value)
                     : 0;
 
-                var rolls = Enumerable.Range(0, count).Select(_ => Random.Shared.Next(1, sides + 1)).ToArray();
+                var rolls = Enumerable.Range(0, count).Select(_ => Random.Shared.Next(sides) + 1).ToArray();
                 var sum = rolls.Sum() + modifier;
 
-                if (await ctx.Event.NewMessageRequest([
-                        new TextData(
-                            $"""
-                            Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...
-                            Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}
-                            """
-                        )
-                    ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
-                {
-                    LogSendFailed(_context.Logger, ctx.Event.SourceId);
-                    return;
-                }
-
-                LogDiceSent(_context.Logger, ctx.Event.SourceId);
+                await ctx.Event.NewMessageRequest([
+                    new TextData(
+                        $"""
+                         Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...
+                         Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}
+                         """
+                    )
+                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token);
             });
 
         return Task.CompletedTask;
     }
-
-    #region Log
-
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Failed to send message to group {GroupId}.")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Dice sent to group {GroupId}.")]
-    private static partial void LogDiceSent(ILogger logger, long groupId);
-
-    #endregion
 }

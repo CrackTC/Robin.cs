@@ -36,34 +36,15 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
             .Do(async t =>
             {
                 var (ctx, msgId) = t;
+
                 if (await new GetMessageRequest(msgId)
-                    .SendAsync(_context.OperationProvider, ctx.Token)
-                    is not GetMessageResponse { Success: true, Message: { } origMsg })
-                {
-                    LogGetMessageFailed(_context.Logger, msgId);
-                    return;
-                }
+                        .SendAsync<GetMessageResponse>(_context.OperationProvider, _context.Logger, ctx.Token)
+                    is not { Message.Sender.UserId: var id }) return;
 
-                var senderId = origMsg.Sender.UserId;
-
-                try
-                {
-                    var url = $"{_option.ApiAddress}/?id={senderId}";
-                    if (await ctx.Event.NewMessageRequest([
-                            new ImageData(url)
-                        ]).SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
-                    {
-                        LogSendFailed(_context.Logger, ctx.Event.GroupId);
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogGetImageFailed(_context.Logger, senderId, ex);
-                    return;
-                }
-
-                LogImageSent(_context.Logger, ctx.Event.GroupId);
+                var url = $"{_option.ApiAddress}/?id={id}";
+                await ctx.Event.NewMessageRequest([
+                    new ImageData(url)
+                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token);
             });
 
         return Task.CompletedTask;
@@ -73,18 +54,6 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Failed to bind option.")]
     private static partial void LogOptionBindingFailed(ILogger logger);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Image sent for group {GroupId}")]
-    private static partial void LogImageSent(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Failed to get message {Id}")]
-    private static partial void LogGetMessageFailed(ILogger logger, string id);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "Failed to get image {Id}")]
-    private static partial void LogGetImageFailed(ILogger logger, long id, Exception ex);
 
     #endregion
 }

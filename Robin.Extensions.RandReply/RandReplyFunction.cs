@@ -46,14 +46,8 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
                         ctx.Token
                     ))}");
 
-                if (await ctx.Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
-                        .SendAsync(_context.OperationProvider, ctx.Token) is not { Success: true })
-                {
-                    LogSendFailed(_context.Logger, ctx.Event.GroupId);
-                    return;
-                }
-
-                LogReplySent(_context.Logger, ctx.Event.GroupId);
+                await ctx.Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
+                    .SendAsync(_context.OperationProvider, _context.Logger, ctx.Token);
             });
 
         return Task.CompletedTask;
@@ -63,12 +57,6 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Failed to bind option.")]
     private static partial void LogOptionBindingFailed(ILogger logger);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Send message failed for group {GroupId}")]
-    private static partial void LogSendFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Reply sent for group {GroupId}")]
-    private static partial void LogReplySent(ILogger logger, long groupId);
 
     #endregion
 }

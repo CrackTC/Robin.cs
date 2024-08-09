@@ -158,19 +158,10 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
             });
     }
 
-    private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token)
-    {
-        if (await new SendPrivateMessageRequest(userId, [
-                new TextData(reply)
-            ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-        {
-            LogSendFailed(_context.Logger, userId);
-            return false;
-        }
-
-        LogReplySent(_context.Logger, userId);
-        return true;
-    }
+    private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token) =>
+        await new SendPrivateMessageRequest(userId, [
+            new TextData(reply)
+        ]).SendAsync(_context.OperationProvider, _context.Logger, token) is not null;
 
     public override async Task StopAsync(CancellationToken token)
     {
@@ -370,14 +361,8 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Regex compile failed")]
     private static partial void LogRegexCompileFailed(ILogger logger, ArgumentException exception);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Send message failed for user {UserId}")]
-    private static partial void LogSendFailed(ILogger logger, long userId);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Failed to generate content for user {UserId}")]
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to generate content for user {UserId}")]
     private static partial void LogGenerateContentFailed(ILogger logger, long userId);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Reply sent for user {UserId}")]
-    private static partial void LogReplySent(ILogger logger, long userId);
 
     #endregion
 }

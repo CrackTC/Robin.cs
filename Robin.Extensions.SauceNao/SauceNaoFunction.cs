@@ -40,14 +40,11 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
                 var (e, token) = ctx;
 
                 if (await new GetMessageRequest(msgId)
-                    .SendAsync(_context.OperationProvider, token)
-                    is not GetMessageResponse { Success: true, Message: { } origMsg })
-                {
-                    LogGetMessageFailed(_context.Logger, msgId);
+                        .SendAsync<GetMessageResponse>(_context.OperationProvider, _context.Logger, token)
+                    is not { Message.Message: { } origMsg })
                     return;
-                }
 
-                if (origMsg.Message.OfType<ImageData>().FirstOrDefault() is not { Url: { } url })
+                if (origMsg.OfType<ImageData>().FirstOrDefault() is not { Url: { } url })
                     return;
 
                 var results = (await _client.GetSauceAsync(url)).Results
@@ -65,27 +62,16 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 
                 if (results.Count is 0)
                 {
-                    if (await e.NewMessageRequest([
-                            new TextData("找不到喵>_<")
-                        ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-                    {
-                        LogSendMessageFailed(_context.Logger, e.SourceId);
-                        return;
-                    }
+                    await e.NewMessageRequest([
+                        new TextData("找不到喵>_<")
+                    ]).SendAsync(_context.OperationProvider, _context.Logger, token);
 
-                    LogMessageSent(_context.Logger, e.SourceId);
                     return;
                 }
 
-                if (await e.NewMessageRequest([
-                        new TextData(string.Join("\n", results))
-                    ]).SendAsync(_context.OperationProvider, token) is not { Success: true })
-                {
-                    LogSendMessageFailed(_context.Logger, e.SourceId);
-                    return;
-                }
-
-                LogMessageSent(_context.Logger, e.SourceId);
+                await e.NewMessageRequest([
+                    new TextData(string.Join("\n", results))
+                ]).SendAsync(_context.OperationProvider, _context.Logger, token);
             });
 
         return Task.CompletedTask;
@@ -93,17 +79,8 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Failed to get message {Id}")]
-    private static partial void LogGetMessageFailed(ILogger logger, string id);
-
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Option binding failed")]
+    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to send message to {GroupId}")]
-    private static partial void LogSendMessageFailed(ILogger logger, long groupId);
-
-    [LoggerMessage(EventId = 4, Level = LogLevel.Information, Message = "Message sent to {GroupId}")]
-    private static partial void LogMessageSent(ILogger logger, long groupId);
 
     #endregion
 }
