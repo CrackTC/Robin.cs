@@ -39,6 +39,7 @@ public static class FluentExt
         this EventTunnelBuilder<TEvent, EventContext<TEvent>> builder
     ) where TEvent : MessageEvent =>
         builder
+            .Where(ctx => ctx.Event.Message.OfType<TextData>().Any())
             .Select(ctx => (ctx, Text: string.Join(null, ctx.Event.Message.OfType<TextData>().Select(data => data.Text))))
             .WithDescription("消息包含文本");
 
