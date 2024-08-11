@@ -12,7 +12,7 @@ public static class FluentExt
     public static EventTunnelBuilder<TEvent, EventContext<TEvent>> OnAtSelf<TEvent>(
         this EventTunnelBuilder<TEvent, EventContext<TEvent>> builder,
         long selfUin
-    ) where TEvent : GroupMessageEvent =>
+    ) where TEvent : MessageEvent =>
         builder
             .Where(ctx => ctx.Event.Message.OfType<AtData>().Any(at => at.Uin == selfUin))
             .WithDescription("自身在群聊中被@");
@@ -20,7 +20,7 @@ public static class FluentExt
     public static EventTunnelBuilder<TEvent, EventContext<TEvent>> OnNotAtOthers<TEvent>(
         this EventTunnelBuilder<TEvent, EventContext<TEvent>> builder,
         long selfUin
-    ) where TEvent : GroupMessageEvent =>
+    ) where TEvent : MessageEvent =>
         builder
             .Where(ctx => ctx.Event.Message.OfType<AtData>().All(at => at.Uin == selfUin))
             .WithDescription("消息未@其他人");
