@@ -36,9 +36,11 @@ public class EventTunnelBuilder<TEvent, TOut> where TEvent : BotEvent
     public EventTunnelBuilder<TEvent, TOut> WithPriority(int priority) =>
         new(_funcBuilder, _tunBuilder, priority, _descriptions);
 
-    public EventTunnelBuilder<TEvent, TOut> AsFallback() => WithPriority(int.MaxValue);
+    public EventTunnelBuilder<TEvent, TOut> AsFallback() =>
+        new(_funcBuilder, _tunBuilder, int.MaxValue, [.. _descriptions, "未触发其它功能"]);
 
-    public EventTunnelBuilder<TEvent, TOut> AsAlwaysFired() => WithPriority(int.MinValue);
+    public EventTunnelBuilder<TEvent, TOut> AsAlwaysFired() =>
+        new(_funcBuilder, _tunBuilder, int.MinValue, [.. _descriptions, "始终触发"]);
 
     internal EventTunnelBuilder<TEvent, TOut> WithDescription(string description) =>
         new(_funcBuilder, _tunBuilder, _priority, [.. _descriptions, description]);

@@ -31,9 +31,6 @@ public class FunctionBuilder
                 }
             )
         )
-        .WithDescription(typeof(TEvent)
-            .GetCustomAttribute<EventDescriptionAttribute>()
-            ?.Description
-            ?? typeof(TEvent).Name
-        );
+        .WithDescription($"收到{typeof(TEvent)
+            .GetCustomAttribute<EventDescriptionAttribute>()?.Description ?? typeof(TEvent).Name}");
 }

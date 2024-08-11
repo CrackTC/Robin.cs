@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
@@ -14,7 +15,7 @@ namespace Robin.Extensions.Help;
 
 [BotFunctionInfo("help", "帮助信息")]
 // ReSharper disable UnusedType.Global
-public class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
+public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     public string? Description { get; set; }
 
@@ -54,29 +55,59 @@ public class HelpFunction(FunctionContext context) : BotFunction(context), IFlue
         return builder.ToString();
     }
 
+    private Dictionary<string, string> Helps => _context.Functions
+        .Select(f => (
+                function: f,
+                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
+                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
+            )
+        )
+        .ToDictionary(pair => pair.info.Name, pair => $"""
+            名称: {pair.info.Name}
+            描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
+            """
+        );
+
+    private Dictionary<string, string> BriefHelps => _context.Functions
+        .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
+        .ToDictionary(info => info.Name, info => info.Description);
+
+    [GeneratedRegex(@"^/help(?:\s+(?<name>\S+))?")]
+    private static partial Regex HelpRegex();
+
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
             .OnAtSelf(_context.Uin)
-            .OnCommand("help")
-            .Do(async ctx =>
+            .OnRegex(HelpRegex())
+            .Do(async tuple =>
             {
-                await ctx.Event.NewMessageRequest([
-                    new TextData(string.Join("\n\n", _context.Functions
-                        .Select(f => (
-                                function: f,
-                                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
-                                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
-                            )
-                        )
-                        .Select(pair =>
-                            $"""
-                             名称: {pair.info.Name}
-                             描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
-                             """
-                        )
-                    ))
-                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token);
+                var (ctx, match) = tuple;
+                var (e, t) = ctx;
+
+                var name = match.Groups["name"];
+
+                if (!name.Success)
+                {
+                    await e.NewMessageRequest([
+                        new TextData($"""
+                        /help [功能名] 查看详细功能信息
+                        可用功能：
+                        {string.Join("\n", BriefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
+                        """)
+                    ]).SendAsync(_context.OperationProvider, _context.Logger, t);
+                    return;
+                }
+
+                if (!Helps.TryGetValue(name.Value, out var help))
+                {
+                    await e.NewMessageRequest([
+                        new TextData($"未找到功能：{name.Value}")
+                    ]).SendAsync(_context.OperationProvider, _context.Logger, t);
+                    return;
+                }
+
+                await e.NewMessageRequest([new TextData(help)]).SendAsync(_context.OperationProvider, _context.Logger, t);
             });
 
         return Task.CompletedTask;
