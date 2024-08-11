@@ -89,7 +89,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     }
 
 
-    [GeneratedRegex(@"^/rank\s*(?<n>\d+)?")]
+    [GeneratedRegex(@"^/rank(?:\s+(?<n>\d+))?$")]
     private static partial Regex RankRegex();
 
     public string? Description { get; set; }
