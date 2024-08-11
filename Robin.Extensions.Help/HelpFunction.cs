@@ -57,6 +57,7 @@ public class HelpFunction(FunctionContext context) : BotFunction(context), IFlue
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
+            .OnAtSelf(_context.Uin)
             .OnCommand("help")
             .Do(async ctx =>
             {
