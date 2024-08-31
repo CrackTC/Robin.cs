@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS abstraction
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS abstraction
 WORKDIR /robin/Robin.Abstractions
 COPY ./Robin.Abstractions/Robin.Abstractions.csproj ./
 RUN dotnet restore
