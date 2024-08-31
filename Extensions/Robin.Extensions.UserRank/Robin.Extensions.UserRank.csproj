@@ -7,7 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Robin.Abstractions\Robin.Abstractions.csproj" />
+      <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj" />
+      <ProjectReference Include="..\Robin.Annotations\Robin.Annotations.csproj" />
       <ProjectReference Include="..\Robin.Fluent\Robin.Fluent.csproj" />
     </ItemGroup>
 

@@ -44,8 +44,21 @@ void ConfigureBackend()
 void LoadAssemblies(string dir)
 {
     var path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? string.Empty, dir);
-    foreach (var dll in Directory.GetFiles(path, "*.dll"))
+    foreach (var directory in Directory.GetDirectories(path))
     {
-        AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
+        var subPath = Path.Combine(path, directory);
+        foreach (var dll in Directory.GetFiles(subPath, "*.dll"))
+        {
+            AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
+        }
+
+        var nativePath = Path.Combine(subPath, "runtimes", System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier, "native");
+        if (Directory.Exists(nativePath))
+        {
+            foreach (var lib in Directory.GetFiles(nativePath))
+            {
+                File.Copy(lib, Path.Combine(subPath, Path.GetFileName(lib)));
+            }
+        }
     }
 }
