@@ -57,7 +57,7 @@ void LoadAssemblies(string dir)
         {
             foreach (var lib in Directory.GetFiles(nativePath))
             {
-                File.Copy(lib, Path.Combine(subPath, Path.GetFileName(lib)));
+                File.Move(lib, Path.Combine(subPath, Path.GetFileName(lib)));
             }
         }
     }
