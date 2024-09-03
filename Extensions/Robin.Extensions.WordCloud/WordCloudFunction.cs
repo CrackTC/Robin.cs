@@ -21,7 +21,7 @@ namespace Robin.Extensions.WordCloud;
 public partial class WordCloudFunction(FunctionContext context) : BotFunction(context), ICronHandler, IFluentFunction
 {
     private WordCloudOption? _option;
-    private static readonly HttpClient _client = new();
+    private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(3) };
 
     public string? Description { get; set; }
 
@@ -101,7 +101,11 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
     {
         try
         {
-            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendWordCloudAsync(group, true, token)));
+            var groups = await GetGroupsAsync(token);
+            foreach (var group in groups)
+            {
+                await SendWordCloudAsync(group, true, token);
+            }
         }
         catch (Exception e)
         {
