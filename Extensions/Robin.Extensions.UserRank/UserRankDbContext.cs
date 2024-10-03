@@ -5,7 +5,7 @@ namespace Robin.Extensions.UserRank;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 internal class UserRankDbContext(long uin = 0) : DbContext
 {
-    public DbSet<Record> Records { get; set; }
+    public DbSet<Record> Records { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

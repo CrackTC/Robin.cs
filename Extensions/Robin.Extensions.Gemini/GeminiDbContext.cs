@@ -5,8 +5,8 @@ namespace Robin.Extensions.Gemini;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 internal class GeminiDbContext(long uin = 0) : DbContext
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<Message> Messages { get; set; }
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Message> Messages { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
