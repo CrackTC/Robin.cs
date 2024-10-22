@@ -17,8 +17,8 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     static OneBotMessageConverter()
     {
-        var dataTypes = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        var dataTypes = typeof(OneBotMessageConverter).Assembly
+            .GetTypes()
             .Select(type => (Type: type, Attribute: type.GetCustomAttribute<OneBotSegmentDataAttribute>()))
             .Where(pair => pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotSegmentData)));
 

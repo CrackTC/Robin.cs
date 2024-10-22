@@ -10,18 +10,19 @@ using Robin.Abstractions.Context;
 
 namespace Robin.App.Services;
 
-// scoped, every bot has its own function, **DO NOT register it as IHostedService**
+// scoped, every bot has its own copy of functions, **DO NOT register it as IHostedService**
 internal partial class BotFunctionService(
     ILogger<BotFunctionService> logger,
     BotContext context,
-    List<BotFunction> functions
+    List<BotFunction> functions,
+    IEnumerable<Assembly> extensions
 ) : IHostedService
 {
     private readonly Dictionary<Type, List<BotFunction>> _eventToFunctions = [];
 
     private async Task RegisterFunctions(CancellationToken token)
     {
-        var types = AppDomain.CurrentDomain.GetAssemblies()
+        var types = extensions
             .SelectMany(assembly => assembly.GetExportedTypes())
             .Where(type => type.IsSubclassOf(typeof(BotFunction)));
 

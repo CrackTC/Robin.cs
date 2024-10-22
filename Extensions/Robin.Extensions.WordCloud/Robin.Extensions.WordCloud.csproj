@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj" />
-      <ProjectReference Include="..\Robin.Annotations\Robin.Annotations.csproj" />
       <ProjectReference Include="..\Robin.Fluent\Robin.Fluent.csproj" />
+      <ProjectReference Include="..\Robin.Annotations\Robin.Annotations.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -18,6 +17,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
     </PropertyGroup>
 
 </Project>

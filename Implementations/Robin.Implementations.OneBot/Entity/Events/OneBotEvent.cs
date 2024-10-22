@@ -20,8 +20,8 @@ internal abstract class OneBotEvent
 
     static OneBotEvent()
     {
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        var types = typeof(OneBotEvent).Assembly
+            .GetTypes()
             .Where(type => type.BaseType?.IsAssignableTo(typeof(OneBotEvent)) ?? false)
             .Select(type => (Type: type, EventTypeAttribute: type.GetCustomAttribute<OneBotEventTypeAttribute>(),
                 PostTypeAttribute: type.BaseType?.GetCustomAttribute<OneBotPostTypeAttribute>()))

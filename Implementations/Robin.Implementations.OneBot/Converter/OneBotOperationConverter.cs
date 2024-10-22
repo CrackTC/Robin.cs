@@ -14,8 +14,8 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
 
     static OneBotOperationConverter()
     {
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        var types = typeof(OneBotOperationConverter).Assembly
+            .GetTypes()
             .Select(type => (Type: type, Attribute: type.GetCustomAttribute<OneBotRequestAttribute>()))
             .Where(pair => pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotRequest)));
 
@@ -25,8 +25,8 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
             _requestTypeToOneBotRequest[attribute!.Type] = (attribute.Endpoint, r);
         }
 
-        var types1 = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        var types1 = typeof(OneBotOperationConverter).Assembly
+            .GetTypes()
             .Select(type => (Type: type, Attribute: type.GetCustomAttribute<OneBotResponseDataAttribute>()))
             .Where(pair => pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotResponseData)));
 

@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.Loader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Context;
+using Robin.App;
 using Robin.App.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -14,11 +14,12 @@ builder.Configuration.AddJsonFile("config.json");
 
 builder.Logging.AddConsole();
 
-LoadAssemblies("Implementations");
-LoadAssemblies("Extensions");
-ConfigureBackend();
+var implementations = LoadAssemblies("Implementations");
+var extensions = LoadAssemblies("Extensions");
+ConfigureBackend(implementations);
 
 builder.Services.AddHostedService<BotCreationService>()
+    .AddSingleton<IEnumerable<Assembly>>(extensions)
     .AddScoped<BotFunctionService>()
     .AddScoped<BotContext>()
     .AddScoped<List<BotFunction>>();
@@ -26,9 +27,9 @@ builder.Services.AddHostedService<BotCreationService>()
 await builder.Build().RunAsync();
 return;
 
-void ConfigureBackend()
+void ConfigureBackend(IEnumerable<Assembly> implementations)
 {
-    var backends = AppDomain.CurrentDomain.GetAssemblies()
+    var backends = implementations
         .SelectMany(assembly => assembly.GetExportedTypes())
         .Select(type => (Type: type, Attributes: type.GetCustomAttributes<BackendAttribute>(false)))
         .Where(pair => pair.Attributes.Any() && pair.Type.IsAssignableTo(typeof(IBackendFactory)))
@@ -41,24 +42,10 @@ void ConfigureBackend()
     }
 }
 
-void LoadAssemblies(string dir)
+IEnumerable<Assembly> LoadAssemblies(string dir)
 {
     var path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? string.Empty, dir);
-    foreach (var directory in Directory.GetDirectories(path))
-    {
-        var subPath = Path.Combine(path, directory);
-        foreach (var dll in Directory.GetFiles(subPath, "*.dll"))
-        {
-            AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
-        }
-
-        var nativePath = Path.Combine(subPath, "runtimes", System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier, "native");
-        if (Directory.Exists(nativePath))
-        {
-            foreach (var lib in Directory.GetFiles(nativePath))
-            {
-                File.Move(lib, Path.Combine(subPath, Path.GetFileName(lib)));
-            }
-        }
-    }
+    return Directory.GetDirectories(path).Select(subDir =>
+        new BotExtensionLoadContext(Path.Combine(subDir, $"{Path.GetFileName(subDir)}.dll"))
+            .LoadFromAssemblyName(new AssemblyName(Path.GetFileName(subDir)))).ToList();
 }
