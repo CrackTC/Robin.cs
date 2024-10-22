@@ -1,10 +1,10 @@
 using System.Reflection;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
-using Robin.Fluent.Event;
-using Robin.Fluent.Tunnel;
+using Robin.Middlewares.Fluent.Event;
+using Robin.Middlewares.Fluent.Tunnel;
 
-namespace Robin.Fluent;
+namespace Robin.Middlewares.Fluent;
 
 public class FunctionBuilder
 {

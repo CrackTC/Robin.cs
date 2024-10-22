@@ -1,8 +1,8 @@
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
-using Robin.Fluent.Tunnel;
+using Robin.Middlewares.Fluent.Tunnel;
 
-namespace Robin.Fluent.Event;
+namespace Robin.Middlewares.Fluent.Event;
 
 internal record EventTunnelInfo(int Priority, IEnumerable<string> Descriptions, Tunnel<EventContext<BotEvent>, Task> Tunnel);
 

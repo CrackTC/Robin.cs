@@ -1,4 +1,4 @@
-namespace Robin.Fluent.Tunnel;
+namespace Robin.Middlewares.Fluent.Tunnel;
 
 internal interface ITunnelResult<out T>
 {

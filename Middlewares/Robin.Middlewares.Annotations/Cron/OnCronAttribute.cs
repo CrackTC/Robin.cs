@@ -1,4 +1,4 @@
-namespace Robin.Annotations.Cron;
+namespace Robin.Middlewares.Annotations.Cron;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class OnCronAttribute(string cron) : Attribute

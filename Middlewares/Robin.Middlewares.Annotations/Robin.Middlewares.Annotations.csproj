@@ -2,8 +2,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj">
-          <Private>false</Private>
-          <ExcludeAssets>runtime</ExcludeAssets>
+        <Private>false</Private>
+        <ExcludeAssets>runtime</ExcludeAssets>
       </ProjectReference>
     </ItemGroup>
 

@@ -6,7 +6,7 @@ using Quartz.Impl;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 
-namespace Robin.Annotations.Cron;
+namespace Robin.Middlewares.Annotations.Cron;
 
 [BotFunctionInfo("cron", "元功能，在指定的时间执行任务")]
 // ReSharper disable UnusedType.Global

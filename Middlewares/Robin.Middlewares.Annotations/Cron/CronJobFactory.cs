@@ -1,7 +1,7 @@
 using Quartz;
 using Quartz.Spi;
 
-namespace Robin.Annotations.Cron;
+namespace Robin.Middlewares.Annotations.Cron;
 
 public class CronJobFactory(
     IReadOnlyDictionary<string, ICronHandler> handlers,

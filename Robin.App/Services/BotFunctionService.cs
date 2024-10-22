@@ -43,6 +43,7 @@ internal partial class BotFunctionService(
                 }
 
                 functions.Add(function);
+                LogAddingFunction(logger, info.Name);
 
                 foreach (var eventType in info.EventTypes)
                 {
@@ -140,6 +141,9 @@ internal partial class BotFunctionService(
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
     private static partial void LogInvokeFunctionFailed(ILogger logger, string name, Exception exception);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Adding function {Name}")]
+    private static partial void LogAddingFunction(ILogger logger, string name);
 
     #endregion
 }

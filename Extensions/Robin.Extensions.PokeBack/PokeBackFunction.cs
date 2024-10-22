@@ -3,8 +3,8 @@ using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Notice;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Fluent;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.PokeBack;
 

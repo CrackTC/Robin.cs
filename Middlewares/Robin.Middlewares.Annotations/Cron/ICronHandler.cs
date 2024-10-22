@@ -1,4 +1,4 @@
-namespace Robin.Annotations.Cron;
+namespace Robin.Middlewares.Annotations.Cron;
 
 public interface ICronHandler
 {

@@ -4,7 +4,7 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Fluent;
+using Robin.Middlewares.Fluent;
 
 namespace Robin.Extensions.Test;
 

@@ -1,4 +1,4 @@
-namespace Robin.Fluent;
+namespace Robin.Middlewares.Fluent;
 
 public interface IFluentFunction
 {

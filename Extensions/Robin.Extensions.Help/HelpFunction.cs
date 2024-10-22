@@ -7,8 +7,8 @@ using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Fluent;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.Help;
 

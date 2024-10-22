@@ -1,6 +1,6 @@
 using Quartz;
 
-namespace Robin.Annotations.Cron;
+namespace Robin.Middlewares.Annotations.Cron;
 
 public class CronJob(ICronHandler handler, CancellationToken token) : IJob
 {

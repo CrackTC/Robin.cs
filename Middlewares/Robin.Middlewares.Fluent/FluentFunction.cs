@@ -1,9 +1,9 @@
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Fluent.Event;
 
-namespace Robin.Fluent;
+namespace Robin.Middlewares.Fluent;
 
 [BotFunctionInfo("fluent", "元功能，流式扩展接口", typeof(BotEvent))]
 // ReSharper disable once UnusedType.Global

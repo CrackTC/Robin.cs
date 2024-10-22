@@ -4,7 +4,7 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Event.Notice;
 using Robin.Abstractions.Message.Entity;
 
-namespace Robin.Fluent.Event;
+namespace Robin.Middlewares.Fluent.Event;
 
 public static class FluentExt
 {

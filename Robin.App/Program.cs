@@ -8,6 +8,8 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Context;
 using Robin.App;
 using Robin.App.Services;
+using Robin.Middlewares.Annotations.Cron;
+using Robin.Middlewares.Fluent;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("config.json");
@@ -19,7 +21,11 @@ var extensions = LoadAssemblies("Extensions");
 ConfigureBackend(implementations);
 
 builder.Services.AddHostedService<BotCreationService>()
-    .AddSingleton<IEnumerable<Assembly>>(extensions)
+    .AddSingleton<IEnumerable<Assembly>>([
+        typeof(CronFunction).Assembly,
+        typeof(FluentFunction).Assembly,
+        .. extensions
+    ])
     .AddScoped<BotFunctionService>()
     .AddScoped<BotContext>()
     .AddScoped<List<BotFunction>>();

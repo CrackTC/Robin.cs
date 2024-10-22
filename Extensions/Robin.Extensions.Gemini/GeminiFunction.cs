@@ -10,8 +10,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Context;
-using Robin.Fluent;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.Gemini;
 

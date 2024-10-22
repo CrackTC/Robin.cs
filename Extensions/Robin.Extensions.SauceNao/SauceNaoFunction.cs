@@ -7,8 +7,8 @@ using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
-using Robin.Fluent;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 using SauceNET;
 
 namespace Robin.Extensions.SauceNao;

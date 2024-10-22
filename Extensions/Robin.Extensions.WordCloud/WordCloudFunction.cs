@@ -9,9 +9,9 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Annotations.Cron;
-using Robin.Fluent;
-using Robin.Fluent.Event;
+using Robin.Middlewares.Annotations.Cron;
+using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.WordCloud;
 
