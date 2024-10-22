@@ -14,12 +14,12 @@ RUN dotnet publish -c Release -o /out
 FROM abstraction AS build-impl
 WORKDIR /robin/Implementations
 COPY ./Implementations ./
-RUN find . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Implementations/{}' \;
+RUN find . ! -path . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Implementations/{}' \;
 
 FROM abstraction AS build-ext
 WORKDIR /robin/Extensions
 COPY ./Extensions ./
-RUN find . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Extensions/{}' \;
+RUN find . ! -path . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Extensions/{}' \;
 
 FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS final
 WORKDIR /app
