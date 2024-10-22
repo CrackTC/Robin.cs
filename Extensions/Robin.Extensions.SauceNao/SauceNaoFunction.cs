@@ -19,8 +19,6 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 {
     private SauceNETClient? _client;
 
-    public string? Description { get; set; }
-
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         if (_context.Configuration.Get<SauceNaoOption>() is not { } option)

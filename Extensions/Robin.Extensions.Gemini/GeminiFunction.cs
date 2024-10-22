@@ -26,8 +26,6 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     private Regex? _clearRegex;
     private Regex? _rollbackRegex;
 
-    public string? Description { get; set; }
-
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         if (_context.Configuration.Get<GeminiOption>() is not { } option)

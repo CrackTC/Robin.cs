@@ -1,7 +1,7 @@
 namespace Robin.Annotations.Cron;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class OnCronAttribute(string cron) : TriggerAttribute
+public class OnCronAttribute(string cron) : Attribute
 {
     public string Cron { get; } = cron;
 
@@ -11,6 +11,6 @@ public class OnCronAttribute(string cron) : TriggerAttribute
         Locale = "zh-Hans"
     };
 
-    public override string GetDescription()
+    public string GetDescription()
         => $"{CronExpressionDescriptor.ExpressionDescriptor.GetDescription(Cron, _options)} 自动触发";
 }

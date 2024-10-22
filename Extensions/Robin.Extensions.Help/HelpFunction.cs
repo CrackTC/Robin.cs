@@ -7,7 +7,6 @@ using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
-using Robin.Annotations;
 using Robin.Fluent;
 using Robin.Fluent.Event;
 
@@ -17,21 +16,16 @@ namespace Robin.Extensions.Help;
 // ReSharper disable UnusedType.Global
 public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public string? Description { get; set; }
-
     private static string GetTriggerDescription(
         BotFunction function,
-        BotFunctionInfoAttribute info,
-        IEnumerable<TriggerAttribute> triggers
+        BotFunctionInfoAttribute info
     )
     {
         var infoText = string.Join(" 或 ", info.EventTypes
             .Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
 
-        var triggerText = string.Concat(triggers
-            .Select(trigger => $"• {trigger.GetDescription()}\n"));
-
-        triggerText += (function as IFluentFunction)?.Description;
+        var triggerText = string.Concat(function.TriggerDescriptions
+            .Select(triggerDesc => $"• {triggerDesc}\n"));
 
         if (string.IsNullOrEmpty(infoText) && string.IsNullOrEmpty(triggerText)) return string.Empty;
 
@@ -58,13 +52,12 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
     private Dictionary<string, string> Helps => _context.Functions
         .Select(f => (
                 function: f,
-                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!,
-                triggers: f.GetType().GetCustomAttributes<TriggerAttribute>()
+                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
             )
         )
         .ToDictionary(pair => pair.info.Name, pair => $"""
             名称: {pair.info.Name}
-            描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info, pair.triggers)}
+            描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info)}
             """
         );
 

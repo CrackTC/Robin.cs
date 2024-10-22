@@ -15,8 +15,6 @@ namespace Robin.Extensions.ReplyAction;
 // ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public string? Description { get; set; }
-
     [GeneratedRegex(@"^/\S")]
     private static partial Regex IsAction();
 

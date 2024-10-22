@@ -13,8 +13,6 @@ namespace Robin.Extensions.Status;
 // ReSharper disable once UnusedType.Global
 public class StatusFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public string? Description { get; set; }
-
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()

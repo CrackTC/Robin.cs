@@ -18,8 +18,6 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
 {
     private GrayOption? _option;
 
-    public string? Description { get; set; }
-
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         if (_context.Configuration.Get<GrayOption>() is not { } option)

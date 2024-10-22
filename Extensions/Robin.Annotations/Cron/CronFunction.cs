@@ -1,5 +1,4 @@
 using System.Collections.Frozen;
-using System.Collections.Specialized;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Quartz;
@@ -20,13 +19,15 @@ public partial class CronFunction(FunctionContext context) : BotFunction(context
             .OfType<ICronHandler>()
             .Select(handler => (
                 Handler: handler,
-                InfoAttribute: handler.GetType().GetCustomAttribute<BotFunctionInfoAttribute>(),
-                CronAttribute: handler.GetType().GetCustomAttribute<OnCronAttribute>()))
-            .Where(tuple => tuple.InfoAttribute is not null && tuple.CronAttribute is not null)
-            .Select(tuple => (tuple.Handler, tuple.InfoAttribute!.Name, tuple.CronAttribute!.Cron))
+                InfoAttr: handler.GetType().GetCustomAttribute<BotFunctionInfoAttribute>(),
+                CronAttr: handler.GetType().GetCustomAttribute<OnCronAttribute>()))
+            .Where(tuple => tuple.InfoAttr is not null && tuple.CronAttr is not null)
+            .Select(tuple => (tuple.Handler, tuple.InfoAttr!.Name, CronAttr: tuple.CronAttr!))
             .ToList();
 
-        _scheduler = await new StdSchedulerFactory(new NameValueCollection
+        handlers.ForEach(handler => (handler.Handler as BotFunction)?.TriggerDescriptions.Add(handler.CronAttr.GetDescription()));
+
+        _scheduler = await new StdSchedulerFactory(new()
         {
             [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_context.Uin}"
         }).GetScheduler(token);
@@ -42,7 +43,7 @@ public partial class CronFunction(FunctionContext context) : BotFunction(context
                 .WithIdentity($"{name}-{_context.Uin}", "CronFunction")
                 .Build();
 
-            var cron = _context.Configuration[name] ?? defaultCron;
+            var cron = _context.Configuration[name] ?? defaultCron.Cron;
 
             var trigger = TriggerBuilder.Create()
                 .WithIdentity($"{name}-{_context.Uin}", "CronFunction")

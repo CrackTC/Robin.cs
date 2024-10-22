@@ -12,8 +12,6 @@ namespace Robin.Extensions.Test;
 // ReSharper disable once UnusedType.Global
 public class TestFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public string? Description { get; set; }
-
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupMessageEvent>()

@@ -13,8 +13,6 @@ namespace Robin.Extensions.Dice;
 // ReSharper disable once UnusedType.Global
 public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    public string? Description { get; set; }
-
     [GeneratedRegex(@"/dice (?<count>\d+)d(?<sides>\d+)(?<modifier>[+-]\d+)?")]
     private static partial Regex DiceRegex();
 

@@ -23,8 +23,6 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
     private WordCloudOption? _option;
     private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(3) };
 
-    public string? Description { get; set; }
-
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         if (_context.Configuration.Get<WordCloudOption>() is not { } option)

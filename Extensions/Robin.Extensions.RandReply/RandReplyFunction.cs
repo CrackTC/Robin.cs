@@ -17,8 +17,6 @@ public partial class RandReplyFunction(FunctionContext context) : BotFunction(co
 {
     private RandReplyOption? _option;
 
-    public string? Description { get; set; }
-
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         if (_context.Configuration.Get<RandReplyOption>() is not { } option)

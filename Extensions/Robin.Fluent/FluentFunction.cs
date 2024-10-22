@@ -25,7 +25,7 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
 
             var infos = functionBuilder.Build().ToList();
 
-            function.Description = string.Join('\n', infos.Select(info => "• " + string.Join(" 且 ", info.Descriptions)));
+            (function as BotFunction)?.TriggerDescriptions.AddRange(infos.Select(info => string.Join(" 且 ", info.Descriptions)));
 
             foreach (var info in infos)
             {
