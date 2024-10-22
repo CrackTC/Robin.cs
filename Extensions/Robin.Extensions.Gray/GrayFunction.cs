@@ -8,7 +8,7 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.Gray;
 

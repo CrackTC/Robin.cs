@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Context;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.Gemini;
 

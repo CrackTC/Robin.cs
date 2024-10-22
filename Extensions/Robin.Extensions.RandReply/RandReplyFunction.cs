@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
@@ -7,7 +7,7 @@ using Robin.Abstractions.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.RandReply;
 

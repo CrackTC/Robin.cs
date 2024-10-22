@@ -4,7 +4,7 @@ using Robin.Abstractions.Event.Notice;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.PokeBack;
 

@@ -11,7 +11,7 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Annotations.Cron;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.WordCloud;
 

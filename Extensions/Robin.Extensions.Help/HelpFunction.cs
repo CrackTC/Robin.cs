@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Robin.Abstractions;
@@ -9,7 +9,7 @@ using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Annotations;
 using Robin.Fluent;
-using Robin.Fluent.Builder;
+using Robin.Fluent.Event;
 
 namespace Robin.Extensions.Help;
 
@@ -28,7 +28,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         var infoText = string.Join(" 或 ", info.EventTypes
             .Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
 
-        var triggerText = string.Join(null, triggers
+        var triggerText = string.Concat(triggers
             .Select(trigger => $"• {trigger.GetDescription()}\n"));
 
         triggerText += (function as IFluentFunction)?.Description;
@@ -91,10 +91,10 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                 {
                     await e.NewMessageRequest([
                         new TextData($"""
-                        /help [功能名] 查看详细功能信息
-                        可用功能：
-                        {string.Join("\n", BriefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
-                        """)
+                            /help [功能名] 查看详细功能信息
+                            可用功能：
+                            {string.Join("\n", BriefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
+                            """)
                     ]).SendAsync(_context.OperationProvider, _context.Logger, t);
                     return;
                 }

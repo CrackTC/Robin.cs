@@ -1,27 +1,21 @@
 using System.Reflection;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
+using Robin.Fluent.Event;
+using Robin.Fluent.Tunnel;
 
-namespace Robin.Fluent.Builder;
-
-internal delegate TunnelResult<Task> EventTunnel(EventContext<BotEvent> eventContext);
-
-internal record TunnelInfo(int Priority, IEnumerable<string> Descriptions, EventTunnel Tunnel);
-
+namespace Robin.Fluent;
 
 public class FunctionBuilder
 {
-    private readonly IList<TunnelInfo> _tunnels = [];
+    private readonly IList<EventTunnelInfo> _tunnels = [];
 
-    internal void AddTunnel(TunnelInfo tunnel)
-    {
-        _tunnels.Add(tunnel);
-    }
+    internal void AddTunnel(EventTunnelInfo tunnel) => _tunnels.Add(tunnel);
 
-    internal IEnumerable<TunnelInfo> Build() => _tunnels;
+    internal IEnumerable<EventTunnelInfo> Build() => _tunnels;
 
-    public EventTunnelBuilder<TEvent, EventContext<TEvent>> On<TEvent>() where TEvent : BotEvent =>
-        new EventTunnelBuilder<TEvent, EventContext<TEvent>>(
+    public EventTunnelBuilder<EventContext<TEvent>> On<TEvent>() where TEvent : BotEvent =>
+        new EventTunnelBuilder<EventContext<TEvent>>(
             this,
             new TunnelBuilder<EventContext<BotEvent>, EventContext<TEvent>>(
                 ctx => ctx.Event switch
