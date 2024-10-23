@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
@@ -68,4 +69,13 @@ public static class FluentExt
         builder
             .Where(ctx => ctx.Event.TargetId == selfUin)
             .WithDescription("自身在群聊中被戳一戳");
+
+    public static EventTunnelBuilder<(EventContext<TEvent> EventContext, JsonNode? Json)> OnJson<TEvent>(
+        this EventTunnelBuilder<EventContext<TEvent>> builder
+    ) where TEvent : MessageEvent =>
+        builder
+            .Select(ctx => (ctx, Jsons: ctx.Event.Message.OfType<JsonData>()))
+            .Where(t => t.Jsons.Any())
+            .Select(t => (t.ctx, JsonNode.Parse(t.Jsons.First().Content)))
+            .WithDescription("消息包含 Json 数据");
 }
