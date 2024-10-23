@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj">
-        <Private>false</Private>
-        <ExcludeAssets>runtime</ExcludeAssets>
-      </ProjectReference>
+      <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj" />
     </ItemGroup>
 
     <ItemGroup>

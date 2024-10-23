@@ -8,12 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj"><Private>false</Private><ExcludeAssets>runtime</ExcludeAssets></ProjectReference>
-      <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Annotations\Robin.Middlewares.Annotations.csproj"><Private>false</Private><ExcludeAssets>runtime</ExcludeAssets></ProjectReference>
-      <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj">
-        <Private>false</Private>
-        <ExcludeAssets>runtime</ExcludeAssets>
-      </ProjectReference>
+      <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj" />
+      <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Annotations\Robin.Middlewares.Annotations.csproj" />
     </ItemGroup>
 
 </Project>
