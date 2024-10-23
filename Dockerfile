@@ -25,12 +25,12 @@ WORKDIR /robin/Robin.App
 COPY ./Robin.App/Robin.App.csproj ./
 RUN dotnet restore
 COPY ./Robin.App ./
-RUN dotnet publish -c Release -o /out
+RUN dotnet publish -c Release -o /out/Robin.App
 
 FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS final
 RUN apk add --no-cache icu-libs
 WORKDIR /app
-COPY --from=build-app /out .
+COPY --from=build-app /out/Robin.App .
 COPY --from=build-impl /out/Implementations ./Implementations
 COPY --from=build-ext /out/Extensions ./Extensions
 RUN for f in $(ls *.dll); do rm -f /app/Extensions/*/$(basename $f); done
