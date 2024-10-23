@@ -38,7 +38,9 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
             .Do(async t =>
             {
                 var (ctx, json) = t;
-                var url = json?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>() ?? string.Empty;
+                var url = json?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>()
+                    ?? json?["meta"]?["news"]?["jumpUrl"]?.GetValue<string>()
+                    ?? string.Empty;
 
                 if (!url.StartsWith("https://b23.tv/")) return;
                 if (await ResolveB23(url, ctx.Token) is not { } resolved) return;
