@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
@@ -10,8 +9,6 @@ using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.B23;
-
-
 
 [BotFunctionInfo("b23", "不要b23")]
 public partial class B23Function(FunctionContext context) : BotFunction(context), IFluentFunction
@@ -41,8 +38,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
             .Do(async t =>
             {
                 var (ctx, json) = t;
-                var content = JsonNode.Parse(json?["Message"]?[0]?["Content"]?.GetValue<string>() ?? "{}");
-                var url = content?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>() ?? string.Empty;
+                var url = json?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>() ?? string.Empty;
 
                 if (!url.StartsWith("https://b23.tv/")) return;
                 if (await ResolveB23(url, ctx.Token) is not { } resolved) return;
