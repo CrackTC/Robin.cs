@@ -18,7 +18,7 @@ public partial class BotContext(
     public IEnumerable<BotFunction> Functions => functions;
     public FrozenDictionary<string, IConfigurationSection>? FunctionConfigurations { get; set; }
 
-    private Type? GetOptionType(Type functionType)
+    private static Type? GetOptionType(Type functionType)
     {
         for (var t = functionType.BaseType; t != null; t = t.BaseType)
         {
