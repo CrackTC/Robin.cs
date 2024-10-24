@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Robin.Abstractions;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Context;
@@ -13,8 +14,12 @@ using Robin.Middlewares.Fluent;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("config.json");
-
-builder.Logging.AddConsole();
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "MM-dd HH:mm:ss ";
+    options.ColorBehavior = LoggerColorBehavior.Enabled;
+});
 
 var implementations = LoadAssemblies("Implementations");
 var extensions = LoadAssemblies("Extensions");
