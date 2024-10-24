@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Operation;
+using Robin.Abstractions.Utility;
 using Robin.Implementations.OneBot.Converter;
 using Robin.Implementations.OneBot.Entity.Operations;
 
@@ -50,17 +51,7 @@ internal partial class OneBotHttpClientService(
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
         }
 
-        HttpResponseMessage response;
-        await _semaphore.WaitAsync(token);
-        try
-        {
-            response = await _client.SendAsync(requestMessage, token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-
+        var response = await _semaphore.ConsumeAsync(() => _client.SendAsync(requestMessage, token), token);
         if (!response.IsSuccessStatusCode)
         {
             LogSendFailed(_logger);

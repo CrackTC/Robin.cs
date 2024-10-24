@@ -9,6 +9,7 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
+using Robin.Abstractions.Utility;
 using Robin.Middlewares.Annotations.Cron;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
@@ -37,22 +38,14 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
 
         builder.On<GroupMessageEvent>()
             .AsAlwaysFired()
-            .Do(ctx =>
-            {
-                var (e, t) = ctx;
-                return InsertDataAsync(
-                    e.GroupId,
-                    string.Join(' ', e.Message.OfType<TextData>().Select(s => s.Text)),
-                    t
-                );
-            })
+            .Do(ctx => InsertDataAsync(
+                ctx.Event.GroupId,
+                string.Join(' ', ctx.Event.Message.OfType<TextData>().Select(s => s.Text)),
+                ctx.Token
+            ))
             .On<GroupMessageEvent>()
             .OnCommand("word_cloud")
-            .Do(ctx =>
-            {
-                var (e, t) = ctx;
-                return SendWordCloudAsync(e.GroupId, token: t);
-            });
+            .Do(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token));
     }
 
 
@@ -116,67 +109,34 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
     private readonly WordCloudDbContext _db = new(context.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private Task<bool> CreateTableAsync(CancellationToken token)
-        => _db.Database.EnsureCreatedAsync(token);
+    private Task<bool> CreateTableAsync(CancellationToken token) =>
+        _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
-    private async Task InsertDataAsync(long groupId, string message, CancellationToken token)
-    {
-        await _semaphore.WaitAsync(token);
-        try
+    private Task InsertDataAsync(long groupId, string message, CancellationToken token) =>
+        _semaphore.ConsumeAsync(() =>
         {
-            await _db.Records.AddAsync(new Record
-            {
-                GroupId = groupId,
-                Content = message
-            }, token);
-            await _db.SaveChangesAsync(token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
+            _db.Records.Add(new Record { GroupId = groupId, Content = message });
+            return _db.SaveChangesAsync(token);
+        }, token);
 
-    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token)
-    {
-        await _semaphore.WaitAsync(token);
+    private Task<List<long>> GetGroupsAsync(CancellationToken token) =>
+        _semaphore.ConsumeAsync(() => _db.Records
+            .Select(r => r.GroupId)
+            .Distinct()
+            .ToListAsync(token), token);
 
-        try
-        {
-            return await _db.Records.Select(r => r.GroupId).Distinct().ToListAsync(token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
+    private Task<List<string>> GetGroupMessagesAsync(long groupId, CancellationToken token) =>
+        _semaphore.ConsumeAsync(() => _db.Records
+            .Where(r => r.GroupId == groupId)
+            .Select(r => r.Content)
+            .ToListAsync(token), token);
 
-    private async Task<IEnumerable<string>> GetGroupMessagesAsync(long groupId, CancellationToken token)
-    {
-        await _semaphore.WaitAsync(token);
-        try
-        {
-            return await _db.Records.Where(r => r.GroupId == groupId).Select(r => r.Content).ToListAsync(token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
-
-    private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token)
-    {
-        await _semaphore.WaitAsync(token);
-        try
+    private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token) =>
+        await _semaphore.ConsumeAsync(() =>
         {
             _db.Records.RemoveRange(_db.Records.Where(r => r.GroupId == groupId));
-            await _db.SaveChangesAsync(token);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
+            return _db.SaveChangesAsync(token);
+        }, token);
 
     #endregion
 

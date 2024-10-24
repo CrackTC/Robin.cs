@@ -9,6 +9,7 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Meta;
 using Robin.Abstractions.Operation;
+using Robin.Abstractions.Utility;
 using Robin.Implementations.OneBot.Converter;
 using Robin.Implementations.OneBot.Entity.Operations;
 
@@ -59,15 +60,7 @@ internal partial class OneBotForwardWebSocketService(
 
         try
         {
-            await _semaphore.WaitAsync(token);
-            try
-            {
-                await _websocket!.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token);
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
+            await _semaphore.ConsumeAsync(() => _websocket!.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token), token);
 
             var completionSource = new TaskCompletionSource<Response?>();
 
