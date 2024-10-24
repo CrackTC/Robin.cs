@@ -182,14 +182,14 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
 
     #region Log
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Option binding failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning,
+    [LoggerMessage(Level = LogLevel.Warning,
         Message = "Word cloud api request failed for group {GroupId}")]
     private static partial void LogApiRequestFailed(ILogger logger, long groupId);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion

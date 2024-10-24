@@ -51,10 +51,10 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Welcome text for {GroupId}: {Text}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Welcome text for {GroupId}: {Text}")]
     private static partial void LogWelcomeText(ILogger logger, string groupId, string text);
 
     #endregion

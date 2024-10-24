@@ -50,7 +50,7 @@ public partial class GrayFunction(FunctionContext context) : BotFunction(context
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Error, Message = "Failed to bind option.")]
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to bind option.")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
     #endregion

@@ -221,26 +221,26 @@ internal partial class OneBotReverseWebSocketService(
 
     #region Log
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Receive message: {Message}")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid response: {Response}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid response: {Response}")]
     private static partial void LogInvalidResponse(ILogger logger, string response);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Invalid request: {Request}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid request: {Request}")]
     private static partial void LogInvalidRequest(ILogger logger, string request);
 
-    [LoggerMessage(EventId = 4, Level = LogLevel.Warning,
+    [LoggerMessage(Level = LogLevel.Warning,
         Message = "Websocket throws an exception")]
     private static partial void LogWebSocketException(ILogger logger, Exception e);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Trace, Message = "Send: {Data}")]
+    [LoggerMessage(Level = LogLevel.Trace, Message = "Send: {Data}")]
     private static partial void LogSendingData(ILogger logger, string data);
 
-    [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Send data failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Send data failed")]
     private static partial void LogSendFailed(ILogger logger, Exception e);
 
-    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Connection from {Src}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Connection from {Src}")]
     private static partial void LogConnected(ILogger logger, string src);
 
     #endregion

@@ -44,12 +44,12 @@ public static partial class RequestExt
         }
     }
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Sent request: {Request}, response: {Response}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Sent request: {Request}, response: {Response}")]
     private static partial void LogSent(ILogger logger, Request request, Response response);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to send request: {Request}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to send request: {Request}")]
     private static partial void LogSendFailed(ILogger logger, Request request, Exception? e = default);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Malformed response for request: {Request}, response: {Response}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Malformed response for request: {Request}, response: {Response}")]
     private static partial void LogMalformedResponse(ILogger logger, Request request, Response response);
 }

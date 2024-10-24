@@ -38,7 +38,7 @@ public partial class OneBotHttpClientFactory(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "GetOperationProvider")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GetOperationProvider")]
     private static partial void LogGetOperationProvider(ILogger logger);
 
     #endregion

@@ -61,7 +61,7 @@ public partial class CronFunction(FunctionContext context) : BotFunction(context
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Cron job {Name} scheduled")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Cron job {Name} scheduled")]
     private static partial void LogCronJobScheduled(ILogger logger, string name);
 
     #endregion

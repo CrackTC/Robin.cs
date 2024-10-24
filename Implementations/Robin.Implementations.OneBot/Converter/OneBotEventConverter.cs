@@ -24,7 +24,7 @@ internal partial class OneBotEventConverter(ILogger<OneBotEventConverter> logger
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Invalid event: {Event}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid event: {Event}")]
     private static partial void LogInvalidEvent(ILogger logger, string @event);
 
     #endregion

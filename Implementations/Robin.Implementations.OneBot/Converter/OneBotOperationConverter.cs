@@ -64,13 +64,13 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "OneBotRequest for request {Request} not found")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "OneBotRequest for request {Request} not found")]
     private static partial void LogOneBotRequestNotFound(ILogger logger, Request request);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to deserialize response data: {Data}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to deserialize response data: {Data}")]
     private static partial void LogDeserializeDataFailed(ILogger logger, string data);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Ignoring response data: {Data}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Ignoring response data: {Data}")]
     private static partial void LogIgnoringData(ILogger logger, string data);
 
     #endregion

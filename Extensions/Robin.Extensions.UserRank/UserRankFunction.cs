@@ -240,10 +240,10 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion

@@ -170,22 +170,22 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Invalid message type: {Json}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid message type: {Json}")]
     private static partial void LogInvalidMessageType(ILogger logger, string json);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Invalid segment type: {Json}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid segment type: {Json}")]
     private static partial void LogInvalidSegmentType(ILogger logger, string json);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Data type {Type} not found")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Data type {Type} not found")]
     private static partial void LogDataTypeNotFound(ILogger logger, string type);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Invalid segment data: {Json}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid segment data: {Json}")]
     private static partial void LogInvalidSegmentData(ILogger logger, string json);
 
-    [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Invalid CQ code: {Code}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid CQ code: {Code}")]
     private static partial void LogInvalidCqCode(ILogger logger, string code);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Failed to create instance of type {Type}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to create instance of type {Type}")]
     private static partial void LogCreateInstanceFailed(ILogger logger, string type);
 
     #endregion

@@ -61,7 +61,6 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 await RemoveAllAsync(e.UserId, t);
                 await SendReplyAsync(e.UserId, _option.ClearReply, t);
             })
-
             .On<PrivateMessageEvent>()
             .OnRegex(_rollbackRegex)
             .Do(async tuple =>
@@ -71,7 +70,6 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 await RemoveLastAsync(e.UserId, t);
                 await SendReplyAsync(e.UserId, _option.RollbackReply, t);
             })
-
             .On<PrivateMessageEvent>()
             .OnRegex(_modelRegex)
             .Do(async tuple =>
@@ -353,13 +351,13 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Option binding failed")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Regex compile failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Regex compile failed")]
     private static partial void LogRegexCompileFailed(ILogger logger, ArgumentException exception);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to generate content for user {UserId}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to generate content for user {UserId}")]
     private static partial void LogGenerateContentFailed(ILogger logger, long userId);
 
     #endregion

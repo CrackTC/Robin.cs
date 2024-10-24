@@ -77,7 +77,7 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Option binding failed")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
     private static partial void LogOptionBindingFailed(ILogger logger);
 
     #endregion

@@ -126,19 +126,19 @@ internal partial class BotFunctionService(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Information, Message = "Function {Name} is not registered")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Function {Name} is not registered")]
     private static partial void LogFunctionNotRegistered(ILogger logger, string name);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
-    private static partial void LogCreateFunctionFailed(ILogger logger, string name, Exception exception);
-
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Invalid option {Name}")]
-    private static partial void LogInvalidOption(ILogger logger, string name);
-
-    [LoggerMessage(EventId = 3, Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
     private static partial void LogReceivedEvent(ILogger logger, string type, string @event);
 
-    [LoggerMessage(EventId = 4, Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
+    private static partial void LogCreateFunctionFailed(ILogger logger, string name, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid option {Name}")]
+    private static partial void LogInvalidOption(ILogger logger, string name);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
     private static partial void LogInvokeFunctionFailed(ILogger logger, string name, Exception exception);
 
     #endregion

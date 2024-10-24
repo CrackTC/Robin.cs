@@ -42,10 +42,10 @@ public partial class OneBotForwardWebSocketFactory(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "GetBotEventInvoker")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GetBotEventInvoker")]
     private static partial void LogGetBotEventInvoker(ILogger logger);
 
-    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "GetOperationProvider")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GetOperationProvider")]
     private static partial void LogGetOperationProvider(ILogger logger);
 
     #endregion

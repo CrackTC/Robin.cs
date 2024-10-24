@@ -89,7 +89,7 @@ internal partial class OneBotHttpServerService(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Receive message: {Message}")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
     #endregion

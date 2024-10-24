@@ -39,7 +39,7 @@ public partial class OneBotHttpServerFactory(
 
     #region Log
 
-    [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "GetBotEventInvoker")]
+    [LoggerMessage(Level = LogLevel.Debug, Message = "GetBotEventInvoker")]
     private static partial void LogGetBotEventInvoker(ILogger logger);
 
     #endregion
