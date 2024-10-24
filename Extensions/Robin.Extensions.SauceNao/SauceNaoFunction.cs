@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
@@ -15,19 +13,15 @@ namespace Robin.Extensions.SauceNao;
 
 // ReSharper disable once UnusedType.Global
 [BotFunctionInfo("sauce_nao", "Saucenao 插画反向搜索")]
-public partial class SauceNaoFunction(FunctionContext context) : BotFunction(context), IFluentFunction
+public partial class SauceNaoFunction(
+    FunctionContext<SauceNaoOption> context
+) : BotFunction<SauceNaoOption>(context), IFluentFunction
 {
     private SauceNETClient? _client;
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        if (_context.Configuration.Get<SauceNaoOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return Task.CompletedTask;
-        }
-
-        _client = new SauceNETClient(option.ApiKey);
+        _client = new SauceNETClient(_context.Configuration.ApiKey);
 
         builder.On<MessageEvent>()
             .OnCommand("搜图")
@@ -38,7 +32,7 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
                 var (e, token) = ctx;
 
                 if (await new GetMessageRequest(msgId)
-                        .SendAsync<GetMessageResponse>(_context.OperationProvider, _context.Logger, token)
+                        .SendAsync<GetMessageResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
                     is not { Message.Message: { } origMsg })
                     return;
 
@@ -62,23 +56,16 @@ public partial class SauceNaoFunction(FunctionContext context) : BotFunction(con
                 {
                     await e.NewMessageRequest([
                         new TextData("找不到喵>_<")
-                    ]).SendAsync(_context.OperationProvider, _context.Logger, token);
+                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
 
                     return;
                 }
 
                 await e.NewMessageRequest([
                     new TextData(string.Join("\n", results))
-                ]).SendAsync(_context.OperationProvider, _context.Logger, token);
+                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
             });
 
         return Task.CompletedTask;
     }
-
-    #region Log
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
-    private static partial void LogOptionBindingFailed(ILogger logger);
-
-    #endregion
 }

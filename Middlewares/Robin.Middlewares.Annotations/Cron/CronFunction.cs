@@ -15,7 +15,7 @@ public partial class CronFunction(FunctionContext context) : BotFunction(context
     private IScheduler? _scheduler;
     public override async Task StartAsync(CancellationToken token)
     {
-        var handlers = _context.Functions
+        var handlers = _context.BotContext.Functions
             .OfType<ICronHandler>()
             .Select(handler => (
                 Handler: handler,
@@ -29,24 +29,24 @@ public partial class CronFunction(FunctionContext context) : BotFunction(context
 
         _scheduler = await new StdSchedulerFactory(new()
         {
-            [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_context.Uin}"
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = $"Scheduler-{_context.BotContext.Uin}"
         }).GetScheduler(token);
 
         _scheduler.JobFactory = new CronJobFactory(
-            handlers.ToFrozenDictionary(tuple => $"{tuple.Name}-{_context.Uin}", tuple => tuple.Handler),
+            handlers.ToFrozenDictionary(tuple => $"{tuple.Name}-{_context.BotContext.Uin}", tuple => tuple.Handler),
             token
         );
 
         foreach (var (_, name, defaultCron) in handlers)
         {
             var job = JobBuilder.Create<CronJob>()
-                .WithIdentity($"{name}-{_context.Uin}", "CronFunction")
+                .WithIdentity($"{name}-{_context.BotContext.Uin}", "CronFunction")
                 .Build();
 
-            var cron = _context.Configuration[name] ?? defaultCron.Cron;
+            var cron = _context.Configuration?[name] ?? defaultCron.Cron;
 
             var trigger = TriggerBuilder.Create()
-                .WithIdentity($"{name}-{_context.Uin}", "CronFunction")
+                .WithIdentity($"{name}-{_context.BotContext.Uin}", "CronFunction")
                 .WithCronSchedule(cron)
                 .Build();
 

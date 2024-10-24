@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Event.Message;
@@ -19,10 +18,10 @@ namespace Robin.Extensions.Gemini;
 
 [BotFunctionInfo("gemini", "Gemini 聊天机器人")]
 // ReSharper disable once UnusedType.Global
-public partial class GeminiFunction(FunctionContext context) : BotFunction(context), IFluentFunction
+public partial class GeminiFunction(
+    FunctionContext<GeminiOption> context
+) : BotFunction<GeminiOption>(context), IFluentFunction
 {
-    private GeminiOption? _option;
-
     private Regex? _modelRegex;
     private Regex? _systemRegex;
     private Regex? _clearRegex;
@@ -30,20 +29,12 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
 
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
-        if (_context.Configuration.Get<GeminiOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return;
-        }
-
-        _option = option;
-
         try
         {
-            _modelRegex = new Regex(option.ModelRegexString, RegexOptions.Compiled);
-            _systemRegex = new Regex(option.SystemRegexString, RegexOptions.Compiled);
-            _clearRegex = new Regex(option.ClearRegexString, RegexOptions.Compiled);
-            _rollbackRegex = new Regex(option.RollbackRegexString, RegexOptions.Compiled);
+            _modelRegex = new Regex(_context.Configuration.ModelRegexString, RegexOptions.Compiled);
+            _systemRegex = new Regex(_context.Configuration.SystemRegexString, RegexOptions.Compiled);
+            _clearRegex = new Regex(_context.Configuration.ClearRegexString, RegexOptions.Compiled);
+            _rollbackRegex = new Regex(_context.Configuration.RollbackRegexString, RegexOptions.Compiled);
         }
         catch (ArgumentException e)
         {
@@ -61,7 +52,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 var (ctx, _) = tuple;
                 var (e, t) = ctx;
                 await RemoveAllAsync(e.UserId, t);
-                await SendReplyAsync(e.UserId, _option.ClearReply, t);
+                await SendReplyAsync(e.UserId, _context.Configuration.ClearReply, t);
             })
             .On<PrivateMessageEvent>()
             .OnRegex(_rollbackRegex)
@@ -70,7 +61,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 var (ctx, _) = tuple;
                 var (e, t) = ctx;
                 await RemoveLastAsync(e.UserId, t);
-                await SendReplyAsync(e.UserId, _option.RollbackReply, t);
+                await SendReplyAsync(e.UserId, _context.Configuration.RollbackReply, t);
             })
             .On<PrivateMessageEvent>()
             .OnRegex(_modelRegex)
@@ -79,7 +70,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 var (ctx, match) = tuple;
                 var (e, t) = ctx;
                 await SetModelAsync(e.UserId, match.Groups[1].Value, t);
-                await SendReplyAsync(e.UserId, _option.ModelReply, t);
+                await SendReplyAsync(e.UserId, _context.Configuration.ModelReply, t);
             })
             .On<PrivateMessageEvent>()
             .OnRegex(_systemRegex)
@@ -88,7 +79,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 var (ctx, match) = tuple;
                 var (e, t) = ctx;
                 await SetSystemAsync(e.UserId, match.Groups[1].Value, t);
-                await SendReplyAsync(e.UserId, _option.SystemReply, t);
+                await SendReplyAsync(e.UserId, _context.Configuration.SystemReply, t);
             })
             .On<PrivateMessageEvent>()
             .OnText()
@@ -112,7 +103,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 ];
 
                 var now = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var request = new GeminiRequest(_option.ApiKey, model: model);
+                var request = new GeminiRequest(_context.Configuration.ApiKey, model: model);
                 if (await request.GenerateContentAsync(
                         new GeminiRequestBody
                         {
@@ -125,7 +116,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                     ) is not { } response)
                 {
                     LogGenerateContentFailed(_context.Logger, e.UserId);
-                    await SendReplyAsync(e.UserId, _option.ErrorReply, t);
+                    await SendReplyAsync(e.UserId, _context.Configuration.ErrorReply, t);
                     return;
                 }
 
@@ -139,7 +130,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 if (response is not GeminiGenerateDataResponse { Candidates: { Count: > 0 } candidates })
                 {
                     LogGenerateContentFailed(_context.Logger, e.UserId);
-                    await SendReplyAsync(e.UserId, _option.FilteredReply, t);
+                    await SendReplyAsync(e.UserId, _context.Configuration.FilteredReply, t);
                     return;
                 }
 
@@ -159,7 +150,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token) =>
         await new SendPrivateMessageRequest(userId, [
             new TextData(reply)
-        ]).SendAsync(_context.OperationProvider, _context.Logger, token) is not null;
+        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token) is not null;
 
     public override async Task StopAsync(CancellationToken token)
     {
@@ -169,7 +160,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
 
     #region Database
 
-    private readonly GeminiDbContext _db = new(context.Uin);
+    private readonly GeminiDbContext _db = new(context.BotContext.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTablesAsync(CancellationToken token) =>
@@ -222,7 +213,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 user = new User
                 {
                     UserId = userId,
-                    ModelName = _option!.Model,
+                    ModelName = _context.Configuration.Model,
                     SystemCommand = string.Empty
                 };
                 _db.Users.Add(user);
@@ -243,7 +234,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
         _semaphore.ConsumeAsync(async ValueTask<string> () =>
         {
             var user = await _db.Users.FindAsync([userId], token);
-            return user?.ModelName ?? _option!.Model;
+            return user?.ModelName ?? _context.Configuration.Model;
         }, token);
 
     private Task SetModelAsync(long userId, string model, CancellationToken token) =>
@@ -284,7 +275,7 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
                 user = new User
                 {
                     UserId = userId,
-                    ModelName = _option!.Model,
+                    ModelName = _context.Configuration.Model,
                     SystemCommand = system
                 };
                 _db.Users.Add(user);
@@ -300,9 +291,6 @@ public partial class GeminiFunction(FunctionContext context) : BotFunction(conte
     #endregion
 
     #region Log
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Option binding failed")]
-    private static partial void LogOptionBindingFailed(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Regex compile failed")]
     private static partial void LogRegexCompileFailed(ILogger logger, ArgumentException exception);

@@ -45,12 +45,12 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                 var adverb = match.Groups["adverb"];
 
                 if (await new GetMessageRequest(msgId)
-                        .SendAsync<GetMessageResponse>(_context.OperationProvider, _context.Logger, token)
+                        .SendAsync<GetMessageResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
                     is not { Message.Sender.UserId: var senderId })
                     return;
 
                 if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true)
-                        .SendAsync<GetGroupMemberInfoResponse>(_context.OperationProvider, _context.Logger, token)
+                        .SendAsync<GetGroupMemberInfoResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
                     is not { Info: { } info })
                     return;
 
@@ -70,7 +70,7 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                     new TextData($"{sourceName} {verb.Value} {targetName}{(
                         adverb.Success ? ' ' + adverb.Value : string.Empty
                     )}")
-                ]).SendAsync(_context.OperationProvider, _context.Logger, token);
+                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
             });
 
         return Task.CompletedTask;

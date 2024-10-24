@@ -1,7 +1,7 @@
 namespace Robin.Extensions.Gemini;
 
 [Serializable]
-internal class GeminiOption
+public class GeminiOption
 {
     public required string ApiKey { get; set; }
     public required string Model { get; set; } = "gemini-pro";

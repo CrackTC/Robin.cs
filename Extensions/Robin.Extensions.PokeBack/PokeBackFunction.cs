@@ -15,10 +15,10 @@ public class PokeBackFunction(FunctionContext context) : BotFunction(context), I
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupPokeEvent>()
-            .OnPokeSelf(_context.Uin)
+            .OnPokeSelf(_context.BotContext.Uin)
             .Do(ctx =>
                 new SendGroupPokeRequest(ctx.Event.GroupId, ctx.Event.SenderId)
-                    .SendAsync(_context.OperationProvider, _context.Logger, ctx.Token)
+                    .SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
             );
 
         return Task.CompletedTask;

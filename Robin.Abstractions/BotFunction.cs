@@ -16,3 +16,8 @@ public abstract class BotFunction(FunctionContext context) : IHostedService
 
     public virtual Task StopAsync(CancellationToken token) => Task.CompletedTask;
 }
+
+public abstract class BotFunction<TConfig>(FunctionContext<TConfig> context) : BotFunction(context)
+{
+    protected readonly new FunctionContext<TConfig> _context = context;
+}

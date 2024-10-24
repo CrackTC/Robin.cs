@@ -1,20 +1,24 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Robin.Abstractions.Communication;
 
 namespace Robin.Abstractions.Context;
 
 public class FunctionContext(
     ILogger logger,
-    long uin,
-    IOperationProvider operationProvider,
-    IConfiguration configuration,
-    IEnumerable<BotFunction> functions
+    BotContext botContext,
+    IConfigurationSection? configuration
 )
 {
     public ILogger Logger => logger;
-    public long Uin => uin;
-    public IOperationProvider OperationProvider => operationProvider;
-    public IConfiguration Configuration => configuration;
-    public IEnumerable<BotFunction> Functions => functions;
+    public BotContext BotContext => botContext;
+    public IConfigurationSection? Configuration => configuration;
+}
+
+public class FunctionContext<TConfig>(
+    ILogger logger,
+    BotContext botContext,
+    TConfig configuration
+) : FunctionContext(logger, botContext, null)
+{
+    public new TConfig Configuration => configuration;
 }

@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
@@ -19,21 +18,14 @@ namespace Robin.Extensions.WordCloud;
 [BotFunctionInfo("word_cloud", "群词云生成")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global
-public partial class WordCloudFunction(FunctionContext context) : BotFunction(context), ICronHandler, IFluentFunction
+public partial class WordCloudFunction(
+    FunctionContext<WordCloudOption> context
+) : BotFunction<WordCloudOption>(context), ICronHandler, IFluentFunction
 {
-    private WordCloudOption? _option;
     private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(3) };
 
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
-        if (_context.Configuration.Get<WordCloudOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return;
-        }
-
-        _option = option;
-
         await CreateTableAsync(token);
 
         builder.On<GroupMessageEvent>()
@@ -54,8 +46,8 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
         var messages = await GetGroupMessagesAsync(groupId, token);
         var content = string.Join('\n', messages);
         using var response = await _client.PostAsJsonAsync(
-            _option!.ApiAddress,
-            _option.CloudOption with { Text = content },
+            _context.Configuration.ApiAddress,
+            _context.Configuration.CloudOption with { Text = content },
             cancellationToken: token
         );
 
@@ -78,7 +70,7 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
 
         await new SendGroupMessageRequest(groupId, [
             new ImageData(url)
-        ]).SendAsync(_context.OperationProvider, _context.Logger, token);
+        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
     }
 
     public override async Task StopAsync(CancellationToken token)
@@ -106,7 +98,7 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
 
     #region Database
 
-    private readonly WordCloudDbContext _db = new(context.Uin);
+    private readonly WordCloudDbContext _db = new(context.BotContext.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token) =>
@@ -141,9 +133,6 @@ public partial class WordCloudFunction(FunctionContext context) : BotFunction(co
     #endregion
 
     #region Log
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
-    private static partial void LogOptionBindingFailed(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Word cloud api request failed for group {GroupId}")]

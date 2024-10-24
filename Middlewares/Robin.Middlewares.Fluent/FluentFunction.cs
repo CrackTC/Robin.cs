@@ -17,7 +17,7 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
         var eventTunLists = new SortedList<int, List<EventTunnelInfo>>();
         var alwaysFiredEventTuns = new List<EventTunnelInfo>();
 
-        foreach (var function in _context.Functions.OfType<IFluentFunction>())
+        foreach (var function in _context.BotContext.Functions.OfType<IFluentFunction>())
         {
             var functionBuilder = new FunctionBuilder();
 

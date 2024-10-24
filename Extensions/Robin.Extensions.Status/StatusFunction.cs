@@ -22,13 +22,13 @@ public class StatusFunction(FunctionContext context) : BotFunction(context), IFl
                     new TextData(
                         $"""
                          Robin Status
-                         QQ号: {_context.Uin}
+                         QQ号: {_context.BotContext.Uin}
                          运行时间: {DateTime.Now - Process.GetCurrentProcess().StartTime}
                          总分配内存数: {GC.GetTotalAllocatedBytes() / 1024 / 1024} MB
                          当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB
                          """
                     )
-                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token)
+                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
             );
 
         return Task.CompletedTask;

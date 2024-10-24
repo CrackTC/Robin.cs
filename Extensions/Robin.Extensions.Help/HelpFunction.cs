@@ -49,7 +49,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         return builder.ToString();
     }
 
-    private Dictionary<string, string> Helps => _context.Functions
+    private Dictionary<string, string> Helps => _context.BotContext.Functions
         .Select(f => (
                 function: f,
                 info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
@@ -61,7 +61,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
             """
         );
 
-    private Dictionary<string, string> BriefHelps => _context.Functions
+    private Dictionary<string, string> BriefHelps => _context.BotContext.Functions
         .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
         .ToDictionary(info => info.Name, info => info.Description);
 
@@ -71,7 +71,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
-            .OnAtSelf(_context.Uin)
+            .OnAtSelf(_context.BotContext.Uin)
             .OnRegex(HelpRegex())
             .Do(async tuple =>
             {
@@ -88,7 +88,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                             可用功能：
                             {string.Join("\n", BriefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
                             """)
-                    ]).SendAsync(_context.OperationProvider, _context.Logger, t);
+                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
                     return;
                 }
 
@@ -96,11 +96,11 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                 {
                     await e.NewMessageRequest([
                         new TextData($"未找到功能：{name.Value}")
-                    ]).SendAsync(_context.OperationProvider, _context.Logger, t);
+                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
                     return;
                 }
 
-                await e.NewMessageRequest([new TextData(help)]).SendAsync(_context.OperationProvider, _context.Logger, t);
+                await e.NewMessageRequest([new TextData(help)]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
             });
 
         return Task.CompletedTask;

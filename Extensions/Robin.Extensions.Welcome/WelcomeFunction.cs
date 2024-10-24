@@ -1,4 +1,3 @@
-﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
@@ -12,21 +11,13 @@ namespace Robin.Extensions.Welcome;
 
 [BotFunctionInfo("welcome", "入群欢迎", typeof(GroupIncreaseEvent))]
 // ReSharper disable once UnusedType.Global
-public partial class WelcomeFunction(FunctionContext context) : BotFunction(context)
+public partial class WelcomeFunction(
+    FunctionContext<WelcomeOption> context
+) : BotFunction<WelcomeOption>(context)
 {
-    private WelcomeOption? _option;
-
     public override Task StartAsync(CancellationToken token)
     {
-        if (_context.Configuration.Get<WelcomeOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return Task.CompletedTask;
-        }
-
-        _option = option;
-
-        foreach (var (groupId, text) in option.WelcomeTexts)
+        foreach (var (groupId, text) in _context.Configuration.WelcomeTexts)
         {
             LogWelcomeText(_context.Logger, groupId, text);
         }
@@ -38,7 +29,7 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
     {
         if (eventContext.Event is not GroupIncreaseEvent e) return;
 
-        if (_option?.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text) is not true) return;
+        if (!_context.Configuration.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text)) return;
 
         var parts = text.Split("{at}");
 
@@ -46,13 +37,10 @@ public partial class WelcomeFunction(FunctionContext context) : BotFunction(cont
             new TextData(parts[0]),
             new AtData(e.UserId),
             new TextData(parts[1])
-        ]).SendAsync(_context.OperationProvider, _context.Logger, eventContext.Token);
+        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, eventContext.Token);
     }
 
     #region Log
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
-    private static partial void LogOptionBindingFailed(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Welcome text for {GroupId}: {Text}")]
     private static partial void LogWelcomeText(ILogger logger, string groupId, string text);

@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
@@ -20,10 +19,10 @@ namespace Robin.Extensions.UserRank;
 [BotFunctionInfo("user_rank", "用户发言排行")]
 [OnCron("0 0 0 * * ?")]
 // ReSharper disable once UnusedType.Global
-public partial class UserRankFunction(FunctionContext context) : BotFunction(context), ICronHandler, IFluentFunction
+public partial class UserRankFunction(
+    FunctionContext<UserRankOption> context
+) : BotFunction<UserRankOption>(context), ICronHandler, IFluentFunction
 {
-    private UserRankOption? _option;
-
     public override async Task StopAsync(CancellationToken token)
     {
         _semaphore.Dispose();
@@ -46,7 +45,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     {
         var peopleCount = await GetGroupPeopleCountAsync(groupId, token);
         var msgCount = await GetGroupMessageCountAsync(groupId, token);
-        var top = await GetGroupTopNAsync(groupId, n > 0 ? n : _option!.TopN, token);
+        var top = await GetGroupTopNAsync(groupId, n > 0 ? n : _context.Configuration.TopN, token);
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
         string message;
@@ -55,7 +54,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
         else
         {
             if (await new GetGroupMemberListRequest(groupId, true)
-                .SendAsync<GetGroupMemberListResponse>(_context.OperationProvider, _context.Logger, token)
+                .SendAsync<GetGroupMemberListResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
                 is not { Members: { } members })
                 return;
 
@@ -86,7 +85,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
 
         await new SendGroupMessageRequest(groupId, [
             new TextData(message)
-        ]).SendAsync(_context.OperationProvider, _context.Logger, token);
+        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
     }
 
 
@@ -95,14 +94,6 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
 
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
-        if (_context.Configuration.Get<UserRankOption>() is not { } option)
-        {
-            LogOptionBindingFailed(_context.Logger);
-            return;
-        }
-
-        _option = option;
-
         await CreateTableAsync(token);
 
         builder.On<GroupMessageEvent>()
@@ -125,7 +116,7 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
 
     #region Database
 
-    private readonly UserRankDbContext _db = new(context.Uin);
+    private readonly UserRankDbContext _db = new(context.BotContext.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token) =>
@@ -179,9 +170,6 @@ public partial class UserRankFunction(FunctionContext context) : BotFunction(con
     #endregion
 
     #region Log
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Option binding failed")]
-    private static partial void LogOptionBindingFailed(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);

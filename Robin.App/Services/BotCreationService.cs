@@ -21,8 +21,6 @@ internal partial class BotCreationService(
     private async Task StartBot(IConfiguration botConfig, CancellationToken token)
     {
         var scope = service.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<BotContext>();
-        context.Uin = long.Parse(botConfig["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
 
         var eventInvokerName = botConfig["EventInvokerName"];
         var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(eventInvokerName);
@@ -30,9 +28,11 @@ internal partial class BotCreationService(
         var operationProviderName = botConfig["OperationProviderName"];
         var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
 
+        var context = scope.ServiceProvider.GetRequiredService<BotContext>();
+        context.Uin = long.Parse(botConfig["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
         context.EventInvoker =
-            await eventInvokerFactory.GetBotEventInvokerAsync(botConfig.GetRequiredSection("EventInvokerConfig"),
-                token);
+            await eventInvokerFactory.GetBotEventInvokerAsync(
+                botConfig.GetRequiredSection("EventInvokerConfig"), token);
         context.OperationProvider =
             await operationProviderFactory.GetOperationProviderAsync(
                 botConfig.GetRequiredSection("OperationProviderConfig"), token);

@@ -1,7 +1,7 @@
 namespace Robin.Extensions.SauceNao;
 
 [Serializable]
-internal class SauceNaoOption
+public class SauceNaoOption
 {
     public required string ApiKey { get; set; }
 }

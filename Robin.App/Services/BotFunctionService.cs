@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Event;
 using System.Reflection;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Robin.Abstractions.Event.Meta;
@@ -64,7 +65,7 @@ internal partial class BotFunctionService(
 
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
     };
 
@@ -85,7 +86,15 @@ internal partial class BotFunctionService(
     {
         if (@event is not HeartbeatEvent)
         {
-            LogReceivedEvent(logger, @event.GetType().Name, JsonSerializer.Serialize(@event, @event.GetType(), _jsonSerializerOptions));
+            LogReceivedEvent(
+                logger,
+                @event.GetType().Name,
+                JsonSerializer.Serialize(
+                    @event,
+                    @event.GetType(),
+                    _jsonSerializerOptions
+                )
+            );
         }
 
         var tasks = new List<Task>();

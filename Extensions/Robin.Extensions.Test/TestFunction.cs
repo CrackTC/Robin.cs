@@ -20,7 +20,7 @@ public class TestFunction(FunctionContext context) : BotFunction(context), IFlue
             .Do(ctx =>
                 new SendGroupMessageRequest(ctx.GroupId, [
                     new TextData("pong!")
-                ]).SendAsync(_context.OperationProvider, _context.Logger, ctx.Token)
+                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
             );
 
         return Task.CompletedTask;
