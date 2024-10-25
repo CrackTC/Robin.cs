@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Robin.Extensions.Gemini;
 
 [BotFunctionInfo("gemini", "Gemini 聊天机器人")]
-// ReSharper disable once UnusedType.Global
 public partial class GeminiFunction(
     FunctionContext<GeminiOption> context
 ) : BotFunction<GeminiOption>(context), IFluentFunction

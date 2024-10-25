@@ -9,7 +9,6 @@ using Robin.Middlewares.Fluent;
 namespace Robin.Extensions.Test;
 
 [BotFunctionInfo("test", "测试功能")]
-// ReSharper disable once UnusedType.Global
 public class TestFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)

@@ -13,7 +13,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.Help;
 
 [BotFunctionInfo("help", "帮助信息")]
-// ReSharper disable UnusedType.Global
 public partial class HelpFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     private static string GetTriggerDescription(

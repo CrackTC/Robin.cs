@@ -2,7 +2,6 @@ using Robin.Extensions.Gemini.Entity;
 
 namespace Robin.Extensions.Gemini;
 
-// ReSharper disable EntityFramework.ModelValidation.UnlimitedStringLength
 internal class User
 {
     public long UserId { get; init; }

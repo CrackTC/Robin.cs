@@ -12,7 +12,6 @@ using System.Text.RegularExpressions;
 namespace Robin.Extensions.ReplyAction;
 
 [BotFunctionInfo("reply_action", "把字句制造机")]
-// ReSharper disable once UnusedType.Global
 public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     [GeneratedRegex(@"^/\S")]

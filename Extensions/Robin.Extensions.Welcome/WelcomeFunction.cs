@@ -10,7 +10,6 @@ using Robin.Abstractions.Operation.Requests;
 namespace Robin.Extensions.Welcome;
 
 [BotFunctionInfo("welcome", "入群欢迎", typeof(GroupIncreaseEvent))]
-// ReSharper disable once UnusedType.Global
 public partial class WelcomeFunction(
     FunctionContext<WelcomeOption> context
 ) : BotFunction<WelcomeOption>(context)

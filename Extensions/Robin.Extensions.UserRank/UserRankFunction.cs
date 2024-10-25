@@ -18,7 +18,6 @@ namespace Robin.Extensions.UserRank;
 
 [BotFunctionInfo("user_rank", "用户发言排行")]
 [OnCron("0 0 0 * * ?")]
-// ReSharper disable once UnusedType.Global
 public partial class UserRankFunction(
     FunctionContext<UserRankOption> context
 ) : BotFunction<UserRankOption>(context), ICronHandler, IFluentFunction

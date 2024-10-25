@@ -9,7 +9,6 @@ using Robin.Abstractions.Context;
 namespace Robin.Middlewares.Annotations.Cron;
 
 [BotFunctionInfo("cron", "元功能，在指定的时间执行任务")]
-// ReSharper disable UnusedType.Global
 public partial class CronFunction(FunctionContext context) : BotFunction(context)
 {
     private IScheduler? _scheduler;

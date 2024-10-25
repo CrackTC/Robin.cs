@@ -11,7 +11,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.Gray;
 
 [BotFunctionInfo("gray", "喜多烧香精神续作（x")]
-// ReSharper disable once UnusedType.Global
 public partial class GrayFunction(
     FunctionContext<GrayOption> context
 ) : BotFunction<GrayOption>(context), IFluentFunction

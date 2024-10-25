@@ -9,7 +9,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.PokeBack;
 
 [BotFunctionInfo("poke_back", "戳回去")]
-// ReSharper disable once UnusedType.Global
 public class PokeBackFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)

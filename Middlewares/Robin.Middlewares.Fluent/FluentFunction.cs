@@ -6,7 +6,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Middlewares.Fluent;
 
 [BotFunctionInfo("fluent", "元功能，流式扩展接口", typeof(BotEvent))]
-// ReSharper disable once UnusedType.Global
 public class FluentFunction(FunctionContext context) : BotFunction(context)
 {
     private IEnumerable<IEnumerable<EventTunnelInfo>> _eventTunLists = [];

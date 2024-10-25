@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Robin.Extensions.UserRank;
 
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 internal class UserRankDbContext(long uin = 0) : DbContext
 {
     public DbSet<Record> Records { get; set; } = null!;

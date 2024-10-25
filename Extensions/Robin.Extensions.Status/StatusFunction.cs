@@ -10,7 +10,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.Status;
 
 [BotFunctionInfo("status", "当前运行状态")]
-// ReSharper disable once UnusedType.Global
 public class StatusFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)

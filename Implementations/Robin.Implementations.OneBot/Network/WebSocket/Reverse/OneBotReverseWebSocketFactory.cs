@@ -5,7 +5,6 @@ using Robin.Abstractions.Communication;
 namespace Robin.Implementations.OneBot.Network.WebSocket.Reverse;
 
 [Backend("OneBotReverseWebSocket")]
-// ReSharper disable once UnusedType.Global
 public partial class OneBotReverseWebSocketFactory(
     IServiceProvider provider,
     ILogger<OneBotReverseWebSocketFactory> logger

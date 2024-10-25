@@ -11,7 +11,6 @@ using SauceNET;
 
 namespace Robin.Extensions.SauceNao;
 
-// ReSharper disable once UnusedType.Global
 [BotFunctionInfo("sauce_nao", "Saucenao 插画反向搜索")]
 public partial class SauceNaoFunction(
     FunctionContext<SauceNaoOption> context

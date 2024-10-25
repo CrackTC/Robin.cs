@@ -10,7 +10,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.Dice;
 
 [BotFunctionInfo("dice", "投个骰子（<次数>d<面数>[+/-<修正>]）")]
-// ReSharper disable once UnusedType.Global
 public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     [GeneratedRegex(@"/dice (?<count>\d+)d(?<sides>\d+)(?<modifier>[+-]\d+)?")]

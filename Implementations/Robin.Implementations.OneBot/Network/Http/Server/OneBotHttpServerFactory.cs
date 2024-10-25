@@ -5,7 +5,6 @@ using Robin.Abstractions.Communication;
 namespace Robin.Implementations.OneBot.Network.Http.Server;
 
 [Backend("OneBotHttpServer")]
-// ReSharper disable once UnusedType.Global
 public partial class OneBotHttpServerFactory(
     IServiceProvider provider,
     ILogger<OneBotHttpServerFactory> logger

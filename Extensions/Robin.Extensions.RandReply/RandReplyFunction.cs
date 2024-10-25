@@ -10,7 +10,6 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.RandReply;
 
 [BotFunctionInfo("rand_reply", "随机回复", typeof(RandReplyOption))]
-// ReSharper disable once UnusedType.Global
 public partial class RandReplyFunction(
     FunctionContext<RandReplyOption> context
 ) : BotFunction<RandReplyOption>(context), IFluentFunction

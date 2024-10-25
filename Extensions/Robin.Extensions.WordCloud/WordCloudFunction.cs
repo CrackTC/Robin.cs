@@ -17,7 +17,6 @@ namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "群词云生成")]
 [OnCron("0 0 0 * * ?")]
-// ReSharper disable once UnusedType.Global
 public partial class WordCloudFunction(
     FunctionContext<WordCloudOption> context
 ) : BotFunction<WordCloudOption>(context), ICronHandler, IFluentFunction
