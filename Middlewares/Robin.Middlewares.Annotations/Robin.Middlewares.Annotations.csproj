@@ -5,8 +5,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="CronExpressionDescriptor" Version="2.36.0" />
-      <PackageReference Include="Quartz" Version="3.8.1" />
+      <PackageReference Include="CronExpressionDescriptor" Version="*" />
+      <PackageReference Include="Quartz" Version="*" />
     </ItemGroup>
 
     <PropertyGroup>

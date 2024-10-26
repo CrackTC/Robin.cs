@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SauceNET" Version="1.1.1" />
+    <PackageReference Include="SauceNET" Version="*" />
   </ItemGroup>
 
   <PropertyGroup>
