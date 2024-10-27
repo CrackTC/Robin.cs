@@ -15,7 +15,7 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         builder.On<GroupMessageEvent>()
-            .Where(e => e.Event.Message.SingleOrDefault() is TextData { Text: "今日老婆" })
+            .Where(e => e.Event.Message.Count() is 1 && e.Event.Message.Single() is TextData { Text: "今日老婆" })
             .Do(async ctx =>
             {
                 var (e, t) = ctx;
