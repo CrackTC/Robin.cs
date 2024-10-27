@@ -45,6 +45,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Middlewares.Annotatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Middlewares.Fluent", "Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj", "{C1F90895-A459-4C57-9A4C-0D4239F5BDEE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Wife", "Extensions\Robin.Extensions.Wife\Robin.Extensions.Wife.csproj", "{90953558-7BC6-4240-B830-C6F8816D2EC6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,10 @@ Global
 		{C1F90895-A459-4C57-9A4C-0D4239F5BDEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1F90895-A459-4C57-9A4C-0D4239F5BDEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1F90895-A459-4C57-9A4C-0D4239F5BDEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90953558-7BC6-4240-B830-C6F8816D2EC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90953558-7BC6-4240-B830-C6F8816D2EC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90953558-7BC6-4240-B830-C6F8816D2EC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90953558-7BC6-4240-B830-C6F8816D2EC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -138,5 +144,6 @@ Global
 		{B0A62FE5-4B9D-4726-A919-9FA10F6F62BF} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 		{C2DFF6B0-3E9D-463A-8979-B5A5D6C4100F} = {4377CD21-B598-44A3-8F44-E6C3BC7413F3}
 		{C1F90895-A459-4C57-9A4C-0D4239F5BDEE} = {4377CD21-B598-44A3-8F44-E6C3BC7413F3}
+		{90953558-7BC6-4240-B830-C6F8816D2EC6} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 	EndGlobalSection
 EndGlobal
