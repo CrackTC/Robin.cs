@@ -36,7 +36,7 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
                         null or "" => member.Nickname,
                         _ => member.Card
                     }}"),
-                    new ImageData($"https://q1.qlogo.cn/g?b=qq&nk={e.UserId}&s=640"),
+                    new ImageData($"https://q1.qlogo.cn/g?b=qq&nk={member.UserId}&s=640"),
                 ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
             });
 
