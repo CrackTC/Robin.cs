@@ -9,7 +9,6 @@ internal class UserRankDbContext(long uin = 0) : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder
-            .UseModel(CompiledModels.UserRankDbContextModel.Instance)
             .UseSqlite($"Data Source=user_rank-{uin}.db");
     }
 

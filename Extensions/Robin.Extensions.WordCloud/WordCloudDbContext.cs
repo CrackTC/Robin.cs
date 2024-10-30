@@ -9,7 +9,6 @@ internal class WordCloudDbContext(long uin = 0) : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder
-            .UseModel(CompiledModels.WordCloudDbContextModel.Instance)
             .UseSqlite($"Data Source=word_cloud-{uin}.db");
     }
 
