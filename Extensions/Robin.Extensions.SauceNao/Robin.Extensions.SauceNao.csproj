@@ -5,11 +5,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SauceNET" Version="*" />
+    <PackageReference Include="SauceNET" Version="1.1.1" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>

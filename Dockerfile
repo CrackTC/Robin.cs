@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS abstraction
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS abstraction
 WORKDIR /robin/Robin.Abstractions
 COPY ./Robin.Abstractions/Robin.Abstractions.csproj ./
 RUN dotnet restore
@@ -27,7 +27,7 @@ RUN dotnet restore
 COPY ./Robin.App ./
 RUN dotnet publish -c Release -o /out/Robin.App
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS final
 RUN apk add --no-cache icu-libs
 WORKDIR /app
 COPY --from=build-app /out/Robin.App .

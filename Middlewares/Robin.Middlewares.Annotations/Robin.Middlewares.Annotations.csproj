@@ -5,12 +5,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="CronExpressionDescriptor" Version="*" />
-      <PackageReference Include="Quartz" Version="*" />
+      <PackageReference Include="CronExpressionDescriptor" Version="2.36.0" />
+      <PackageReference Include="Quartz" Version="3.13.0" />
     </ItemGroup>
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>
