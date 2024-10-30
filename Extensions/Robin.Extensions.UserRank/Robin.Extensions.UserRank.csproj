@@ -5,7 +5,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <EFOptimizeContext>true</EFOptimizeContext>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,8 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="*" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="*" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0-rc.2.24474.1" />
     </ItemGroup>
 
 </Project>
