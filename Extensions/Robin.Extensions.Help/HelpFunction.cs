@@ -48,27 +48,27 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         return builder.ToString();
     }
 
-    private Dictionary<string, string> Helps => _context.BotContext.Functions
-        .Select(f => (
-                function: f,
-                info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
-            )
-        )
-        .ToDictionary(pair => pair.info.Name, pair => $"""
-            名称: {pair.info.Name}
-            描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info)}
-            """
-        );
-
-    private Dictionary<string, string> BriefHelps => _context.BotContext.Functions
-        .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
-        .ToDictionary(info => info.Name, info => info.Description);
-
     [GeneratedRegex(@"^/help(?:\s+(?<name>\S+))?")]
     private static partial Regex HelpRegex();
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
+        var helps = _context.BotContext.Functions
+            .Select(f => (
+                    function: f,
+                    info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
+                )
+            )
+            .ToDictionary(pair => pair.info.Name, pair => $"""
+                名称: {pair.info.Name}
+                描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info)}
+                """
+            );
+
+        var briefHelps = _context.BotContext.Functions
+            .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
+            .ToDictionary(info => info.Name, info => info.Description);
+
         builder.On<MessageEvent>()
             .OnAt(_context.BotContext.Uin)
             .OnRegex(HelpRegex())
@@ -85,13 +85,13 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                         new TextData($"""
                             /help [功能名] 查看详细功能信息
                             可用功能：
-                            {string.Join("\n", BriefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
+                            {string.Join("\n", briefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
                             """)
                     ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
                     return;
                 }
 
-                if (!Helps.TryGetValue(name.Value, out var help))
+                if (!helps.TryGetValue(name.Value, out var help))
                 {
                     await e.NewMessageRequest([
                         new TextData($"未找到功能：{name.Value}")
