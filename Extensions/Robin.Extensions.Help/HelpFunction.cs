@@ -70,7 +70,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
-            .OnAtSelf(_context.BotContext.Uin)
+            .OnAt(_context.BotContext.Uin)
             .OnRegex(HelpRegex())
             .Do(async tuple =>
             {

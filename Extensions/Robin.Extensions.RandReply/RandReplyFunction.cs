@@ -17,7 +17,7 @@ public partial class RandReplyFunction(
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupMessageEvent>()
-            .OnAtSelf(_context.BotContext.Uin)
+            .OnAt(_context.BotContext.Uin)
             .AsFallback()
             .Do(async ctx =>
             {

@@ -6,6 +6,7 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Operation.Responses;
 using Robin.Middlewares.Fluent;
+using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.Wife;
 
@@ -15,7 +16,7 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         builder.On<GroupMessageEvent>()
-            .Where(e => e.Event.Message.Count() is 1 && e.Event.Message.Single() is TextData { Text: "今日老婆" })
+            .OnCommand("今日老婆", string.Empty)
             .Do(async ctx =>
             {
                 var (e, t) = ctx;

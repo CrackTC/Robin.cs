@@ -9,30 +9,30 @@ namespace Robin.Middlewares.Fluent.Event;
 
 public static class FluentExt
 {
-    public static EventTunnelBuilder<EventContext<TEvent>> OnAtSelf<TEvent>(
+    public static EventTunnelBuilder<EventContext<TEvent>> OnAt<TEvent>(
         this EventTunnelBuilder<EventContext<TEvent>> builder,
-        long selfUin
+        long uin
     ) where TEvent : MessageEvent =>
         builder
-            .Where(ctx => ctx.Event.Message.OfType<AtData>().Any(at => at.Uin == selfUin))
-            .WithDescription("自身在群聊中被@");
+            .Where(ctx => ctx.Event.Message.OfType<AtData>().Any(at => at.Uin == uin))
+            .WithDescription($"消息@了 {uin}");
 
     public static EventTunnelBuilder<EventContext<TEvent>> OnNotAtOthers<TEvent>(
         this EventTunnelBuilder<EventContext<TEvent>> builder,
-        long selfUin
+        long uin
     ) where TEvent : MessageEvent =>
         builder
-            .Where(ctx => ctx.Event.Message.OfType<AtData>().All(at => at.Uin == selfUin))
-            .WithDescription("消息未@其他人");
+            .Where(ctx => ctx.Event.Message.OfType<AtData>().All(at => at.Uin == uin))
+            .WithDescription($"消息未@除了 {uin} 以外的人");
 
     public static EventTunnelBuilder<EventContext<TEvent>> OnCommand<TEvent>(
         this EventTunnelBuilder<EventContext<TEvent>> builder,
         string command,
-        char prefix = '/'
+        string prefix = "/"
     ) where TEvent : MessageEvent =>
         builder
             .Where(ctx => ctx.Event.Message.Any(seg => seg is TextData text
-                                                && text.Text.Trim().Split(null).Any(t => t == $"{prefix}{command}")))
+                && text.Text.Trim().Split(null).Any(t => t == $"{prefix}{command}")))
             .WithDescription($"消息包含指令：{prefix}{command}");
 
     public static EventTunnelBuilder<(EventContext<TEvent> EventContext, string Text)> OnText<TEvent>(
