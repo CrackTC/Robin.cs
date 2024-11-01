@@ -10,6 +10,13 @@ namespace Robin.Middlewares.Fluent.Event;
 public static class FluentExt
 {
     public static EventTunnelBuilder<EventContext<TEvent>> OnAt<TEvent>(
+        this EventTunnelBuilder<EventContext<TEvent>> builder
+    ) where TEvent : MessageEvent =>
+        builder
+            .Where(ctx => ctx.Event.Message.OfType<AtData>().Any())
+            .WithDescription("消息@了某人");
+
+    public static EventTunnelBuilder<EventContext<TEvent>> OnAt<TEvent>(
         this EventTunnelBuilder<EventContext<TEvent>> builder,
         long uin
     ) where TEvent : MessageEvent =>
