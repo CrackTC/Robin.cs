@@ -19,9 +19,11 @@ public class AtPokeFunction(FunctionContext context) : BotFunction(context), IFl
             .Do(async tuple =>
             {
                 var (e, t) = tuple;
-                if (e.Message.Count() > 2) return;
-                if (e.Message.OfType<TextData>().FirstOrDefault() is null or { Text: not " " }) return;
-                await new SendGroupPokeRequest(e.GroupId, e.Message.OfType<AtData>().Single().Uin)
+
+                long uin = e.Message switch { [AtData at, TextData { Text: " " }] => at.Uin, [AtData at] => at.Uin, _ => 0 };
+                if (uin is 0) return;
+
+                await new SendGroupPokeRequest(e.GroupId, uin)
                     .SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
             });
 
