@@ -16,6 +16,7 @@ public class AtPokeFunction(FunctionContext context) : BotFunction(context), IFl
     {
         builder.On<GroupMessageEvent>()
             .OnAt()
+            .AsFallback()
             .Do(async tuple =>
             {
                 var (e, t) = tuple;
