@@ -14,6 +14,8 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
     private static readonly OpSsd1306 _oled = new OpSsd1306(0, 1, 12);
     private static readonly Font _font = new Font("wenquanyi_9pt.pcf");
 
+    static OledFunction() => _oled.Clear();
+
     private static string GetText(MessageChain chain) => string.Join(' ', chain.Select(msg => msg switch
     {
         TextData { Text: var text } => text,
@@ -29,7 +31,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             .Do((tuple) =>
             {
                 var (e, t) = tuple;
-                _oled.Print(_font, $"{e.UserId}: {GetText(e.Message)}");
+                _oled.Print(_font, $"{e.UserId}: {GetText(e.Message)}\n");
                 return Task.CompletedTask;
             });
 
