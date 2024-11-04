@@ -59,11 +59,11 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                     info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
                 )
             )
-            .ToDictionary(pair => pair.info.Name, pair => $"""
+            .ToDictionary(pair => pair.info.Name, pair => new Func<string>(() => $"""
                 名称: {pair.info.Name}
                 描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info)}
                 """
-            );
+            ));
 
         var briefHelps = _context.BotContext.Functions
             .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
@@ -99,7 +99,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                     return;
                 }
 
-                await e.NewMessageRequest([new TextData(help)]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                await e.NewMessageRequest([new TextData(help())]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
             });
 
         return Task.CompletedTask;
