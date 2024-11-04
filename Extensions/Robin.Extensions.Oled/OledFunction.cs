@@ -28,6 +28,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
         builder.On<MessageEvent>()
+            .AsAlwaysFired()
             .Do((tuple) =>
             {
                 var (e, t) = tuple;
