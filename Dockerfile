@@ -29,7 +29,7 @@ RUN dotnet publish -c Release -o /out/Robin.App
 
 FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS final
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apk add --no-cache icu-libs
+RUN apk add --no-cache icu-libs freetype
 WORKDIR /app
 COPY --from=build-app /out/Robin.App .
 COPY --from=build-impl /out/Implementations ./Implementations
