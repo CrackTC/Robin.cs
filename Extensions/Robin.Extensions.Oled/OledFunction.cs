@@ -32,7 +32,8 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             .Do((tuple) =>
             {
                 var (e, t) = tuple;
-                _oled.Print(_font, $"{e.UserId}: {GetText(e.Message)}\n");
+                _oled.Print(_font, $"\n{e.UserId}: {GetText(e.Message)}");
+                _oled.SyncLine();
                 return Task.CompletedTask;
             });
 
