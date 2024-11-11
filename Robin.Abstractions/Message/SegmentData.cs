@@ -17,6 +17,7 @@ namespace Robin.Abstractions.Message;
 [JsonDerivedType(typeof(KeyboardData))]
 [JsonDerivedType(typeof(LocationData))]
 [JsonDerivedType(typeof(LongMessageData))]
+[JsonDerivedType(typeof(MarketFaceData))]
 [JsonDerivedType(typeof(MusicData))]
 [JsonDerivedType(typeof(NodeData))]
 [JsonDerivedType(typeof(PokeData))]
