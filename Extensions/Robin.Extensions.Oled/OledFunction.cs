@@ -47,15 +47,16 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
     };
 
     private async Task<string> GetText(MessageEvent e, CancellationToken token) =>
-        string.Join(' ', await Task.WhenAll(e.Message.Select(async msg => msg switch
+        string.Join(' ', (await Task.WhenAll(e.Message.Select(async msg => msg switch
         {
             TextData { Text: var text } => text,
             AtData { Uin: var uin } => $"@{await GetUserName(e, uin, token)}",
             ReplyData { Id: var id } => $"[re:{id}]",
             ImageData { Summary: var summary } => summary ?? "[图片]",
+            MarketFaceData => string.Empty, // TextData will handle this
             ForwardData => "[转发]",
             _ => $"[{msg.GetType().Name}]"
-        })));
+        }))).Where(s => !string.IsNullOrWhiteSpace(s)));
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
@@ -66,18 +67,14 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             .Do(async (tuple) =>
             {
                 var (e, t) = tuple;
-
                 var (newSource, newUser) = ((e.GetType(), e.SourceId), e.UserId);
 
                 if (newSource != lastSource)
-                {
                     textBuilder.AppendLine().Append('*').Append(await GetSourceName(e, t));
-                }
                 if ((newSource, newUser) != (lastSource, lastUser))
-                {
                     textBuilder.AppendLine().Append('>').Append(await GetUserName(e, e.UserId, t));
-                }
                 textBuilder.AppendLine().Append('|').Append(await GetText(e, t));
+
                 _oled.Print(_font, textBuilder.ToString());
                 _oled.SyncLine();
                 textBuilder.Clear();
