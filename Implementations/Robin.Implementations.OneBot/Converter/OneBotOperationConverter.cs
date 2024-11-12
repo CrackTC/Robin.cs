@@ -27,11 +27,12 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
 
         var types1 = typeof(OneBotOperationConverter).Assembly
             .GetTypes()
-            .Select(type => (Type: type, Attribute: type.GetCustomAttribute<OneBotResponseDataAttribute>()))
-            .Where(pair => pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotResponseData)));
+            .Select(type => (Type: type, Attributes: type.GetCustomAttributes<OneBotResponseDataAttribute>()))
+            .Where(pair => pair.Attributes is not null && pair.Type.IsAssignableTo(typeof(IOneBotResponseData)));
 
-        foreach (var (type, attribute) in types1)
-            _requestTypeToResponseType[attribute!.RequestType] = type;
+        foreach (var (type, attributes) in types1)
+            foreach (var attribute in attributes)
+                _requestTypeToResponseType[attribute!.RequestType] = type;
     }
 
     public (string, JsonNode?, Type)? SerializeToJson<TResp>(RequestFor<TResp> request, OneBotMessageConverter converter) where TResp : Response
