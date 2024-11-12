@@ -34,7 +34,7 @@ internal partial class OneBotOperationConverter(ILogger<OneBotOperationConverter
             _requestTypeToResponseType[attribute!.RequestType] = type;
     }
 
-    public (string, JsonNode?, Type)? SerializeToJson(Request request, OneBotMessageConverter converter)
+    public (string, JsonNode?, Type)? SerializeToJson<TResp>(RequestFor<TResp> request, OneBotMessageConverter converter) where TResp : Response
     {
         if (_requestTypeToOneBotRequest.TryGetValue(request.GetType(), out var pair))
             return (pair.Item1, pair.Item2.GetJson(request, converter), pair.Item2.GetType());

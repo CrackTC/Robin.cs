@@ -21,9 +21,8 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
             {
                 var (e, t) = ctx;
 
-                if (await new GetGroupMemberListRequest(e.GroupId)
-                        .SendAsync<GetGroupMemberListResponse>(_context.BotContext.OperationProvider, _context.Logger, t)
-                            is not { Members: { } members })
+                if (await new GetGroupMemberListRequest(e.GroupId).SendAsync(_context, t)
+                    is not { Members: { } members })
                     return;
 
                 var member = members[Random.Shared.Next(members.Count)];
@@ -38,7 +37,7 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
                         _ => member.Card
                     }}"),
                     new ImageData($"https://q1.qlogo.cn/g?b=qq&nk={member.UserId}&s=640"),
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                ]).SendAsync(_context, t);
             });
 
         return Task.CompletedTask;

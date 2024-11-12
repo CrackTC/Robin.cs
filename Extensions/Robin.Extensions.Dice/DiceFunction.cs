@@ -39,7 +39,7 @@ public partial class DiceFunction(FunctionContext context) : BotFunction(context
                          Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}
                          """
                     )
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token);
+                ]).SendAsync(_context, ctx.Token);
             });
 
         return Task.CompletedTask;

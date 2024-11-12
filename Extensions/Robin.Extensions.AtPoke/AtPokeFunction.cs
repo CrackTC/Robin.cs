@@ -24,8 +24,7 @@ public class AtPokeFunction(FunctionContext context) : BotFunction(context), IFl
                 long uin = e.Message switch { [AtData at, TextData { Text: " " }] => at.Uin, [AtData at] => at.Uin, _ => 0 };
                 if (uin is 0) return;
 
-                await new SendGroupPokeRequest(e.GroupId, uin)
-                    .SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                await new SendGroupPokeRequest(e.GroupId, uin).SendAsync(_context, t);
             });
 
         return Task.CompletedTask;

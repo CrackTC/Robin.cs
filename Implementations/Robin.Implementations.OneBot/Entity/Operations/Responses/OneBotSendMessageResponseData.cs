@@ -7,11 +7,12 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
 [Serializable]
+[OneBotResponseData(typeof(OneBotSendGroupMessageRequest))]
 [OneBotResponseData(typeof(OneBotSendPrivateMessageRequest))]
-internal class OneBotSendPrivateMessageResponseData : IOneBotResponseData
+internal class OneBotSendMessageResponseData : IOneBotResponseData
 {
     [JsonPropertyName("message_id")] public int MessageId { get; set; }
 
-    public Response ToResponse(OneBotResponse response, OneBotMessageConverter converter) =>
-        new SendPrivateMessageResponse(response.Status is not "failed", response.ReturnCode, null, MessageId);
+    public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
+        new SendMessageResponse(response.Status is not "failed", response.ReturnCode, null, MessageId);
 }

@@ -1,45 +1,37 @@
 using Microsoft.Extensions.Logging;
-using Robin.Abstractions.Communication;
+using Robin.Abstractions.Context;
 
 namespace Robin.Abstractions.Operation;
 
 public static partial class RequestExt
 {
     public static Task<Response?> SendAsync(
-        this Request request,
-        IOperationProvider operation,
-        ILogger logger,
+        this RequestFor<Response> request,
+        FunctionContext context,
         CancellationToken token
-    ) => SendAsync<Response>(request, operation, logger, token);
+    ) => SendAsync<Response>(request, context, token);
 
-    public async static Task<TResponse?> SendAsync<TResponse>(
-        this Request request,
-        IOperationProvider operation,
-        ILogger logger,
+    public async static Task<TResp?> SendAsync<TResp>(
+        this RequestFor<TResp> request,
+        FunctionContext context,
         CancellationToken token
-    ) where TResponse : Response
+    ) where TResp : Response
     {
         try
         {
-            if (await operation.SendRequestAsync(request, token)
+            if (await context.BotContext.OperationProvider.SendRequestAsync(request, token)
                 is not { Success: true } response)
             {
-                LogSendFailed(logger, request);
+                LogSendFailed(context.Logger, request);
                 return null;
             }
 
-            if (response is not TResponse tResp)
-            {
-                LogMalformedResponse(logger, request, response);
-                return null;
-            }
-
-            LogSent(logger, request, tResp);
-            return tResp;
+            LogSent(context.Logger, request, response);
+            return response;
         }
         catch (Exception e)
         {
-            LogSendFailed(logger, request, e);
+            LogSendFailed(context.Logger, request, e);
             return null;
         }
     }
@@ -49,7 +41,4 @@ public static partial class RequestExt
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to send request: {Request}")]
     private static partial void LogSendFailed(ILogger logger, Request request, Exception? e = default);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Malformed response for request: {Request}, response: {Response}")]
-    private static partial void LogMalformedResponse(ILogger logger, Request request, Response response);
 }

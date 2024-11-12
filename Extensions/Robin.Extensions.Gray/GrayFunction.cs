@@ -4,7 +4,6 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Abstractions.Operation.Responses;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
 
@@ -24,14 +23,12 @@ public partial class GrayFunction(
             {
                 var (ctx, msgId) = t;
 
-                if (await new GetMessageRequest(msgId)
-                        .SendAsync<GetMessageResponse>(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
-                    is not { Message.Sender.UserId: var id }) return;
+                if (await new GetMessageRequest(msgId).SendAsync(_context, ctx.Token)
+                    is not { Message.Sender.UserId: var id })
+                    return;
 
                 var url = $"{_context.Configuration.ApiAddress}/?id={id}";
-                await ctx.Event.NewMessageRequest([
-                    new ImageData(url)
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token);
+                await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token);
             });
 
         return Task.CompletedTask;

@@ -52,8 +52,7 @@ public partial class UserRankFunction(
         if (peopleCount is 0 || msgCount is 0) message = "本群暂无发言记录";
         else
         {
-            if (await new GetGroupMemberListRequest(groupId, true)
-                .SendAsync<GetGroupMemberListResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
+            if (await new GetGroupMemberListRequest(groupId, true).SendAsync(_context, token)
                 is not { Members: { } members })
                 return;
 
@@ -82,9 +81,7 @@ public partial class UserRankFunction(
             message = stringBuilder.ToString();
         }
 
-        await new SendGroupMessageRequest(groupId, [
-            new TextData(message)
-        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
+        await new SendGroupMessageRequest(groupId, [new TextData(message)]).SendAsync(_context, token);
     }
 
 

@@ -34,7 +34,7 @@ public partial class RandReplyFunction(
                     ))}");
 
                 await ctx.Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
-                    .SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token);
+                    .SendAsync(_context, ctx.Token);
             });
 
         return Task.CompletedTask;

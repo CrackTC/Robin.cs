@@ -30,8 +30,7 @@ public partial class SauceNaoFunction(
                 var (ctx, msgId) = t;
                 var (e, token) = ctx;
 
-                if (await new GetMessageRequest(msgId)
-                        .SendAsync<GetMessageResponse>(_context.BotContext.OperationProvider, _context.Logger, token)
+                if (await new GetMessageRequest(msgId).SendAsync(_context, token)
                     is not { Message.Message: { } origMsg })
                     return;
 
@@ -53,16 +52,13 @@ public partial class SauceNaoFunction(
 
                 if (results.Count is 0)
                 {
-                    await e.NewMessageRequest([
-                        new TextData("找不到喵>_<")
-                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
-
+                    await e.NewMessageRequest([new TextData("找不到喵>_<")]).SendAsync(_context, token);
                     return;
                 }
 
                 await e.NewMessageRequest([
                     new TextData(string.Join("\n", results))
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
+                ]).SendAsync(_context, token);
             });
 
         return Task.CompletedTask;

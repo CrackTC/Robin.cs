@@ -1,6 +1,6 @@
 namespace Robin.Abstractions.Operation.Responses;
 
-public record SendGroupMessageResponse(
+public record SendMessageResponse(
     bool Success,
     int ReturnCode,
     string? ErrorMessage,

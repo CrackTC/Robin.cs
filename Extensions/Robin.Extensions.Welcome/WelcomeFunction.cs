@@ -36,7 +36,7 @@ public partial class WelcomeFunction(
             new TextData(parts[0]),
             new AtData(e.UserId),
             new TextData(parts[1])
-        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, eventContext.Token);
+        ]).SendAsync(_context, eventContext.Token);
     }
 
     #region Log

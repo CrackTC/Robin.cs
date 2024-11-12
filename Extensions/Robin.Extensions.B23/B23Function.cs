@@ -48,7 +48,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
                 await ctx.Event.NewMessageRequest([
                     new ReplyData(ctx.Event.MessageId),
                     new TextData(resolved)
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token);
+                ]).SendAsync(_context, ctx.Token);
             });
 
         return Task.CompletedTask;

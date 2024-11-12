@@ -28,7 +28,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
     {
         GroupMessageEvent { SourceId: var groupId } when
             await new GetGroupInfoRequest(groupId)
-                .SendAsync<GetGroupInfoResponse>(_context.BotContext.OperationProvider, _context.Logger, token) is { Info: { } info } =>
+                .SendAsync(_context, token) is { Info: { } info } =>
                     info.GroupName,
         PrivateMessageEvent { Sender: { Nickname: var nickname } } => nickname,
         _ => e.SourceId.ToString()
@@ -39,8 +39,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
         GroupMessageEvent { Sender: { } sender } when sender.UserId == uin =>
             sender.Card switch { null or "" => sender.Nickname, _ => sender.Card },
         GroupMessageEvent { GroupId: var groupId } when
-            await new GetGroupMemberInfoRequest(groupId, uin)
-                .SendAsync<GetGroupMemberInfoResponse>(_context.BotContext.OperationProvider, _context.Logger, token) is { Info: { } info } =>
+            await new GetGroupMemberInfoRequest(groupId, uin).SendAsync(_context, token) is { Info: { } info } =>
                     info.Card switch { null or "" => info.Nickname, _ => info.Card },
         PrivateMessageEvent { Sender: { Nickname: var nickname } } => nickname,
         _ => uin.ToString()

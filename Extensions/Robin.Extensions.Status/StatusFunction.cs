@@ -27,7 +27,7 @@ public class StatusFunction(FunctionContext context) : BotFunction(context), IFl
                          当前分配内存数: {Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024} MB
                          """
                     )
-                ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
+                ]).SendAsync(_context, ctx.Token)
             );
 
         return Task.CompletedTask;

@@ -28,7 +28,7 @@ internal partial class OneBotHttpClientService(
 
     private readonly SemaphoreSlim _semaphore = new(options.RequestParallelism, options.RequestParallelism);
 
-    public async Task<Response?> SendRequestAsync(Request request, CancellationToken token = default)
+    public async Task<TResp?> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
     {
         if (_operationConverter.SerializeToJson(request, _messageConverter) is not { } pair)
         {
@@ -63,16 +63,13 @@ internal partial class OneBotHttpClientService(
                 cancellationToken: token);
 
         if (oneBotResponse is not null)
-            return _operationConverter.ParseResponse(type, oneBotResponse, _messageConverter);
+            return _operationConverter.ParseResponse(type, oneBotResponse, _messageConverter) as TResp;
 
         LogInvalidResponse(_logger, await response.Content.ReadAsStringAsync(token));
         return null;
     }
 
-    public void Dispose()
-    {
-        _client.Dispose();
-    }
+    public void Dispose() => _client.Dispose();
 
     #region Log
 

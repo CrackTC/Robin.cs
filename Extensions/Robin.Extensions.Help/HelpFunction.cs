@@ -87,19 +87,17 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                             可用功能：
                             {string.Join("\n", briefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
                             """)
-                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                    ]).SendAsync(_context, t);
                     return;
                 }
 
                 if (!helps.TryGetValue(name.Value, out var help))
                 {
-                    await e.NewMessageRequest([
-                        new TextData($"未找到功能：{name.Value}")
-                    ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                    await e.NewMessageRequest([new TextData($"未找到功能：{name.Value}")]).SendAsync(_context, t);
                     return;
                 }
 
-                await e.NewMessageRequest([new TextData(help())]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, t);
+                await e.NewMessageRequest([new TextData(help())]).SendAsync(_context, t);
             });
 
         return Task.CompletedTask;

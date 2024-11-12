@@ -149,7 +149,7 @@ public partial class GeminiFunction(
     private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token) =>
         await new SendPrivateMessageRequest(userId, [
             new TextData(reply)
-        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token) is not null;
+        ]).SendAsync(_context, token) is not null;
 
     public override async Task StopAsync(CancellationToken token)
     {

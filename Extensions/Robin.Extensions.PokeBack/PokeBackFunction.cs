@@ -16,8 +16,7 @@ public class PokeBackFunction(FunctionContext context) : BotFunction(context), I
         builder.On<GroupPokeEvent>()
             .OnPokeSelf(_context.BotContext.Uin)
             .Do(ctx => ctx.Event.SenderId != _context.BotContext.Uin
-                ? new SendGroupPokeRequest(ctx.Event.GroupId, ctx.Event.SenderId)
-                   .SendAsync(_context.BotContext.OperationProvider, _context.Logger, ctx.Token)
+                ? new SendGroupPokeRequest(ctx.Event.GroupId, ctx.Event.SenderId).SendAsync(_context, ctx.Token)
                 : Task.CompletedTask
             );
 

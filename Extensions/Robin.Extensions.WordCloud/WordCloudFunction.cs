@@ -67,9 +67,7 @@ public partial class WordCloudFunction(
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        await new SendGroupMessageRequest(groupId, [
-            new ImageData(url)
-        ]).SendAsync(_context.BotContext.OperationProvider, _context.Logger, token);
+        await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_context, token);
     }
 
     public override async Task StopAsync(CancellationToken token)

@@ -12,6 +12,4 @@ public abstract record MessageEvent(
 ) : BotEvent(Time)
 {
     public abstract long SourceId { get; }
-
-    public abstract Operation.Request NewMessageRequest(MessageChain chain);
 };

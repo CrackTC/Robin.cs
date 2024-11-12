@@ -38,7 +38,7 @@ internal partial class OneBotReverseWebSocketService(
 
     public event Func<BotEvent, CancellationToken, Task>? OnEventAsync;
 
-    public async Task<Response?> SendRequestAsync(Request request, CancellationToken token = default)
+    public async Task<TResp?> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
     {
         if (_operationConverter.SerializeToJson(request, _messageConverter) is not { } pair)
         {
@@ -63,7 +63,7 @@ internal partial class OneBotReverseWebSocketService(
         {
             await _semaphore.ConsumeAsync(() => _websocket!.SendAsync(buffer.AsMemory(), WebSocketMessageType.Text, true, token), token);
 
-            var completionSource = new TaskCompletionSource<Response?>();
+            var completionSource = new TaskCompletionSource<TResp?>();
 
             Action<OneBotResponse> onResponse = null!;
             onResponse = oneBotResponse =>
@@ -71,7 +71,7 @@ internal partial class OneBotReverseWebSocketService(
                 if (oneBotResponse.Echo != echo) return;
                 OnResponse -= onResponse;
                 var response = _operationConverter.ParseResponse(type, oneBotResponse, _messageConverter);
-                completionSource.SetResult(response);
+                completionSource.SetResult(response as TResp);
             };
 
             OnResponse += onResponse;
