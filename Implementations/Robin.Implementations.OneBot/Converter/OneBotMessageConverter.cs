@@ -108,7 +108,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
     }
 
     [GeneratedRegex(@"\[CQ:([^,\]]+)(?:,([^,\]]+))*\]")]
-    private static partial Regex CqCodeRegex();
+    private static partial Regex CqCodeRegex { get; }
 
     private static string UnescapeCq(string str)
         => str.Replace("&#91;", "[")
@@ -125,7 +125,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
     {
         var chain = new MessageChain();
 
-        var matches = CqCodeRegex().Matches(segmentString);
+        var matches = CqCodeRegex.Matches(segmentString);
         var textStart = 0;
         foreach (Match match in matches)
         {

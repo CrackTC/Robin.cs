@@ -13,12 +13,12 @@ namespace Robin.Extensions.Dice;
 public partial class DiceFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     [GeneratedRegex(@"/dice (?<count>\d+)d(?<sides>\d+)(?<modifier>[+-]\d+)?")]
-    private static partial Regex DiceRegex();
+    private static partial Regex DiceRegex { get; }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
-            .OnRegex(DiceRegex())
+            .OnRegex(DiceRegex)
             .Do(async t =>
             {
                 var (ctx, match) = t;

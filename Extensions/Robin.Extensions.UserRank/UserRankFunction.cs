@@ -8,7 +8,6 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Abstractions.Operation.Responses;
 using Robin.Abstractions.Utility;
 using Robin.Middlewares.Annotations.Cron;
 using Robin.Middlewares.Fluent;
@@ -86,7 +85,7 @@ public partial class UserRankFunction(
 
 
     [GeneratedRegex(@"^/rank(?:\s+(?<n>\d+))?$")]
-    private static partial Regex RankRegex();
+    private static partial Regex RankRegex { get; }
 
     public async Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
@@ -96,7 +95,7 @@ public partial class UserRankFunction(
             .AsAlwaysFired()
             .Do(ctx => InsertDataAsync(ctx.Event.GroupId, ctx.Event.UserId, ctx.Token))
             .On<GroupMessageEvent>()
-            .OnRegex(RankRegex())
+            .OnRegex(RankRegex)
             .Do(async tuple =>
             {
                 var (ctx, match) = tuple;

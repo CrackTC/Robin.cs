@@ -49,7 +49,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
     }
 
     [GeneratedRegex(@"^/help(?:\s+(?<name>\S+))?")]
-    private static partial Regex HelpRegex();
+    private static partial Regex HelpRegex { get; }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
@@ -71,7 +71,7 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
 
         builder.On<MessageEvent>()
             .OnAt(_context.BotContext.Uin)
-            .OnRegex(HelpRegex())
+            .OnRegex(HelpRegex)
             .Do(async tuple =>
             {
                 var (ctx, match) = tuple;

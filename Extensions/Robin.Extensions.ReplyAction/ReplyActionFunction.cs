@@ -4,7 +4,6 @@ using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
-using Robin.Abstractions.Operation.Responses;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
 using System.Text.RegularExpressions;
@@ -15,15 +14,15 @@ namespace Robin.Extensions.ReplyAction;
 public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
     [GeneratedRegex(@"^/\S")]
-    private static partial Regex IsAction();
+    private static partial Regex IsAction { get; }
 
     [GeneratedRegex(@"^/(?<verb>\S+)(?:\s+(?<adverb>.*))?")]
-    private static partial Regex ActionParts();
+    private static partial Regex ActionParts { get; }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupMessageEvent>()
-            .OnRegex(IsAction())
+            .OnRegex(IsAction)
             .Select(e => e.EventContext)
             .OnReply()
             .AsFallback()
@@ -32,7 +31,7 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                 var (ctx, msgId) = t;
                 var (e, token) = ctx;
 
-                var match = ActionParts().Match(
+                var match = ActionParts.Match(
                     string.Join(
                         null,
                         e.Message.OfType<TextData>()

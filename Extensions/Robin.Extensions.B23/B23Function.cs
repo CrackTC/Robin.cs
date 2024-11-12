@@ -20,14 +20,14 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
     });
 
     [GeneratedRegex(@"^https://www\.bilibili\.com/video/[^?]+")]
-    private partial Regex RawUrlRegex();
+    private partial Regex RawUrlRegex { get; }
 
     private async Task<string?> ResolveB23(string b23Url, CancellationToken token)
     {
         using var resp = await _client.GetAsync(b23Url, token);
 
         if (resp is not { StatusCode: HttpStatusCode.Found, Headers.Location: { } location }) return null;
-        return RawUrlRegex().Match(location.ToString())?.Value;
+        return RawUrlRegex.Match(location.ToString())?.Value;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
