@@ -84,7 +84,7 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             _normalPostBuffer.Add((id, await GetPostNodes(id, token)));
     }
 
-    private async Task SendPostsToGroup(long groupId, CancellationToken token)
+    private async Task<int> SendPostsToGroup(long groupId, CancellationToken token)
     {
         if (!_oaData!.Groups.ContainsKey(groupId))
             _oaData!.Groups.Add(groupId, new(LastPinnedPostId: 0, LastNormalPostId: 0));
@@ -93,19 +93,29 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         var newerPinned = _pinnedPostBuffer.GetItems().SkipWhile(p => p.PostId != group.LastPinnedPostId).ToList();
         var newerNormal = _normalPostBuffer.GetItems().SkipWhile(p => p.PostId != group.LastNormalPostId).ToList();
 
+        int count = 0;
+
         foreach (var (_, nodes) in newerPinned.Count is 0
             ? _pinnedPostBuffer.GetItems()
             : newerPinned.Skip(1))
+        {
             await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
+            ++count;
+        }
         foreach (var (_, nodes) in newerNormal.Count is 0
             ? _normalPostBuffer.GetItems()
             : newerNormal.Skip(1))
+        {
             await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
+            ++count;
+        }
 
         _oaData!.Groups[groupId] = new(
             _pinnedPostBuffer.Last?.PostId ?? 0,
             _normalPostBuffer.Last?.PostId ?? 0
         );
+
+        return count;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
@@ -117,7 +127,8 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             {
                 var (e, t) = tuple;
                 await UpdateOaPosts(t);
-                await SendPostsToGroup(e.GroupId, t);
+                if (await SendPostsToGroup(e.GroupId, t) is 0)
+                    await e.NewMessageRequest([new TextData("没有新通知喵>_<")]).SendAsync(_context, t);
             }, tuple.Token));
 
         return Task.CompletedTask;
