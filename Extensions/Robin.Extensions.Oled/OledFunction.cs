@@ -6,8 +6,8 @@ using Robin.Abstractions.Operation.Requests;
 using Robin.Middlewares.Fluent;
 using Sorac.OpSsd1306;
 using Robin.Abstractions.Operation;
-using Robin.Abstractions.Operation.Responses;
 using System.Text;
+using Robin.Abstractions.Utility;
 
 namespace Robin.Extensions.Oled;
 
@@ -16,6 +16,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
 {
     private static readonly OpSsd1306 _oled = new OpSsd1306(sdaPort: 0, sclPort: 1, lineHeight: 12);
     private static readonly Font _font = new Font("wenquanyi_9pt.pcf");
+    private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     static OledFunction()
     {
@@ -64,7 +65,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
         var textBuilder = new StringBuilder();
         builder.On<MessageEvent>()
             .AsAlwaysFired()
-            .Do(async (tuple) =>
+            .Do((tuple) => _semaphore.ConsumeAsync(async Task () =>
             {
                 var (e, t) = tuple;
                 var (newSource, newUser) = ((e.GetType(), e.SourceId), e.UserId);
@@ -80,7 +81,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
                 textBuilder.Clear();
 
                 (lastSource, lastUser) = (newSource, newUser);
-            });
+            }, tuple.Token));
 
         return Task.CompletedTask;
     }
