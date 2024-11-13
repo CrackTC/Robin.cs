@@ -48,9 +48,9 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
     private async Task<string> GetText(MessageEvent e, CancellationToken token) =>
         string.Join(' ', (await Task.WhenAll(e.Message.Select(async msg => msg switch
         {
-            TextData { Text: var text } => text,
+            TextData { Text: var text } => text.Trim(),
             AtData { Uin: var uin } => $"@{await GetUserName(e, uin, token)}",
-            ReplyData { Id: var id } => $"[re:{id}]",
+            ReplyData => $"[回复]",
             ImageData { Summary: var summary } => summary ?? "[图片]",
             MarketFaceData => string.Empty, // TextData will handle this
             ForwardData => "[转发]",
