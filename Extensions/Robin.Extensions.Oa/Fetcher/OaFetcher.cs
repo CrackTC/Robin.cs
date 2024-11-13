@@ -1,8 +1,10 @@
+using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Robin.Extensions.Oa.Entity;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace Robin.Extensions.Oa.Fetcher;
@@ -31,7 +33,7 @@ internal class OaFetcher
         };
     }
 
-    protected List<(bool Pinned, int Id)> GetPostsFromDocument(IHtmlDocument document) =>
+    private List<(bool Pinned, int Id)> GetPostsFromDocument(IHtmlDocument document) =>
         document.QuerySelectorAll("#itemContainer > div > a.font14")
             .Select(e => (
                 e.TextContent.StartsWith("[置顶]"),
@@ -39,7 +41,7 @@ internal class OaFetcher
             ))
             .ToList();
 
-    protected Uri ResolveAttachmentUri(int postId, string attachmentId, string attachmentTitle)
+    private static Uri ResolveAttachmentUri(int postId, string attachmentId, string attachmentTitle)
     {
         static string B64Encode(string s) => Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
         var key = $"{attachmentId}@{attachmentTitle}@{postId}";
@@ -47,12 +49,19 @@ internal class OaFetcher
         return new Uri($"/defaultroot/rd/download/attachdownload.jsp?res={resId}", UriKind.Relative);
     }
 
-    protected OaPost GetPostFromDocument(IHtmlDocument document, int postId)
+    private static string ExtractText(IElement? elem)
+    {
+        string str = elem?.InnerHtml.Replace("<br>", "\n").Replace("<p", "\n<p") ?? string.Empty;
+        str = Regex.Replace(str, "<[^>]+>", "");
+        return HttpUtility.HtmlDecode(str).Trim();
+    }
+
+    private OaPost GetPostFromDocument(IHtmlDocument document, int postId)
     {
         var title = document.QuerySelector(".content > .content_t")!.TextContent;
         var dateTime = DateTime.Parse(document.QuerySelector(".content > .content_time")!.FirstChild!.TextContent);
         var source = document.QuerySelector(".content > .content_time > span")!.TextContent;
-        var content = string.Join('\n', document.QuerySelectorAll(".content > .immmge > p")!.Select(e => e.TextContent));
+        var content = ExtractText(document.QuerySelector(".content > .immmge"));
         var images = document.QuerySelectorAll(".content img")
             .Where(e => !e.GetAttribute("src")!.StartsWith("data"))
             .Select(e => new Uri(_client.BaseAddress!, e.GetAttribute("src")!)).ToList();
