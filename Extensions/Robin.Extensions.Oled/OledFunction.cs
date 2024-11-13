@@ -54,6 +54,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             ImageData { Summary: var summary } => summary ?? "[图片]",
             MarketFaceData => string.Empty, // TextData will handle this
             ForwardData => "[转发]",
+            FaceData => "[表情]",
             _ => $"[{msg.GetType().Name}]"
         }))).Where(s => !string.IsNullOrWhiteSpace(s)));
 
