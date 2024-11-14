@@ -46,8 +46,11 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
         _ => uin.ToString()
     };
 
-    private async Task<string> GetText(MessageEvent e, CancellationToken token) =>
-        string.Join(' ', (await Task.WhenAll(e.Message.Select(async msg => msg switch
+    private async Task<string> GetText(MessageEvent e, CancellationToken token)
+    {
+        if (e.Message.FirstOrDefault() is JsonData) return "[JSON]";
+
+        return string.Join(' ', (await Task.WhenAll(e.Message.Select(async msg => msg switch
         {
             TextData { Text: var text } => text.Trim(),
             AtData { Uin: var uin } => $"@{await GetUserName(e, uin, token)}",
@@ -58,6 +61,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             FaceData => "[表情]",
             _ => $"[{msg.GetType().Name}]"
         }))).Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
