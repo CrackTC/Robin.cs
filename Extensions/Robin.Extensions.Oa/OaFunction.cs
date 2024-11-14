@@ -24,8 +24,8 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         : new OaFetcher();
 
     private OaData? _oaData;
-    private readonly RingBuffer<(int PostId, List<CustomNodeData> Nodes)> _normalPostBuffer = new(30);
-    private readonly RingBuffer<(int PostId, List<CustomNodeData> Nodes)> _pinnedPostBuffer = new(30);
+    private readonly RingBuffer<(int PostId, Lazy<Task<List<CustomNodeData>>> Nodes)> _normalPostBuffer = new(30);
+    private readonly RingBuffer<(int PostId, Lazy<Task<List<CustomNodeData>>> Nodes)> _pinnedPostBuffer = new(30);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private async Task<List<CustomNodeData>> GetPostNodes(int postId, CancellationToken token)
@@ -75,13 +75,13 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             .Where(t => t.Pinned)
             .TakeWhile(t => t.Id != _pinnedPostBuffer.Last?.PostId)
             .Reverse())
-            _pinnedPostBuffer.Add((id, await GetPostNodes(id, token)));
+            _pinnedPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
 
         foreach (var (_, id) in postIds
             .Where(t => !t.Pinned)
             .TakeWhile(t => t.Id != _normalPostBuffer.Last?.PostId)
             .Reverse())
-            _normalPostBuffer.Add((id, await GetPostNodes(id, token)));
+            _normalPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
     }
 
     private async Task<int> SendPostsToGroup(long groupId, CancellationToken token)
@@ -99,14 +99,14 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             ? _pinnedPostBuffer.GetItems()
             : newerPinned.Skip(1))
         {
-            await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
+            await new SendGroupForwardMessageRequest(groupId, await nodes.Value).SendAsync(_context, token);
             ++count;
         }
         foreach (var (_, nodes) in newerNormal.Count is 0
             ? _normalPostBuffer.GetItems()
             : newerNormal.Skip(1))
         {
-            await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
+            await new SendGroupForwardMessageRequest(groupId, await nodes.Value).SendAsync(_context, token);
             ++count;
         }
 
