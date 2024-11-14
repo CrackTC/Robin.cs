@@ -129,6 +129,7 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
                 await UpdateOaPosts(t);
                 if (await SendPostsToGroup(e.GroupId, t) is 0)
                     await e.NewMessageRequest([new TextData("没有新通知喵>_<")]).SendAsync(_context, t);
+                await SaveAsync(t);
             }, tuple.Token));
 
         return Task.CompletedTask;
@@ -138,7 +139,17 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
     {
         await UpdateOaPosts(token);
         await Task.WhenAll(_context.Configuration.Groups!.Select(groupId => SendPostsToGroup(groupId, token)));
+        await SaveAsync(token);
     }, token);
+
+    private async Task SaveAsync(CancellationToken token)
+    {
+        if (_oaData is not null)
+        {
+            await using var stream = File.Create("oa.json");
+            await JsonSerializer.SerializeAsync(stream, _oaData, cancellationToken: token);
+        }
+    }
 
     public override async Task StartAsync(CancellationToken token)
     {
@@ -156,10 +167,6 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
     public override async Task StopAsync(CancellationToken token)
     {
         _semaphore.Dispose();
-        if (_oaData is not null)
-        {
-            await using var stream = File.Create("oa.json");
-            await JsonSerializer.SerializeAsync(stream, _oaData, cancellationToken: token);
-        }
+        await SaveAsync(token);
     }
 }
