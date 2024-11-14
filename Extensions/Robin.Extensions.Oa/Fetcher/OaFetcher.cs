@@ -52,7 +52,8 @@ internal class OaFetcher
     private static string ExtractText(IElement? elem)
     {
         string str = elem?.InnerHtml.Replace("<br>", "\n").Replace("<p", "\n<p") ?? string.Empty;
-        str = Regex.Replace(str, "<[^>]+>", "");
+        str = Regex.Replace(str, @"<!--.*?-->", string.Empty);
+        str = Regex.Replace(str, @"<[^>]+>", string.Empty);
         return HttpUtility.HtmlDecode(str).Trim();
     }
 
