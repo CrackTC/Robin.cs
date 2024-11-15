@@ -62,7 +62,7 @@ internal class OaFetcher
         var title = document.QuerySelector(".content > .content_t")!.TextContent;
         var dateTime = DateTime.Parse(document.QuerySelector(".content > .content_time")!.FirstChild!.TextContent);
         var source = document.QuerySelector(".content > .content_time > span")!.TextContent;
-        var content = ExtractText(document.QuerySelector(".content > .immmge"));
+        var content = ExtractText(document.QuerySelector(".content > .content_font"));
         var images = document.QuerySelectorAll(".content img")
             .Where(e => !e.GetAttribute("src")!.StartsWith("data"))
             .Select(e => new Uri(_client.BaseAddress!, e.GetAttribute("src")!)).ToList();
