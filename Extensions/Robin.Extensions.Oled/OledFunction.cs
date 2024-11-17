@@ -52,13 +52,14 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
 
         return string.Join(' ', (await Task.WhenAll(e.Message.Select(async msg => msg switch
         {
-            TextData { Text: var text } => text.Trim(),
             AtData { Uin: var uin } => $"@{await GetUserName(e, uin, token)}",
-            ReplyData => $"[回复]",
+            FaceData => "[表情]",
+            ForwardData => "[转发]",
             ImageData { Summary: var summary } => summary ?? "[图片]",
             MarketFaceData => string.Empty, // TextData will handle this
-            ForwardData => "[转发]",
-            FaceData => "[表情]",
+            ReplyData => $"[回复]",
+            TextData { Text: var text } => text.Trim(),
+            VideoData => "[视频]",
             _ => $"[{msg.GetType().Name}]"
         }))).Where(s => !string.IsNullOrWhiteSpace(s)));
     }
