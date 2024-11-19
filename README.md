@@ -165,8 +165,8 @@ Here is an example configuration file:
 
 2. Create a new directory for your extension:
    ```bash
-   mkdir MyExtension
-   cd MyExtension
+   mkdir Robin.Extensions.MyExtension
+   cd Robin.Extensions.MyExtension
    ```
 
 3. Create a new class library project:
