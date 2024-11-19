@@ -70,13 +70,13 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
     {
         var postIds = await _fetcher.FetchPostsAsync(token);
 
-        // post id may not in time order, so we iterate until the last post in buffer
-        foreach (var (_, id) in postIds
-            .Where(t => t.Pinned)
-            .TakeWhile(t => t.Id != _pinnedPostBuffer.Last?.PostId)
-            .Reverse())
+        // we need to check all pinned posts because newer pinned posts may not be placed on top
+        // thx to the shitty design of JLU OA
+        var prevPinned = _pinnedPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
+        foreach (var (_, id) in postIds.Where(t => t.Pinned && !prevPinned.Contains(t.Id)).Reverse())
             _pinnedPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
 
+        // post id may not in time order, so we iterate until the last post in buffer
         foreach (var (_, id) in postIds
             .Where(t => !t.Pinned)
             .TakeWhile(t => t.Id != _normalPostBuffer.Last?.PostId)
@@ -84,38 +84,29 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             _normalPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
     }
 
-    private async Task<int> SendPostsToGroup(long groupId, CancellationToken token)
+    private async Task<bool> SendPostsToGroup(long groupId, CancellationToken token)
     {
         if (!_oaData!.Groups.ContainsKey(groupId))
             _oaData!.Groups.Add(groupId, new(LastPinnedPostId: 0, LastNormalPostId: 0));
         var group = _oaData!.Groups[groupId];
 
-        var newerPinned = _pinnedPostBuffer.GetItems().SkipWhile(p => p.PostId != group.LastPinnedPostId).ToList();
-        var newerNormal = _normalPostBuffer.GetItems().SkipWhile(p => p.PostId != group.LastNormalPostId).ToList();
+        var newerPosts = _pinnedPostBuffer.GetItems()
+            .TakeWhile(p => p.PostId != group.LastPinnedPostId)
+            .Reverse()
+            .Concat(_normalPostBuffer.GetItems()
+                .TakeWhile(p => p.PostId != group.LastNormalPostId)
+                .Reverse())
+            .ToList();
 
-        int count = 0;
-
-        foreach (var (_, nodes) in newerPinned.Count is 0
-            ? _pinnedPostBuffer.GetItems()
-            : newerPinned.Skip(1))
-        {
+        foreach (var (_, nodes) in newerPosts)
             await new SendGroupForwardMessageRequest(groupId, await nodes.Value).SendAsync(_context, token);
-            ++count;
-        }
-        foreach (var (_, nodes) in newerNormal.Count is 0
-            ? _normalPostBuffer.GetItems()
-            : newerNormal.Skip(1))
-        {
-            await new SendGroupForwardMessageRequest(groupId, await nodes.Value).SendAsync(_context, token);
-            ++count;
-        }
 
         _oaData!.Groups[groupId] = new(
             _pinnedPostBuffer.Last?.PostId ?? 0,
             _normalPostBuffer.Last?.PostId ?? 0
         );
 
-        return count;
+        return newerPosts is not [];
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
@@ -127,7 +118,7 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             {
                 var (e, t) = tuple;
                 await UpdateOaPosts(t);
-                if (await SendPostsToGroup(e.GroupId, t) is 0)
+                if (await SendPostsToGroup(e.GroupId, t) is false)
                     await e.NewMessageRequest([new TextData("没有新通知喵>_<")]).SendAsync(_context, t);
                 await SaveAsync(t);
             }, tuple.Token));
