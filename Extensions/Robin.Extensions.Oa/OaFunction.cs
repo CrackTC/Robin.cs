@@ -109,7 +109,7 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         return newerPosts is not [];
     }
 
-    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupMessageEvent>()
             .OnCommand("oa")
@@ -135,11 +135,8 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
 
     private async Task SaveAsync(CancellationToken token)
     {
-        if (_oaData is not null)
-        {
-            await using var stream = File.Create("oa.json");
-            await JsonSerializer.SerializeAsync(stream, _oaData, cancellationToken: token);
-        }
+        await using var stream = File.Create("oa.json");
+        await JsonSerializer.SerializeAsync(stream, _oaData, cancellationToken: token);
     }
 
     public override async Task StartAsync(CancellationToken token)
@@ -155,9 +152,9 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         }
     }
 
-    public override async Task StopAsync(CancellationToken token)
+    public override Task StopAsync(CancellationToken token)
     {
         _semaphore.Dispose();
-        await SaveAsync(token);
+        return Task.CompletedTask;
     }
 }
