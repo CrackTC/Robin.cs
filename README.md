@@ -29,6 +29,7 @@ Robin.cs is a bot framework written in C# that supports extending its functional
 - **Test**: Test extension.
 - **UserRank**: Get the rank of user in the group, based on the number of messages sent.
 - **Welcome**: Welcome new members.
+- **WhoAtMe**: Who @ me.
 - **Wife**: Randomly choose a daily wife ~~(really random)~~.
 - **WordCloud**: Generate word cloud image from group messages, see [WordCloud](https://github.com/CrackTC/WordCloud), [WordCloud.Server](https://github.com/CrackTC/WordCloud.Server) and [hanlp.server](https://github.com/CrackTC/hanlp.server) for more details.
 

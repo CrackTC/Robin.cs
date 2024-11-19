@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Oled", "Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Oa", "Extensions\Robin.Extensions.Oa\Robin.Extensions.Oa.csproj", "{6471BAA0-61C9-4B75-88F2-77AD739DCA2C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.WhoAtMe", "Extensions\Robin.Extensions.WhoAtMe\Robin.Extensions.WhoAtMe.csproj", "{A0B3E28C-F261-4FA8-9D38-804728C5943F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -151,6 +153,10 @@ Global
 		{6471BAA0-61C9-4B75-88F2-77AD739DCA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6471BAA0-61C9-4B75-88F2-77AD739DCA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6471BAA0-61C9-4B75-88F2-77AD739DCA2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -166,5 +172,6 @@ Global
 		{003CCF76-6EBA-4464-8951-8C9A72772E71} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 		{DE6D08A6-3890-42F6-8C5B-00FAA96A2006} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 		{6471BAA0-61C9-4B75-88F2-77AD739DCA2C} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
+		{A0B3E28C-F261-4FA8-9D38-804728C5943F} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 	EndGlobalSection
 EndGlobal
