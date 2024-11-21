@@ -24,16 +24,16 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         : new OaFetcher();
 
     private OaData? _oaData;
-    private readonly RingBuffer<(int PostId, Lazy<Task<List<CustomNodeData>>> Nodes)> _normalPostBuffer = new(30);
-    private readonly RingBuffer<(int PostId, Lazy<Task<List<CustomNodeData>>> Nodes)> _pinnedPostBuffer = new(30);
+    private readonly RingBuffer<(int PostId, Lazy<Task<string?>> ResIdTask)> _normalPostBuffer = new(30);
+    private readonly RingBuffer<(int PostId, Lazy<Task<string?>> ResIdTask)> _pinnedPostBuffer = new(30);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private async Task<List<CustomNodeData>> GetPostNodes(int postId, CancellationToken token)
+    private async Task<string?> GetPostResId(int postId, CancellationToken token)
     {
         var post = await _fetcher.FetchPostAsync(postId, token);
         var images = await Task.WhenAll(post.Images.Select(image => _fetcher.FetchBlobAsync(image, token)));
         // var attachs = await Task.WhenAll(post.Attachments.Select(attach => _fetcher.FetchBlobAsync(attach.Url, token)));
-        return [
+        var resp = await new SendGroupForwardMessageRequest(_context.Configuration.TempGroup, [
             new(_context.BotContext.Uin, "robin", [
                 new TextData(
                     $"""
@@ -63,7 +63,11 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
                     """
                 )
             ]))
-        ];
+        ]).SendAsync(_context, token);
+
+        if (resp is not { Result: { ResId: var resId } }) return null;
+
+        return resId;
     }
 
     private async Task UpdateOaPosts(CancellationToken token)
@@ -74,14 +78,14 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         // thx to the shitty design of JLU OA
         var prevPinned = _pinnedPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
         foreach (var (_, id) in postIds.Where(t => t.Pinned && !prevPinned.Contains(t.Id)).Reverse())
-            _pinnedPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
+            _pinnedPostBuffer.Add((id, new(() => GetPostResId(id, token))));
 
         // post id may not in time order, so we iterate until the last post in buffer
         foreach (var (_, id) in postIds
             .Where(t => !t.Pinned)
             .TakeWhile(t => t.Id != _normalPostBuffer.Last?.PostId)
             .Reverse())
-            _normalPostBuffer.Add((id, new(() => GetPostNodes(id, token))));
+            _normalPostBuffer.Add((id, new(() => GetPostResId(id, token))));
     }
 
     private async Task<bool> SendPostsToGroup(long groupId, CancellationToken token)
@@ -95,18 +99,23 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             .Reverse()
             .Concat(_normalPostBuffer.GetItems()
                 .TakeWhile(p => p.PostId != group.LastNormalPostId)
-                .Reverse())
+                .Reverse());
+        var resIds = await Task.WhenAll(newerPosts.Select(t => t.ResIdTask.Value));
+        var nodes = resIds
+            .OfType<string>()
+            .Select(id => new CustomNodeData(_context.BotContext.Uin, "robin", [new ForwardData(id)]))
             .ToList();
 
-        foreach (var (_, nodes) in newerPosts)
-            await new SendGroupForwardMessageRequest(groupId, await nodes.Value).SendAsync(_context, token);
+        if (nodes is []) return false;
+
+        await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
 
         _oaData!.Groups[groupId] = new(
             _pinnedPostBuffer.Last?.PostId ?? 0,
             _normalPostBuffer.Last?.PostId ?? 0
         );
 
-        return newerPosts is not [];
+        return true;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
