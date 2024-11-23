@@ -29,7 +29,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
 
         if (resp is not { StatusCode: HttpStatusCode.Found, Headers.Location: { } location }) return null;
         LogB23Redirect(_context.Logger, location.ToString());
-        return RawUrlRegex.Match(location.ToString())?.Value;
+        return RawUrlRegex.Match(location.ToString()) is { Success: true, Value: var value } ? value : null;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
