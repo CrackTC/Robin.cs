@@ -74,17 +74,14 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
     {
         var postIds = await _fetcher.FetchPostsAsync(token);
 
-        // we need to check all pinned posts because newer pinned posts may not be placed on top
+        // we need to check all posts because newer posts may not be placed on top
         // thx to the shitty design of JLU OA
         var prevPinned = _pinnedPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
         foreach (var (_, id) in postIds.Where(t => t.Pinned && !prevPinned.Contains(t.Id)).Reverse())
             _pinnedPostBuffer.Add((id, new(() => GetPostResId(id, token))));
 
-        // post id may not in time order, so we iterate until the last post in buffer
-        foreach (var (_, id) in postIds
-            .Where(t => !t.Pinned)
-            .TakeWhile(t => t.Id != _normalPostBuffer.Last?.PostId)
-            .Reverse())
+        var prevNormal = _normalPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
+        foreach (var (_, id) in postIds.Where(t => !t.Pinned && !prevNormal.Contains(t.Id)).Reverse())
             _normalPostBuffer.Add((id, new(() => GetPostResId(id, token))));
     }
 
