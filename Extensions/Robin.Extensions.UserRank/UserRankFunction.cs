@@ -31,7 +31,7 @@ public partial class UserRankFunction(
     {
         try
         {
-            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, clear: true, token: token)));
+            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, n: 0, userId: null, token)));
         }
         catch (Exception e)
         {
@@ -39,12 +39,12 @@ public partial class UserRankFunction(
         }
     }
 
-    private async Task SendUserRankAsync(long groupId, int n = 0, bool clear = false, CancellationToken token = default)
+    private async Task SendUserRankAsync(long groupId, int n, long? userId, CancellationToken token)
     {
         var peopleCount = await GetGroupPeopleCountAsync(groupId, token);
         var msgCount = await GetGroupMessageCountAsync(groupId, token);
         var top = await GetGroupTopNAsync(groupId, n > 0 ? n : _context.Configuration.TopN, token);
-        if (clear) await ClearGroupMessagesAsync(groupId, token);
+        if (userId is null) await ClearGroupMessagesAsync(groupId, token);
 
         string message;
 
@@ -77,6 +77,10 @@ public partial class UserRankFunction(
             stringBuilder.AppendJoin('\n', top.Select(
                 pair => $"{(dict.TryGetValue(pair.Item1, out var value) ? value : pair.Item1)} 贡献：{pair.Item2}"
             ));
+
+            if (userId is not null)
+                stringBuilder.Append('\n').Append($"你的排名：{await GetUserRankAsync(groupId, userId.Value, token)}");
+
             message = stringBuilder.ToString();
         }
 
@@ -105,7 +109,7 @@ public partial class UserRankFunction(
                 {
                     { Success: true, Value: { } value } => int.Min(int.Parse(value), 50),
                     _ => 0
-                }, token: t);
+                }, e.UserId, t);
             });
     }
 
@@ -154,6 +158,23 @@ public partial class UserRankFunction(
             .Select(group => Tuple.Create(group.Key, group.Count()))
             .Take(n)
             .ToListAsync(token), token);
+
+    private Task<int> GetUserRankAsync(
+        long groupId,
+        long userId,
+        CancellationToken token
+    ) =>
+        _semaphore.ConsumeAsync(async Task<int> () =>
+        {
+            var count = await _db.Records
+                .Where(record => record.GroupId == groupId && record.UserId == userId)
+                .CountAsync(token);
+            return 1 + await _db.Records
+                .Where(record => record.GroupId == groupId)
+                .GroupBy(record => record.UserId)
+                .Where(group => group.Count() > count)
+                .CountAsync(token);
+        }, token);
 
     private Task ClearGroupMessagesAsync(long groupId, CancellationToken token) =>
         _semaphore.ConsumeAsync(() =>
