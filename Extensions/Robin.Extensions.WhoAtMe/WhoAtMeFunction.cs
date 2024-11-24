@@ -74,6 +74,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
 
                 await e.NewMessageRequest([
                     new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]),
+                    new TextData("这里这里") // fix ui bug in mobile QQ
                 ]).SendAsync(_context, t);
 
                 _latestAt[e.GroupId].Remove(e.Sender.UserId);
