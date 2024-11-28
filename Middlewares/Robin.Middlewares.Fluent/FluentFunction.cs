@@ -8,13 +8,13 @@ namespace Robin.Middlewares.Fluent;
 [BotFunctionInfo("fluent", "元功能，流式扩展接口", typeof(BotEvent))]
 public class FluentFunction(FunctionContext context) : BotFunction(context)
 {
-    private IEnumerable<IEnumerable<EventTunnelInfo>> _eventTunLists = [];
-    private IEnumerable<EventTunnelInfo> _alwaysFiredEventTuns = [];
+    private IEnumerable<IEnumerable<EventTunnel>> _eventTunLists = [];
+    private IEnumerable<EventTunnel> _alwaysFiredEventTuns = [];
 
     public override async Task StartAsync(CancellationToken token)
     {
-        var eventTunLists = new SortedList<int, List<EventTunnelInfo>>();
-        var alwaysFiredEventTuns = new List<EventTunnelInfo>();
+        var eventTunLists = new SortedList<int, List<EventTunnel>>();
+        var alwaysFiredEventTuns = new List<EventTunnel>();
 
         foreach (var function in _context.BotContext.Functions.OfType<IFluentFunction>())
         {
@@ -22,23 +22,24 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
 
             await function.OnCreatingAsync(functionBuilder, token);
 
-            var infos = functionBuilder.Build().ToList();
+            var info = functionBuilder.Build();
+            var eventTunnels = info.EventTunnels.ToList();
 
-            (function as BotFunction)?.TriggerDescriptions.AddRange(infos.Select(info => string.Join(" 且 ", info.Descriptions)));
+            (function as BotFunction)?.TriggerDescriptions.AddRange(eventTunnels.Select(info => string.Join(" 且 ", info.Descriptions)));
 
-            foreach (var info in infos)
+            foreach (var eventTunnel in eventTunnels)
             {
-                if (info.Priority == int.MinValue)
+                if (eventTunnel.Priority == int.MinValue)
                 {
-                    alwaysFiredEventTuns.Add(info);
+                    alwaysFiredEventTuns.Add(eventTunnel);
                 }
-                else if (!eventTunLists.TryGetValue(info.Priority, out var list))
+                else if (!eventTunLists.TryGetValue(eventTunnel.Priority, out var list))
                 {
-                    eventTunLists[info.Priority] = [info];
+                    eventTunLists[eventTunnel.Priority] = [eventTunnel];
                 }
                 else
                 {
-                    list.Add(info);
+                    list.Add(eventTunnel);
                 }
             }
         }

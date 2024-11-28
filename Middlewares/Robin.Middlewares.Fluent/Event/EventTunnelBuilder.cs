@@ -4,57 +4,75 @@ using Robin.Middlewares.Fluent.Tunnel;
 
 namespace Robin.Middlewares.Fluent.Event;
 
-internal record EventTunnelInfo(int Priority, IEnumerable<string> Descriptions, Tunnel<EventContext<BotEvent>, Task> Tunnel);
-
 public class EventTunnelBuilder<TOut>
 {
-    private readonly FunctionBuilder _funcBuilder;
-    private readonly TunnelBuilder<EventContext<BotEvent>, TOut> _tunBuilder;
+    private readonly FunctionBuilder _functionBuilder;
+    private readonly Tunnel<EventContext<BotEvent>, TOut> _tunnel;
     private readonly int _priority;
     private readonly IEnumerable<string> _descriptions;
 
     internal EventTunnelBuilder(
-        FunctionBuilder funcBuilder,
-        TunnelBuilder<EventContext<BotEvent>, TOut> tunBuilder,
+        FunctionBuilder functionBuilder,
+        Tunnel<EventContext<BotEvent>, TOut> tunnel,
         int priority = 0,
         IEnumerable<string>? descriptions = null
     )
     {
-        _funcBuilder = funcBuilder;
-        _tunBuilder = tunBuilder;
+        _functionBuilder = functionBuilder;
+        _tunnel = tunnel;
         _priority = priority;
         _descriptions = descriptions ?? [];
     }
 
-    private EventTunnelBuilder<TNewOut> WithTunBuilder<TNewOut>(
-        TunnelBuilder<EventContext<BotEvent>, TNewOut> tunBuilder
-    ) => new(_funcBuilder, tunBuilder, _priority, _descriptions);
+    public EventTunnelBuilder<TOut> Where(Predicate<TOut> predicate) => new(
+        _functionBuilder,
+        _tunnel.Where(predicate),
+        _priority,
+        _descriptions
+    );
 
-    public EventTunnelBuilder<TOut> Where(Predicate<TOut> predicate) =>
-        WithTunBuilder(_tunBuilder.Where(predicate));
+    public EventTunnelBuilder<TNewOut> Select<TNewOut>(Func<TOut, TNewOut> selector) => new(
+        _functionBuilder,
+        _tunnel.Select(selector),
+        _priority,
+        _descriptions
+    );
 
-    public EventTunnelBuilder<TNewOut> Select<TNewOut>(Func<TOut, TNewOut> selector) =>
-        WithTunBuilder(_tunBuilder.Select(selector));
+    public EventTunnelBuilder<TOut> WithPriority(int priority) => new(
+        _functionBuilder,
+        _tunnel,
+        priority,
+        _descriptions
+    );
 
-    public EventTunnelBuilder<TOut> WithPriority(int priority) =>
-        new(_funcBuilder, _tunBuilder, priority, _descriptions);
+    public EventTunnelBuilder<TOut> AsFallback() => new(
+        _functionBuilder,
+        _tunnel,
+        int.MaxValue,
+        _descriptions.Append("未触发其他功能")
+    );
 
-    public EventTunnelBuilder<TOut> AsFallback() =>
-        new(_funcBuilder, _tunBuilder, int.MaxValue, [.. _descriptions, "未触发其它功能"]);
+    public EventTunnelBuilder<TOut> AsAlwaysFired() => new(
+        _functionBuilder,
+        _tunnel,
+        int.MinValue,
+        _descriptions.Append("始终触发")
+    );
 
-    public EventTunnelBuilder<TOut> AsAlwaysFired() =>
-        new(_funcBuilder, _tunBuilder, int.MinValue, [.. _descriptions, "始终触发"]);
-
-    internal EventTunnelBuilder<TOut> WithDescription(string description) =>
-        new(_funcBuilder, _tunBuilder, _priority, [.. _descriptions, description]);
+    internal EventTunnelBuilder<TOut> WithDescription(string description) => new(
+        _functionBuilder,
+        _tunnel,
+        _priority,
+        _descriptions.Append(description)
+    );
 
     public FunctionBuilder Do(Func<TOut, Task> something)
     {
-        _funcBuilder.AddTunnel(new EventTunnelInfo(
+        _functionBuilder.AddEventTunnel(new EventTunnel(
             _priority,
             _descriptions,
-            _tunBuilder.Select(something).Tunnel
+            _tunnel.Select(something)
         ));
-        return _funcBuilder;
+        return _functionBuilder;
     }
 }

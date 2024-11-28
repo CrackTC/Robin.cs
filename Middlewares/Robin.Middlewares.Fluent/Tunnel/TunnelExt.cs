@@ -1,8 +1,8 @@
 namespace Robin.Middlewares.Fluent.Tunnel;
 
-internal class TunnelBuilder<TIn, TOut>(Tunnel<TIn, TOut> tunnel)
+internal static class TunnelExt
 {
-    public TunnelBuilder<TIn, TOut> Where(Predicate<TOut> predicate) =>
+    public static Tunnel<TIn, TOut> Where<TIn, TOut>(this Tunnel<TIn, TOut> tunnel, Predicate<TOut> predicate) =>
         new(input =>
         {
             var result = tunnel(input);
@@ -10,13 +10,11 @@ internal class TunnelBuilder<TIn, TOut>(Tunnel<TIn, TOut> tunnel)
             return new TunnelResult<TOut>(result.Data, predicate(result.Data!));
         });
 
-    public TunnelBuilder<TIn, TNewOut> Select<TNewOut>(Func<TOut, TNewOut> selector) =>
+    public static Tunnel<TIn, TNewOut> Select<TIn, TOut, TNewOut>(this Tunnel<TIn, TOut> tunnel, Func<TOut, TNewOut> selector) =>
         new(input =>
         {
             var result = tunnel(input);
             if (!result.Accept) return new TunnelResult<TNewOut>(default, false);
             return new TunnelResult<TNewOut>(selector(result.Data!), true);
         });
-
-    public Tunnel<TIn, TOut> Tunnel => tunnel;
 }

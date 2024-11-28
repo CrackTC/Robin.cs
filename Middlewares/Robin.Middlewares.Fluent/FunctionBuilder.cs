@@ -6,18 +6,20 @@ using Robin.Middlewares.Fluent.Tunnel;
 
 namespace Robin.Middlewares.Fluent;
 
+internal record FunctionInfo(IEnumerable<EventTunnel> EventTunnels);
+
 public class FunctionBuilder
 {
-    private readonly IList<EventTunnelInfo> _tunnels = [];
+    private readonly IList<EventTunnel> _eventTunnels = [];
 
-    internal void AddTunnel(EventTunnelInfo tunnel) => _tunnels.Add(tunnel);
+    internal void AddEventTunnel(EventTunnel tunnel) => _eventTunnels.Add(tunnel);
 
-    internal IEnumerable<EventTunnelInfo> Build() => _tunnels;
+    internal FunctionInfo Build() => new(_eventTunnels);
 
     public EventTunnelBuilder<EventContext<TEvent>> On<TEvent>() where TEvent : BotEvent =>
         new EventTunnelBuilder<EventContext<TEvent>>(
             this,
-            new TunnelBuilder<EventContext<BotEvent>, EventContext<TEvent>>(
+            new Tunnel<EventContext<BotEvent>, EventContext<TEvent>>(
                 ctx => ctx.Event switch
                 {
                     TEvent e => new TunnelResult<EventContext<TEvent>>(new EventContext<TEvent>(e, ctx.Token), true),

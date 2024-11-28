@@ -7,7 +7,7 @@ using Robin.Abstractions.Message.Entity;
 
 namespace Robin.Middlewares.Fluent.Event;
 
-public static class FluentExt
+public static class EventTunnelExt
 {
     public static EventTunnelBuilder<EventContext<TEvent>> OnAt<TEvent>(
         this EventTunnelBuilder<EventContext<TEvent>> builder
