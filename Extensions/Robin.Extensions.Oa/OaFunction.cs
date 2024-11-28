@@ -2,33 +2,27 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
-using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Utility;
-using Robin.Extensions.Oa.Entity;
 using Robin.Extensions.Oa.Fetcher;
 using Robin.Middlewares.Annotations.Cron;
-using Robin.Middlewares.Fluent;
-using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.Oa;
 
 [BotFunctionInfo("oa", "JLU校务通知")]
 [OnCron("0 0 * * * ?")]
-public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), IFluentFunction, ICronHandler
+public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), ICronHandler
 {
     private readonly OaFetcher _fetcher = context.Configuration.UseVpn
         ? new OaVpnFetcher(context.Configuration.VpnUsername!, context.Configuration.VpnPassword!)
         : new OaFetcher();
 
     private OaData? _oaData;
-    private readonly RingBuffer<(int PostId, Lazy<Task<string?>> ResIdTask)> _normalPostBuffer = new(30);
-    private readonly RingBuffer<(int PostId, Lazy<Task<string?>> ResIdTask)> _pinnedPostBuffer = new(30);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private async Task<string?> GetPostResId(int postId, CancellationToken token)
+    private async Task<string?> FetchPostResIdAsync(int postId, CancellationToken token)
     {
         var post = await _fetcher.FetchPostAsync(postId, token);
         var images = await Task.WhenAll(post.Images.Select(image => _fetcher.FetchBlobAsync(image, token)));
@@ -70,73 +64,33 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         return resId;
     }
 
-    private async Task UpdateOaPosts(CancellationToken token)
+    private async Task<List<CustomNodeData>> FetchNewPostsAsync(CancellationToken token)
     {
-        var postIds = await _fetcher.FetchPostsAsync(token);
+        var posts = await _fetcher.FetchPostsAsync(token);
 
         // we need to check all posts because newer posts may not be placed on top
         // thx to the shitty design of JLU OA
-        var prevPinned = _pinnedPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
-        foreach (var (_, id) in postIds.Where(t => t.Pinned && !prevPinned.Contains(t.Id)).Reverse())
-            _pinnedPostBuffer.Add((id, new(() => GetPostResId(id, token))));
-
-        var prevNormal = _normalPostBuffer.GetItems().Select(x => x.PostId).ToHashSet();
-        foreach (var (_, id) in postIds.Where(t => !t.Pinned && !prevNormal.Contains(t.Id)).Reverse())
-            _normalPostBuffer.Add((id, new(() => GetPostResId(id, token))));
-    }
-
-    private async Task<bool> SendPostsToGroup(long groupId, CancellationToken token)
-    {
-        if (!_oaData!.Groups.ContainsKey(groupId))
-            _oaData!.Groups.Add(groupId, new(LastPinnedPostId: 0, LastNormalPostId: 0));
-        var group = _oaData!.Groups[groupId];
-
-        var newerPosts = _pinnedPostBuffer.GetItems()
-            .TakeWhile(p => p.PostId != group.LastPinnedPostId)
+        var newPosts = posts
+            .Where(post => !_oaData!.PostIds.Contains(post.Id))
             .Reverse()
-            .Concat(_normalPostBuffer.GetItems()
-                .TakeWhile(p => p.PostId != group.LastNormalPostId)
-                .Reverse());
-        var resIds = await Task.WhenAll(newerPosts.Select(t => t.ResIdTask.Value));
-        var nodes = resIds
+            .ToList();
+
+        _oaData = new(posts.Select(post => post.Id).ToHashSet());
+        await SaveAsync(token);
+
+        var resIds = await Task.WhenAll(newPosts.Select(post => FetchPostResIdAsync(post.Id, token)));
+
+        return resIds
             .OfType<string>()
             .Select(id => new CustomNodeData(_context.BotContext.Uin, "robin", [new ForwardData(id)]))
             .ToList();
-
-        if (nodes is []) return false;
-
-        await new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token);
-
-        _oaData!.Groups[groupId] = new(
-            _pinnedPostBuffer.Last?.PostId ?? 0,
-            _normalPostBuffer.Last?.PostId ?? 0
-        );
-
-        return true;
-    }
-
-    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
-    {
-        builder.On<GroupMessageEvent>()
-            .OnCommand("oa")
-            .Where(tuple => _context.Configuration.Groups!.Contains(tuple.Event.GroupId))
-            .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
-            {
-                var (e, t) = tuple;
-                await UpdateOaPosts(t);
-                if (await SendPostsToGroup(e.GroupId, t) is false)
-                    await e.NewMessageRequest([new TextData("没有新通知喵>_<")]).SendAsync(_context, t);
-                await SaveAsync(t);
-            }, tuple.Token));
-
-        return Task.CompletedTask;
     }
 
     public Task OnCronEventAsync(CancellationToken token) => _semaphore.ConsumeAsync(async Task () =>
     {
-        await UpdateOaPosts(token);
-        await Task.WhenAll(_context.Configuration.Groups!.Select(groupId => SendPostsToGroup(groupId, token)));
-        await SaveAsync(token);
+        if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
+            await Task.WhenAll(_context.Configuration.Groups!
+                .Select(groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)));
     }, token);
 
     private async Task SaveAsync(CancellationToken token)
