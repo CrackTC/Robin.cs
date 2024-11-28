@@ -8,19 +8,14 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetGroupInfoRequest))]
-internal class OneBotGetGroupInfoResponseData : OneBotGroupInfo, IOneBotResponseData
+[OneBotResponseData(typeof(OneBotGetGroupListRequest))]
+internal class OneBotGetGroupListResponseData : List<OneBotGroupInfo>, IOneBotResponseData
 {
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
-        new GetGroupInfoResponse(
+        new GetGroupListResponse(
             response.Status is not "failed",
             response.ReturnCode,
             null,
-            new GroupInfo(
-                GroupId,
-                GroupName,
-                MemberCount,
-                MaxMemberCount
-            )
+            this.Select(info => new GroupInfo(info.GroupId, info.GroupName, info.MemberCount, info.MaxMemberCount)).ToList()
         );
 }
