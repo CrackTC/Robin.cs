@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Oa", "Exte
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.WhoAtMe", "Extensions\Robin.Extensions.WhoAtMe\Robin.Extensions.WhoAtMe.csproj", "{A0B3E28C-F261-4FA8-9D38-804728C5943F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Approve", "Extensions\Robin.Extensions.Approve\Robin.Extensions.Approve.csproj", "{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -157,6 +159,10 @@ Global
 		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0B3E28C-F261-4FA8-9D38-804728C5943F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -173,5 +179,6 @@ Global
 		{DE6D08A6-3890-42F6-8C5B-00FAA96A2006} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 		{6471BAA0-61C9-4B75-88F2-77AD739DCA2C} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 		{A0B3E28C-F261-4FA8-9D38-804728C5943F} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
+		{7BE200E2-6F07-40DA-A5CC-9A0CAA76A26D} = {6DC8B43E-A2DB-42FE-8BA0-42C63097B6E0}
 	EndGlobalSection
 EndGlobal

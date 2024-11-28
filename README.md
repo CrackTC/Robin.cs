@@ -13,6 +13,7 @@ Robin.cs is a bot framework written in C# that supports extending its functional
 ## Extensions
 
 
+- **Approve**: Auto approve group invitations & friend requests.
 - **AtPoke**: Poke someone by @ them.
 - **B23**: Resolve original link for b23 card.
 - **Dice**: Roll a dice using `/dice`
