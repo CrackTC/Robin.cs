@@ -6,6 +6,7 @@ namespace Robin.Middlewares.Fluent.Event;
 
 internal record EventTunnel(
     int Priority,
+    string? Name,
     IEnumerable<string> Descriptions,
     Tunnel<EventContext<BotEvent>, Task> Tunnel
-) : FluentTunnel<EventContext<BotEvent>>(Descriptions, Tunnel);
+) : FluentTunnel<EventContext<BotEvent>>(Name, Descriptions, Tunnel);

@@ -44,7 +44,7 @@ public partial class GeminiFunction(
         await CreateTablesAsync(token);
 
         builder
-            .On<PrivateMessageEvent>()
+            .On<PrivateMessageEvent>("clear history")
             .OnRegex(_clearRegex)
             .Do(async tuple =>
             {
@@ -53,7 +53,7 @@ public partial class GeminiFunction(
                 await RemoveAllAsync(e.UserId, t);
                 await SendReplyAsync(e.UserId, _context.Configuration.ClearReply, t);
             })
-            .On<PrivateMessageEvent>()
+            .On<PrivateMessageEvent>("rollback history")
             .OnRegex(_rollbackRegex)
             .Do(async tuple =>
             {
@@ -62,7 +62,7 @@ public partial class GeminiFunction(
                 await RemoveLastAsync(e.UserId, t);
                 await SendReplyAsync(e.UserId, _context.Configuration.RollbackReply, t);
             })
-            .On<PrivateMessageEvent>()
+            .On<PrivateMessageEvent>("switch model")
             .OnRegex(_modelRegex)
             .Do(async tuple =>
             {
@@ -71,7 +71,7 @@ public partial class GeminiFunction(
                 await SetModelAsync(e.UserId, match.Groups[1].Value, t);
                 await SendReplyAsync(e.UserId, _context.Configuration.ModelReply, t);
             })
-            .On<PrivateMessageEvent>()
+            .On<PrivateMessageEvent>("switch system message")
             .OnRegex(_systemRegex)
             .Do(async tuple =>
             {
@@ -80,7 +80,7 @@ public partial class GeminiFunction(
                 await SetSystemAsync(e.UserId, match.Groups[1].Value, t);
                 await SendReplyAsync(e.UserId, _context.Configuration.SystemReply, t);
             })
-            .On<PrivateMessageEvent>()
+            .On<PrivateMessageEvent>("chat")
             .OnText()
             .AsFallback()
             .Do(async tuple =>

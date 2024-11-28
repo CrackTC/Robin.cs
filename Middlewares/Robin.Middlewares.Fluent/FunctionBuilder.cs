@@ -16,9 +16,10 @@ public class FunctionBuilder
 
     internal FunctionInfo Build() => new(_eventTunnels);
 
-    public EventTunnelBuilder<EventContext<TEvent>> On<TEvent>() where TEvent : BotEvent =>
+    public EventTunnelBuilder<EventContext<TEvent>> On<TEvent>(string? name = null) where TEvent : BotEvent =>
         new EventTunnelBuilder<EventContext<TEvent>>(
             this,
+            name,
             new Tunnel<EventContext<BotEvent>, EventContext<TEvent>>(
                 ctx => ctx.Event switch
                 {

@@ -25,7 +25,10 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
             var info = functionBuilder.Build();
             var eventTunnels = info.EventTunnels.ToList();
 
-            (function as BotFunction)?.TriggerDescriptions.AddRange(eventTunnels.Select(info => string.Join(" 且 ", info.Descriptions)));
+            (function as BotFunction)!.TriggerDescriptions.AddRange(
+                eventTunnels.Select(tunnel => (tunnel.Name is null ? string.Empty : tunnel.Name + ": ")
+                    + string.Join(" 且 ", tunnel.Descriptions))
+            );
 
             foreach (var eventTunnel in eventTunnels)
             {

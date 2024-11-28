@@ -95,10 +95,10 @@ public partial class UserRankFunction(
     {
         await CreateTableAsync(token);
 
-        builder.On<GroupMessageEvent>()
+        builder.On<GroupMessageEvent>("collect message")
             .AsAlwaysFired()
             .Do(ctx => InsertDataAsync(ctx.Event.GroupId, ctx.Event.UserId, ctx.Token))
-            .On<GroupMessageEvent>()
+            .On<GroupMessageEvent>("show rank")
             .OnRegex(RankRegex)
             .Do(async tuple =>
             {

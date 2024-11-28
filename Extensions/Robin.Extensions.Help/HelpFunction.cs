@@ -23,27 +23,21 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
         var infoText = string.Join(" 或 ", info.EventTypes
             .Select(type => type.GetCustomAttribute<EventDescriptionAttribute>()!.Description));
 
-        var triggerText = string.Concat(function.TriggerDescriptions
-            .Select(triggerDesc => $"• {triggerDesc}\n"));
+        var tunnelText = string.Concat(function.TriggerDescriptions
+            .Select(tunnelDesc => $"• {tunnelDesc}\n"));
 
-        if (string.IsNullOrEmpty(infoText) && string.IsNullOrEmpty(triggerText)) return string.Empty;
+        if (string.IsNullOrEmpty(infoText) && string.IsNullOrEmpty(tunnelText)) return string.Empty;
 
         var builder = new StringBuilder("\n触发条件：\n");
         if (!string.IsNullOrEmpty(infoText))
         {
-            builder.Append("收到 ");
-            builder.Append(infoText);
-
-            if (!string.IsNullOrEmpty(triggerText))
-            {
-                builder.Append("，或");
-            }
+            builder.Append("收到 ").Append(infoText);
+            if (!string.IsNullOrEmpty(tunnelText)) builder.Append("，或");
         }
 
-        if (string.IsNullOrEmpty(triggerText)) return builder.ToString();
+        if (string.IsNullOrEmpty(tunnelText)) return builder.ToString();
 
-        builder.AppendLine("满足以下几组条件之一：");
-        builder.Append(triggerText);
+        builder.AppendLine("满足以下几组条件之一：").Append(tunnelText);
 
         return builder.ToString();
     }

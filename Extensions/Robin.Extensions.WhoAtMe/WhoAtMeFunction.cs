@@ -45,7 +45,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<GroupMessageEvent>()
+        builder.On<GroupMessageEvent>("collect @")
             .OnAt()
             .AsAlwaysFired()
             .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
@@ -58,7 +58,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
 
                 await SaveAsync(t);
             }, tuple.Token))
-            .On<GroupMessageEvent>()
+            .On<GroupMessageEvent>("show who @ me")
             .OnCommand("谁@我", prefix: string.Empty)
             .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
             {

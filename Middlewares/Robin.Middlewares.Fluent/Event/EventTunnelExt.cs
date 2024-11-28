@@ -38,8 +38,8 @@ public static class EventTunnelExt
         string prefix = "/"
     ) where TEvent : MessageEvent =>
         builder
-            .Where(ctx => ctx.Event.Message.Any(seg => seg is TextData text
-                && text.Text.Trim().Split(null).Any(t => t == $"{prefix}{command}")))
+            .Where(ctx => ctx.Event.Message.Any(seg => seg is TextData { Text: var text }
+                && text.Trim().Split(null).Any(t => t == $"{prefix}{command}")))
             .WithDescription($"消息包含指令：{prefix}{command}");
 
     public static EventTunnelBuilder<(EventContext<TEvent> EventContext, string Text)> OnText<TEvent>(
@@ -84,5 +84,5 @@ public static class EventTunnelExt
             .Select(ctx => (ctx, Jsons: ctx.Event.Message.OfType<JsonData>()))
             .Where(t => t.Jsons.Any())
             .Select(t => (t.ctx, JsonNode.Parse(t.Jsons.First().Content)))
-            .WithDescription("消息包含 Json 数据");
+            .WithDescription("消息包含 Json 卡片");
 }

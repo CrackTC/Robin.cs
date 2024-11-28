@@ -27,14 +27,14 @@ public partial class WordCloudFunction(
     {
         await CreateTableAsync(token);
 
-        builder.On<GroupMessageEvent>()
+        builder.On<GroupMessageEvent>("collect message")
             .AsAlwaysFired()
             .Do(ctx => InsertDataAsync(
                 ctx.Event.GroupId,
                 string.Join(' ', ctx.Event.Message.OfType<TextData>().Select(s => s.Text)),
                 ctx.Token
             ))
-            .On<GroupMessageEvent>()
+            .On<GroupMessageEvent>("show word cloud")
             .OnCommand("word_cloud")
             .Do(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token));
     }
