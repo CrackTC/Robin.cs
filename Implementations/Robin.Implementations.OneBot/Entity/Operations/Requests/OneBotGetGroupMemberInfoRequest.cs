@@ -6,12 +6,14 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Requests;
 
-[OneBotRequest("get_group_member_info", typeof(GetGroupMemberInfoRequest))]
+using RequestType = GetGroupMemberInfoRequest;
+
+[OneBotRequest("get_group_member_info", typeof(RequestType))]
 internal class OneBotGetGroupMemberInfoRequest : IOneBotRequest
 {
     public JsonNode? GetJson(Request request, OneBotMessageConverter _)
     {
-        if (request is not GetGroupMemberInfoRequest r) return null;
+        if (request is not RequestType r) return null;
         return JsonSerializer.SerializeToNode(new
         {
             group_id = r.GroupId,

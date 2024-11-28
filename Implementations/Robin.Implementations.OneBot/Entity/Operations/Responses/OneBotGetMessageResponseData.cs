@@ -9,8 +9,11 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotGetMessageRequest;
+using ResponseType = GetMessageResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetMessageRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 internal class OneBotGetMessageResponseData : IOneBotResponseData
 {
     [JsonPropertyName("time")] public int Time { get; set; }
@@ -21,7 +24,7 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
     [JsonPropertyName("message")] public required JsonNode Message { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter converter) =>
-        new GetMessageResponse(
+        new ResponseType(
             response.Status is not "failed",
             response.ReturnCode,
             null,

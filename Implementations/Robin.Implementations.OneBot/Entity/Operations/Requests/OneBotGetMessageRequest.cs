@@ -6,12 +6,14 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Requests;
 
-[OneBotRequest("get_msg", typeof(GetMessageRequest))]
+using RequestType = GetMessageRequest;
+
+[OneBotRequest("get_msg", typeof(RequestType))]
 internal class OneBotGetMessageRequest : IOneBotRequest
 {
     public JsonNode? GetJson(Request request, OneBotMessageConverter _)
     {
-        if (request is not GetMessageRequest r) return null;
+        if (request is not RequestType r) return null;
         return JsonSerializer.SerializeToNode(new
         {
             message_id = Convert.ToInt32(r.MessageId)

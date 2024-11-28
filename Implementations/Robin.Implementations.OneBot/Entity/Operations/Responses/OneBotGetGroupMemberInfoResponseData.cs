@@ -7,8 +7,11 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotGetGroupMemberInfoRequest;
+using ResponseType = GetGroupMemberInfoResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetGroupMemberInfoRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 internal class OneBotGetGroupMemberInfoResponseData : IOneBotResponseData
 {
     [JsonPropertyName("group_id")] public long GroupId { get; set; }
@@ -31,7 +34,7 @@ internal class OneBotGetGroupMemberInfoResponseData : IOneBotResponseData
     [JsonPropertyName("card_changeable")] public bool CardChangeable { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
-        new GetGroupMemberInfoResponse(
+        new ResponseType(
             response.Status is not "failed",
             response.ReturnCode,
             null,

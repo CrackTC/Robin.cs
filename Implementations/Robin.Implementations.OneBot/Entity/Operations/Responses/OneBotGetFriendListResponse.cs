@@ -7,12 +7,15 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotGetFriendListRequest;
+using ResponseType = GetFriendListResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetFriendListRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 internal class OneBotGetFriendListResponseData : List<OneBotFriendInfo>, IOneBotResponseData
 {
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
-        new GetFriendListResponse(
+        new ResponseType(
             response.Status is not "failed",
             response.ReturnCode,
             null,

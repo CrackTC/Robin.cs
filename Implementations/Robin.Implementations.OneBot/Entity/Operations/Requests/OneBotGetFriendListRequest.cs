@@ -6,12 +6,14 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Requests;
 
-[OneBotRequest("get_friend_list", typeof(GetFriendListRequest))]
+using RequestType = GetFriendListRequest;
+
+[OneBotRequest("get_friend_list", typeof(RequestType))]
 internal class OneBotGetFriendListRequest : IOneBotRequest
 {
     public JsonNode? GetJson(Request request, OneBotMessageConverter _)
     {
-        if (request is not GetFriendListRequest) return null;
+        if (request is not RequestType) return null;
         return JsonSerializer.SerializeToNode(new { });
     }
 }

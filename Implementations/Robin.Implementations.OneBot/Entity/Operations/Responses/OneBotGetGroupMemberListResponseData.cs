@@ -5,12 +5,15 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotGetGroupMemberListRequest;
+using ResponseType = GetGroupMemberListResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetGroupMemberListRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 internal class OneBotGetGroupMemberListResponseData : List<OneBotGetGroupMemberInfoResponseData>, IOneBotResponseData
 {
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter converter) =>
-        new GetGroupMemberListResponse(
+        new ResponseType(
             response.Status is not "failed",
             response.ReturnCode,
             null,

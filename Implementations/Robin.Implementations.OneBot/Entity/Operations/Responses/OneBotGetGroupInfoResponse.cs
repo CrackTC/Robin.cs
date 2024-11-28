@@ -7,12 +7,15 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotGetGroupInfoRequest;
+using ResponseType = GetGroupInfoResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotGetGroupInfoRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 internal class OneBotGetGroupInfoResponseData : OneBotGroupInfo, IOneBotResponseData
 {
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
-        new GetGroupInfoResponse(
+        new ResponseType(
             response.Status is not "failed",
             response.ReturnCode,
             null,

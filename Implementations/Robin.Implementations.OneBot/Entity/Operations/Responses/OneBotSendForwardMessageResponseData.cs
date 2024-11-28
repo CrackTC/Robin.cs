@@ -7,15 +7,18 @@ using Robin.Implementations.OneBot.Entity.Operations.Requests;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Responses;
 
+using OneBotRequestType = OneBotSendForwardMessageRequest;
+using ResponseType = SendForwardMessageResponse;
+
 [Serializable]
-[OneBotResponseData(typeof(OneBotSendForwardMessageRequest))]
+[OneBotResponseData(typeof(OneBotRequestType))]
 [JsonConverter(typeof(StringToResponseDataConverter))]
 internal class OneBotSendForwardMessageResponseData : IOneBotResponseData
 {
     [JsonPropertyName("resid")] public required string ResId { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _)
-        => new SendForwardMessageResponse(response.Status is not "failed", response.ReturnCode, null, ResId);
+        => new ResponseType(response.Status is not "failed", response.ReturnCode, null, ResId);
 }
 
 file class StringToResponseDataConverter : JsonConverter<OneBotSendForwardMessageResponseData>

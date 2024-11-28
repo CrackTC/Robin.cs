@@ -6,12 +6,14 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Requests;
 
-[OneBotRequest("send_private_msg", typeof(SendPrivateMessageRequest))]
+using RequestType = SendPrivateMessageRequest;
+
+[OneBotRequest("send_private_msg", typeof(RequestType))]
 internal class OneBotSendPrivateMessageRequest : IOneBotRequest
 {
     public JsonNode? GetJson(Request request, OneBotMessageConverter converter)
     {
-        if (request is not SendPrivateMessageRequest r) return null;
+        if (request is not RequestType r) return null;
 
         return JsonSerializer.SerializeToNode(new
         {

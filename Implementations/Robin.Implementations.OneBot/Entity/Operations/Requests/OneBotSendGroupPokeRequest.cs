@@ -6,12 +6,14 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Operations.Requests;
 
-[OneBotRequest("group_poke", typeof(SendGroupPokeRequest))]
+using RequestType = SendGroupPokeRequest;
+
+[OneBotRequest("group_poke", typeof(RequestType))]
 internal class OneBotSendGroupPokeRequest : IOneBotRequest
 {
     public JsonNode? GetJson(Request request, OneBotMessageConverter _)
     {
-        if (request is not SendGroupPokeRequest r) return null;
+        if (request is not RequestType r) return null;
 
         return JsonSerializer.SerializeToNode(new
         {
