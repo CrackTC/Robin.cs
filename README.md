@@ -82,9 +82,27 @@ Here is an example configuration file:
       "OperationProviderConfig": {
         "Url": "http://<host>:<port>"
       },
+      "Filters": {
+        "oa": {
+          "Group": {
+            "Whitelist": true,
+            "Ids": [
+              123456789,
+              987654321
+            ]
+          }
+        },
+        "gemini": {
+          "Private": {
+            "Whitelist": false,
+            "Ids": [
+              1145141919810
+            ]
+          }
+        }
+      },
       "Configurations": [
-        {
-          "Name": "fluent",
+        "fluent": {
           "Crons": {
             "user_rank": {
               "rank cron": "0 0 0 * * ?"
@@ -97,29 +115,24 @@ Here is an example configuration file:
             }
           }
         },
-        {
-          "Name": "gemini",
+        "gemini": {
           "Model": "gemini-1.5-flash-latest",
           "ApiKey": "<your-api-key>"
         },
-        {
-          "Name": "gray",
+        "gray": {
           "ApiAddress": "http://<host>:<port>"
         },
-        {
-          "Name": "rand_reply",
+        "rand_reply": {
           "Texts": [
             "我喜欢你❤️",
             "我讨厌你😡"
           ],
           "ImagePaths": []
         },
-        {
-          "Name": "user_rank",
+        "user_rank": {
           "TopN": 10
         },
-        {
-          "Name": "word_cloud",
+        "word_cloud": {
           "ApiAddress": "http://<host>:<port>/wordcloud",
           "CloudOption": {
             "Colors": [
@@ -138,23 +151,17 @@ Here is an example configuration file:
             ]
           }
         },
-        {
-          "Name": "sauce_nao",
+        "sauce_nao": {
           "ApiKey": "<your-api-key>"
         },
-        {
-          "Name": "welcome",
+        "welcome": {
           "WelcomeTexts": {
             "123456789": "Welcome {at}",
             "987654321": "{at} 我讨厌你😡"
           }
         },
-        {
-          "Name": "oa",
-          "Groups": [
-            123456789,
-            987654321
-          ],
+        "oa": {
+          "TempGroup": 123456789
           "UseVpn": false
         }
       ]
