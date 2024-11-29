@@ -84,9 +84,18 @@ Here is an example configuration file:
       },
       "Configurations": [
         {
-          "Name": "cron",
-          "user_rank": "0 0 0 * * ?",
-          "word_cloud": "0 0 0 * * ?"
+          "Name": "fluent",
+          "Crons": {
+            "user_rank": {
+              "rank cron": "0 0 0 * * ?"
+            },
+            "word_cloud": {
+              "word cloud cron": "0 0 0 * * ?"
+            },
+            "oa": {
+              "main cron": "0 0 * * * ?"
+            }
+          }
         },
         {
           "Name": "gemini",
