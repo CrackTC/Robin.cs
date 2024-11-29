@@ -1,61 +1,54 @@
+using System.Collections.Frozen;
+using System.Reflection;
+using Microsoft.Extensions.Logging;
+using Quartz;
+using Quartz.Impl;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
+using Robin.Middlewares.Fluent.Cron;
 using Robin.Middlewares.Fluent.Event;
+using CronExpressionDescriptor;
 
 namespace Robin.Middlewares.Fluent;
 
+#region Event
 [BotFunctionInfo("fluent", "元功能，流式扩展接口", typeof(BotEvent))]
-public class FluentFunction(FunctionContext context) : BotFunction(context)
+public partial class FluentFunction(FunctionContext<FluentOption> context) : BotFunction<FluentOption>(context)
 {
     private IEnumerable<IEnumerable<EventTunnel>> _eventTunLists = [];
-    private IEnumerable<EventTunnel> _alwaysFiredEventTuns = [];
+    private IEnumerable<EventTunnel> _intrinsicEventTuns = [];
 
-    public override async Task StartAsync(CancellationToken token)
+    private void AddEventTunnels(List<(IFluentFunction, FunctionInfo)> pairs)
     {
-        var eventTunLists = new SortedList<int, List<EventTunnel>>();
-        var alwaysFiredEventTuns = new List<EventTunnel>();
+        var tunLists = new SortedList<int, List<EventTunnel>>();
+        var intrinsicTuns = new List<EventTunnel>();
 
-        foreach (var function in _context.BotContext.Functions.OfType<IFluentFunction>())
+        pairs.ForEach(pair =>
         {
-            var functionBuilder = new FunctionBuilder();
+            var (function, info) = pair;
+            var tunnels = info.EventTunnels.ToList();
 
-            await function.OnCreatingAsync(functionBuilder, token);
+            ((BotFunction)function).TriggerDescriptions.AddRange(tunnels.GetDescriptions());
 
-            var info = functionBuilder.Build();
-            var eventTunnels = info.EventTunnels.ToList();
-
-            (function as BotFunction)!.TriggerDescriptions.AddRange(
-                eventTunnels.Select(tunnel => (tunnel.Name is null ? string.Empty : tunnel.Name + ": ")
-                    + string.Join(" 且 ", tunnel.Descriptions))
-            );
-
-            foreach (var eventTunnel in eventTunnels)
+            tunnels.ForEach(tunnel =>
             {
-                if (eventTunnel.Priority == int.MinValue)
-                {
-                    alwaysFiredEventTuns.Add(eventTunnel);
-                }
-                else if (!eventTunLists.TryGetValue(eventTunnel.Priority, out var list))
-                {
-                    eventTunLists[eventTunnel.Priority] = [eventTunnel];
-                }
-                else
-                {
-                    list.Add(eventTunnel);
-                }
-            }
-        }
+                if (tunnel.Priority == int.MinValue) intrinsicTuns.Add(tunnel);
+                else if (!tunLists.TryGetValue(tunnel.Priority, out var list))
+                    tunLists[tunnel.Priority] = [tunnel];
+                else list.Add(tunnel);
+            });
+        });
 
-        _eventTunLists = eventTunLists.Values;
-        _alwaysFiredEventTuns = alwaysFiredEventTuns;
+        _eventTunLists = tunLists.Values;
+        _intrinsicEventTuns = intrinsicTuns;
     }
 
     public override Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         var tasks = new List<Task>();
 
-        tasks.AddRange(_alwaysFiredEventTuns
+        tasks.AddRange(_intrinsicEventTuns
             .Select(tunnel => tunnel.Tunnel(eventContext))
             .Where(res => res.Accept)
             .Select(res => res.Data!));
@@ -68,7 +61,7 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
                 .Select(res => res.Data!)
                 .ToList();
 
-            if (fired.Count is not 0)
+            if (fired is not [])
             {
                 tasks.AddRange(fired);
                 break;
@@ -76,5 +69,107 @@ public class FluentFunction(FunctionContext context) : BotFunction(context)
         }
 
         return Task.WhenAll(tasks);
+    }
+}
+#endregion
+
+#region Cron
+public partial class FluentFunction
+{
+    // Like BackgroundService, see https://github.com/dotnet/runtime/blob/cf66826ff76e570d0ed79f33725bdc50e09dc332/src/libraries/Microsoft.Extensions.Hosting.Abstractions/src/BackgroundService.cs
+    private CancellationTokenSource? _stoppingCts;
+    private IScheduler? _scheduler;
+    private async Task AddCronTunnelsAsync(List<(IFluentFunction, FunctionInfo)> pairs, CancellationToken token)
+    {
+        _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+
+        _scheduler = await new StdSchedulerFactory(new()
+        {
+            [StdSchedulerFactory.PropertySchedulerInstanceName] = _context.BotContext.Uin.ToString()
+        }).GetScheduler(token);
+
+        var tuples = pairs.SelectMany(pair =>
+        {
+            var (function, info) = pair;
+            var funcName = function.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!.Name;
+            return info.CronTunnels.Select(tunnel => (FuncName: funcName, Function: function, Tunnel: tunnel));
+        });
+
+        _scheduler.JobFactory = new KeyedCronJobFactory(
+            tuples.ToFrozenDictionary(t => (t.FuncName, t.Tunnel.Name!), t => t.Tunnel.Tunnel),
+            _stoppingCts.Token
+        );
+
+        var options = new CronExpressionDescriptor.Options()
+        {
+            Use24HourTimeFormat = true,
+            Locale = _context.Configuration.CronDescriptionLocale
+        };
+
+        foreach (var (funcName, function, tunnel) in tuples)
+        {
+            string cron;
+            if (_context.Configuration.Crons.TryGetValue(funcName, out var funcCrons) && funcCrons.ContainsKey(tunnel.Name!))
+                cron = funcCrons[tunnel.Name!];
+            else cron = tunnel.Cron;
+
+            {
+                var descTunnel = tunnel with
+                {
+                    Descriptions = tunnel.Descriptions.Prepend(ExpressionDescriptor.GetDescription(cron, options) + " 自动触发")
+                };
+
+                ((BotFunction)function).TriggerDescriptions.Add(descTunnel.GetDescription());
+            }
+
+            {
+                var job = JobBuilder.Create<CronJob>()
+                    .WithIdentity(tunnel.Name!, funcName)
+                    .Build();
+
+                var trigger = TriggerBuilder.Create()
+                    .WithIdentity(tunnel.Name!, funcName)
+                    .WithCronSchedule(cron)
+                    .Build();
+
+                await _scheduler.ScheduleJob(job, trigger, token);
+                LogCronJobScheduled(_context.Logger, funcName, tunnel.Name!, cron);
+            }
+        }
+
+        await _scheduler.Start(token);
+    }
+
+    private async Task StopCronTunnelsAsync(CancellationToken token)
+    {
+        try { _stoppingCts!.Cancel(); }
+        finally { await _scheduler!.Shutdown(token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing); }
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Cron job {Group}:{Name} scheduled at {Cron}")]
+    private static partial void LogCronJobScheduled(ILogger logger, string group, string name, string cron);
+}
+#endregion
+
+public partial class FluentFunction
+{
+    public override async Task StartAsync(CancellationToken token)
+    {
+        var pairs = (await Task.WhenAll(_context.BotContext.Functions
+            .OfType<IFluentFunction>()
+            .Select(async function =>
+            {
+                var functionBuilder = new FunctionBuilder();
+                await function.OnCreatingAsync(functionBuilder, token);
+                return (function, functionBuilder.Build());
+            }))).ToList();
+
+        AddEventTunnels(pairs);
+        await AddCronTunnelsAsync(pairs, token);
+    }
+
+    public override async Task StopAsync(CancellationToken token)
+    {
+        await StopCronTunnelsAsync(token);
     }
 }

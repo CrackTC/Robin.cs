@@ -9,7 +9,6 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Context;
 using Robin.App;
 using Robin.App.Services;
-using Robin.Middlewares.Annotations.Cron;
 using Robin.Middlewares.Fluent;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -27,7 +26,6 @@ ConfigureBackend(implementations);
 
 builder.Services.AddHostedService<BotCreationService>()
     .AddSingleton<IEnumerable<Assembly>>([
-        typeof(CronFunction).Assembly,
         typeof(FluentFunction).Assembly,
         .. extensions
     ])

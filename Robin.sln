@@ -41,8 +41,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.B23", "Ext
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Middlewares", "Middlewares", "{4377CD21-B598-44A3-8F44-E6C3BC7413F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Middlewares.Annotations", "Middlewares\Robin.Middlewares.Annotations\Robin.Middlewares.Annotations.csproj", "{C2DFF6B0-3E9D-463A-8979-B5A5D6C4100F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Middlewares.Fluent", "Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj", "{C1F90895-A459-4C57-9A4C-0D4239F5BDEE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Robin.Extensions.Wife", "Extensions\Robin.Extensions.Wife\Robin.Extensions.Wife.csproj", "{90953558-7BC6-4240-B830-C6F8816D2EC6}"

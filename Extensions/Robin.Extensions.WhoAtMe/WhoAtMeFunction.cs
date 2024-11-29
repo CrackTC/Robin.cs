@@ -47,7 +47,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
     {
         builder.On<GroupMessageEvent>("collect @")
             .OnAt()
-            .AsAlwaysFired()
+            .AsIntrinsic()
             .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
             {
                 var (e, t) = tuple;

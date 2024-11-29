@@ -69,7 +69,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
         var (lastSource, lastUser) = ((typeof(MessageEvent), 0L), 0L);
         var textBuilder = new StringBuilder();
         builder.On<MessageEvent>()
-            .AsAlwaysFired()
+            .AsIntrinsic()
             .Do((tuple) => _semaphore.ConsumeAsync(async Task () =>
             {
                 var (e, t) = tuple;

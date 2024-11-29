@@ -11,4 +11,9 @@
       <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="CronExpressionDescriptor" Version="2.36.0" />
+      <PackageReference Include="Quartz" Version="3.13.1" />
+    </ItemGroup>
+
 </Project>

@@ -59,7 +59,7 @@ public class EventTunnelBuilder<TOut>
         _descriptions.Append("未触发其他功能")
     );
 
-    public EventTunnelBuilder<TOut> AsAlwaysFired() => new(
+    public EventTunnelBuilder<TOut> AsIntrinsic() => new(
         _functionBuilder,
         _name,
         _tunnel,

@@ -9,17 +9,15 @@ using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Utility;
-using Robin.Middlewares.Annotations.Cron;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "群词云生成")]
-[OnCron("0 0 0 * * ?")]
 public partial class WordCloudFunction(
     FunctionContext<WordCloudOption> context
-) : BotFunction<WordCloudOption>(context), ICronHandler, IFluentFunction
+) : BotFunction<WordCloudOption>(context), IFluentFunction
 {
     private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(3) };
 
@@ -28,15 +26,33 @@ public partial class WordCloudFunction(
         await CreateTableAsync(token);
 
         builder.On<GroupMessageEvent>("collect message")
-            .AsAlwaysFired()
+            .AsIntrinsic()
             .Do(ctx => InsertDataAsync(
                 ctx.Event.GroupId,
                 string.Join(' ', ctx.Event.Message.OfType<TextData>().Select(s => s.Text)),
                 ctx.Token
             ))
+
             .On<GroupMessageEvent>("show word cloud")
             .OnCommand("word_cloud")
-            .Do(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token));
+            .Do(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token))
+
+            .OnCron("0 0 0 * * ?", "word cloud cron")
+            .Do(async token =>
+            {
+                try
+                {
+                    var groups = await GetGroupsAsync(token);
+                    foreach (var group in groups)
+                    {
+                        await SendWordCloudAsync(group, true, token);
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogExceptionOccurred(_context.Logger, e);
+                }
+            });
     }
 
 
@@ -77,22 +93,6 @@ public partial class WordCloudFunction(
         await _db.DisposeAsync();
     }
 
-    public async Task OnCronEventAsync(CancellationToken token)
-    {
-        try
-        {
-            var groups = await GetGroupsAsync(token);
-            foreach (var group in groups)
-            {
-                await SendWordCloudAsync(group, true, token);
-            }
-        }
-        catch (Exception e)
-        {
-            LogExceptionOccurred(_context.Logger, e);
-        }
-    }
-
     #region Database
 
     private readonly WordCloudDbContext _db = new(context.BotContext.Uin);
@@ -131,8 +131,7 @@ public partial class WordCloudFunction(
 
     #region Log
 
-    [LoggerMessage(Level = LogLevel.Warning,
-        Message = "Word cloud api request failed for group {GroupId}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Word cloud api request failed for group {GroupId}")]
     private static partial void LogApiRequestFailed(ILogger logger, long groupId);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]

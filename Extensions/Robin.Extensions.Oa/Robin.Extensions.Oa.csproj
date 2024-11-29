@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj" />
-    <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Annotations\Robin.Middlewares.Annotations.csproj" />
   </ItemGroup>
 
   <ItemGroup>

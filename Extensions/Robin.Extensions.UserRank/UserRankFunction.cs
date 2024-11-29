@@ -9,34 +9,20 @@ using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Utility;
-using Robin.Middlewares.Annotations.Cron;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
 
 namespace Robin.Extensions.UserRank;
 
 [BotFunctionInfo("user_rank", "用户发言排行")]
-[OnCron("0 0 0 * * ?")]
 public partial class UserRankFunction(
     FunctionContext<UserRankOption> context
-) : BotFunction<UserRankOption>(context), ICronHandler, IFluentFunction
+) : BotFunction<UserRankOption>(context), IFluentFunction
 {
     public override async Task StopAsync(CancellationToken token)
     {
         _semaphore.Dispose();
         await _db.DisposeAsync();
-    }
-
-    public async Task OnCronEventAsync(CancellationToken token)
-    {
-        try
-        {
-            await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, n: 0, userId: null, token)));
-        }
-        catch (Exception e)
-        {
-            LogExceptionOccurred(_context.Logger, e);
-        }
     }
 
     private async Task SendUserRankAsync(long groupId, int n, long? userId, CancellationToken token)
@@ -96,8 +82,9 @@ public partial class UserRankFunction(
         await CreateTableAsync(token);
 
         builder.On<GroupMessageEvent>("collect message")
-            .AsAlwaysFired()
+            .AsIntrinsic()
             .Do(ctx => InsertDataAsync(ctx.Event.GroupId, ctx.Event.UserId, ctx.Token))
+
             .On<GroupMessageEvent>("show rank")
             .OnRegex(RankRegex)
             .Do(async tuple =>
@@ -110,6 +97,19 @@ public partial class UserRankFunction(
                     { Success: true, Value: { } value } => int.Min(int.Parse(value), 50),
                     _ => 0
                 }, e.UserId, t);
+            })
+
+            .OnCron("0 0 0 * * ?", "rank cron")
+            .Do(async token =>
+            {
+                try
+                {
+                    await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, n: 0, userId: null, token)));
+                }
+                catch (Exception e)
+                {
+                    LogExceptionOccurred(_context.Logger, e);
+                }
             });
     }
 

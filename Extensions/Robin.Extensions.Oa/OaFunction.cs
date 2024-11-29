@@ -7,13 +7,12 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Utility;
 using Robin.Extensions.Oa.Fetcher;
-using Robin.Middlewares.Annotations.Cron;
+using Robin.Middlewares.Fluent;
 
 namespace Robin.Extensions.Oa;
 
 [BotFunctionInfo("oa", "JLU校务通知")]
-[OnCron("0 0 * * * ?")]
-public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), ICronHandler
+public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), IFluentFunction
 {
     private readonly OaFetcher _fetcher = context.Configuration.UseVpn
         ? new OaVpnFetcher(context.Configuration.VpnUsername!, context.Configuration.VpnPassword!)
@@ -86,13 +85,6 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
             .ToList();
     }
 
-    public Task OnCronEventAsync(CancellationToken token) => _semaphore.ConsumeAsync(async Task () =>
-    {
-        if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
-            await Task.WhenAll(_context.Configuration.Groups!
-                .Select(groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)));
-    }, token);
-
     private async Task SaveAsync(CancellationToken token)
     {
         await using var stream = File.Create("oa.json");
@@ -115,6 +107,19 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
     public override Task StopAsync(CancellationToken token)
     {
         _semaphore.Dispose();
+        return Task.CompletedTask;
+    }
+
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
+    {
+        builder.OnCron("0 0 * * * ?")
+            .Do(token => _semaphore.ConsumeAsync(async Task () =>
+            {
+                if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
+                    await Task.WhenAll(_context.Configuration.Groups!
+                        .Select(groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)));
+            }, token));
+
         return Task.CompletedTask;
     }
 }
