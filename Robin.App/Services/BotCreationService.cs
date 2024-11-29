@@ -38,7 +38,10 @@ internal partial class BotCreationService(
                 botConfig.GetRequiredSection("OperationProviderConfig"), token);
         context.FunctionConfigurations = botConfig.GetSection("Configurations")
             .GetChildren()
-            .ToFrozenDictionary(child => child["Name"]!);
+            .ToFrozenDictionary(child => child.Key!);
+        context.FilterConfigurations = botConfig.GetSection("Filters")
+            .GetChildren()
+            .ToFrozenDictionary(child => child.Key!);
 
         var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
         await functionService.StartAsync(token);

@@ -8,4 +8,4 @@ public record GroupUploadEvent(
     long GroupId,
     long UserId,
     UploadFile File
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event;
 using Robin.Middlewares.Fluent.Cron;
@@ -9,8 +10,9 @@ namespace Robin.Middlewares.Fluent;
 
 internal record FunctionInfo(IEnumerable<EventTunnel> EventTunnels, IEnumerable<CronTunnel> CronTunnels);
 
-public class FunctionBuilder
+public class FunctionBuilder(BotFunction function)
 {
+    private readonly BotFunction _function = function;
     private readonly IList<EventTunnel> _eventTunnels = [];
     private readonly IList<CronTunnel> _cronTunnels = [];
 
@@ -26,13 +28,18 @@ public class FunctionBuilder
             new Tunnel<EventContext<BotEvent>, EventContext<TEvent>>(
                 ctx => ctx.Event switch
                 {
-                    TEvent e => new TunnelResult<EventContext<TEvent>>(new EventContext<TEvent>(e, ctx.Token), true),
+                    TEvent e and IGroupEvent { GroupId: var id } =>
+                        new(new(e, ctx.Token), _function.Context.GroupFilter.IsIdEnabled(id)),
+                    TEvent e and IPrivateEvent { UserId: var id } =>
+                        new(new(e, ctx.Token), _function.Context.PrivateFilter.IsIdEnabled(id)),
+                    TEvent e => new(new(e, ctx.Token), true),
                     _ => new TunnelResult<EventContext<TEvent>>(default, false)
                 }
             )
         )
-        .WithDescription($"收到{typeof(TEvent)
-            .GetCustomAttribute<EventDescriptionAttribute>()?.Description ?? typeof(TEvent).Name}");
+        .WithDescription("收到" + typeof(TEvent)
+            .GetCustomAttribute<EventDescriptionAttribute>()?
+            .Description ?? typeof(TEvent).Name);
 
     public CronTunnelBuilder<CancellationToken> OnCron(string cron, string name = "main cron") =>
         new CronTunnelBuilder<CancellationToken>(

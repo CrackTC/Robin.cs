@@ -48,20 +48,20 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         var helps = _context.BotContext.Functions
-            .Select(f => (
-                    function: f,
-                    info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!
-                )
-            )
-            .ToDictionary(pair => pair.info.Name, pair => new Func<string>(() => $"""
-                名称: {pair.info.Name}
-                描述: {pair.info.Description}{GetTriggerDescription(pair.function, pair.info)}
-                """
-            ));
+            .Select(f => (Func: f, Info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!))
+            .ToDictionary(t => t.Info.Name, t => (
+                Func: t.Func,
+                Help: new Func<string>(() =>
+                    $"""
+                    名称: {t.Info.Name}
+                    描述: {t.Info.Description}{GetTriggerDescription(t.Func, t.Info)}
+                    """
+            )));
 
         var briefHelps = _context.BotContext.Functions
-            .Select(f => f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!)
-            .ToDictionary(info => info.Name, info => info.Description);
+            .Select(f => (Func: f, Info: f.GetType().GetCustomAttribute<BotFunctionInfoAttribute>()!))
+            .Select(t => (t.Info.Name, t.Func, t.Info.Description))
+            .ToList();
 
         builder.On<MessageEvent>()
             .OnAt(_context.BotContext.Uin)
@@ -79,7 +79,14 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                         new TextData($"""
                             /help [功能名] 查看详细功能信息
                             可用功能：
-                            {string.Join("\n", briefHelps.Select(pair => $"• {pair.Key} - {pair.Value}"))}
+                            {
+                                string.Join('\n', briefHelps.Where(help => e switch
+                                {
+                                    IGroupEvent {GroupId: var id} => help.Func.Context.GroupFilter.IsIdEnabled(id),
+                                    IPrivateEvent {UserId: var id} => help.Func.Context.PrivateFilter.IsIdEnabled(id),
+                                    _ => true
+                                }).Select(help => $"• {help.Name} - {help.Description}"))
+                            }
                             """)
                     ]).SendAsync(_context, t);
                     return;
@@ -91,7 +98,18 @@ public partial class HelpFunction(FunctionContext context) : BotFunction(context
                     return;
                 }
 
-                await e.NewMessageRequest([new TextData(help())]).SendAsync(_context, t);
+                if (e switch
+                {
+                    IGroupEvent { GroupId: var id } => !help.Func.Context.GroupFilter.IsIdEnabled(id),
+                    IPrivateEvent { UserId: var id } => !help.Func.Context.PrivateFilter.IsIdEnabled(id),
+                    _ => false
+                })
+                {
+                    await e.NewMessageRequest([new TextData($"功能 {name.Value} 在当前上下文中被禁用")]).SendAsync(_context, t);
+                    return;
+                }
+
+                await e.NewMessageRequest([new TextData(help.Help())]).SendAsync(_context, t);
             });
 
         return Task.CompletedTask;

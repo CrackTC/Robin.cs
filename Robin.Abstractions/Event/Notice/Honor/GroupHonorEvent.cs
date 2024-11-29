@@ -5,4 +5,4 @@ public abstract record GroupHonorEvent(
     long Time,
     long GroupId,
     long UserId
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

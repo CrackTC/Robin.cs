@@ -7,8 +7,9 @@ namespace Robin.Abstractions;
 public abstract class BotFunction(FunctionContext context) : IHostedService
 {
     protected readonly FunctionContext _context = context;
+    public FunctionContext Context => _context;
 
-    public readonly List<string> TriggerDescriptions = [];
+    public List<string> TriggerDescriptions { get; } = [];
 
     public virtual Task OnEventAsync(EventContext<BotEvent> eventContext) => Task.CompletedTask;
 

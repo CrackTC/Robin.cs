@@ -7,4 +7,4 @@ public abstract record GroupRequestEvent(
     long GroupId,
     string Comment,
     string Flag
-) : RequestEvent(Time, UserId, Comment, Flag);
+) : RequestEvent(Time, UserId, Comment, Flag), IGroupEvent;

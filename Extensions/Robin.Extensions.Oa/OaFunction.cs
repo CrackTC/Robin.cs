@@ -110,14 +110,23 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         return Task.CompletedTask;
     }
 
+    private async Task<IEnumerable<long>> GetGroupsAsync(CancellationToken token) => _context.GroupFilter switch
+    {
+        { Whitelist: true, Ids: var ids } => ids,
+        { Ids: var ids } when await new GetGroupListRequest().SendAsync(_context, token)
+            is { Success: true, Groups: var groups } => groups.Select(g => g.GroupId).Except(ids),
+        _ => []
+    };
+
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.OnCron("0 0 * * * ?")
             .Do(token => _semaphore.ConsumeAsync(async Task () =>
             {
                 if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
-                    await Task.WhenAll(_context.Configuration.Groups!
-                        .Select(groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)));
+                    await Task.WhenAll((await GetGroupsAsync(token)).Select(
+                        groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)
+                    ));
             }, token));
 
         return Task.CompletedTask;

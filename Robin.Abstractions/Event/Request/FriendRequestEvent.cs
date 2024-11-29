@@ -6,4 +6,4 @@ public record FriendRequestEvent(
     long UserId,
     string Comment,
     string Flag
-) : RequestEvent(Time, UserId, Comment, Flag);
+) : RequestEvent(Time, UserId, Comment, Flag), IPrivateEvent;

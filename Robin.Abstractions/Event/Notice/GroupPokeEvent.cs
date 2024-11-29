@@ -6,4 +6,4 @@ public record GroupPokeEvent(
     long GroupId,
     long SenderId,
     long TargetId
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

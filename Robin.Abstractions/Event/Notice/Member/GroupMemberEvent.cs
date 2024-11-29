@@ -6,4 +6,4 @@ public abstract record GroupMemberEvent(
     long GroupId,
     long OperatorId,
     long UserId
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

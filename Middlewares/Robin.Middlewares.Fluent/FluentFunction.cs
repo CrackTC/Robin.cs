@@ -159,7 +159,7 @@ public partial class FluentFunction
             .OfType<IFluentFunction>()
             .Select(async function =>
             {
-                var functionBuilder = new FunctionBuilder();
+                var functionBuilder = new FunctionBuilder((BotFunction)function);
                 await function.OnCreatingAsync(functionBuilder, token);
                 return (function, functionBuilder.Build());
             }))).ToList();

@@ -7,4 +7,4 @@ public abstract record GroupBanEvent(
     long OperatorId,
     long UserId,
     long Duration
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

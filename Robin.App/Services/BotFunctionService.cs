@@ -103,7 +103,12 @@ internal partial class BotFunctionService(
         for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
         {
             if (!_eventToFunctions.TryGetValue(type, out var eventFunctions)) continue;
-            tasks.AddRange(eventFunctions.Select(function => InvokeFunction(function, eventContext)));
+            tasks.AddRange(eventFunctions.Where(function => @event switch
+            {
+                IGroupEvent { GroupId: var id } => function.Context.GroupFilter.IsIdEnabled(id),
+                IPrivateEvent { UserId: var id } => function.Context.PrivateFilter.IsIdEnabled(id),
+                _ => true
+            }).Select(function => InvokeFunction(function, eventContext)));
         }
 
         return Task.WhenAll(tasks);

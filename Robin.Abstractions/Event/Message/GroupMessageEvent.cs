@@ -13,7 +13,7 @@ public record GroupMessageEvent(
     MessageChain Message,
     int Font,
     GroupMessageSender Sender
-) : MessageEvent(Time, MessageId, UserId, Message, Font)
+) : MessageEvent(Time, MessageId, UserId, Message, Font), IGroupEvent
 {
     public override long SourceId => GroupId;
 };

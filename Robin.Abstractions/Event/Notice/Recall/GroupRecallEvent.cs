@@ -7,4 +7,4 @@ public record GroupRecallEvent(
     long MessageId,
     long GroupId,
     long OperatorId
-) : RecallEvent(Time, UserId, MessageId);
+) : RecallEvent(Time, UserId, MessageId), IGroupEvent;

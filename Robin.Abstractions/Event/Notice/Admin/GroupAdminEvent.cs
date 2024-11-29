@@ -5,4 +5,4 @@ public record GroupAdminEvent(
     long Time,
     long GroupId,
     long UserId
-) : NoticeEvent(Time);
+) : NoticeEvent(Time), IGroupEvent;

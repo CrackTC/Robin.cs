@@ -11,7 +11,7 @@ public record PrivateMessageEvent(
     MessageChain Message,
     int Font,
     MessageSender Sender
-) : MessageEvent(Time, MessageId, UserId, Message, Font)
+) : MessageEvent(Time, MessageId, UserId, Message, Font), IPrivateEvent
 {
     public override long SourceId => UserId;
 };

@@ -5,4 +5,4 @@ public record FriendRecallEvent(
     long Time,
     long UserId,
     long MessageId
-) : RecallEvent(Time, UserId, MessageId);
+) : RecallEvent(Time, UserId, MessageId), IPrivateEvent;
