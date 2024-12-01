@@ -19,17 +19,21 @@ public partial class GrayFunction(
         builder.On<GroupMessageEvent>()
             .OnCommand("送走")
             .OnReply()
-            .Do(async t =>
+            .DoExpensive(async t =>
             {
                 var (ctx, msgId) = t;
 
                 if (await new GetMessageRequest(msgId).SendAsync(_context, ctx.Token)
                     is not { Message.Sender.UserId: var id })
-                    return;
+                    return false;
 
                 var url = $"{_context.Configuration.ApiAddress}/?id={id}";
-                await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token);
-            });
+                if (await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token)
+                    is not { Success: true })
+                    return false;
+
+                return true;
+            }, t => t.EventContext, _context);
 
         return Task.CompletedTask;
     }

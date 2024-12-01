@@ -4,6 +4,8 @@ using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
 using Robin.Abstractions.Event.Notice;
 using Robin.Abstractions.Message.Entity;
+using Robin.Abstractions.Operation;
+using Robin.Abstractions.Operation.Requests;
 
 namespace Robin.Middlewares.Fluent.Event;
 
@@ -85,4 +87,27 @@ public static class EventTunnelExt
             .Where(t => t.Jsons.Any())
             .Select(t => (t.ctx, JsonNode.Parse(t.Jsons.First().Content)))
             .WithDescription("消息包含 Json 卡片");
+
+    public static FunctionBuilder DoExpensive<TOut>(
+        this EventTunnelBuilder<TOut> builder,
+        Func<TOut, Task<bool>> something,
+        Func<TOut, EventContext<GroupMessageEvent>> eventSelector,
+        FunctionContext context
+    ) =>
+        builder.Do(async data =>
+        {
+            var (e, t) = eventSelector(data);
+            try
+            {
+                await new SetGroupReactionRequest(e.GroupId, e.MessageId, "128164", true).SendAsync(context, t);
+                await new SetGroupReactionRequest(e.GroupId, e.MessageId, await something(data) ? "10024" : "128293", true).SendAsync(context, t);
+                await new SetGroupReactionRequest(e.GroupId, e.MessageId, "128164", false).SendAsync(context, t);
+            }
+            catch
+            {
+                await ((Task)new SetGroupReactionRequest(e.GroupId, e.MessageId, "128293", true)
+                    .SendAsync(context, t)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+                throw;
+            }
+        });
 }
