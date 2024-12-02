@@ -142,7 +142,6 @@ Here is an example configuration file:
               "ffa3be8c",
               "ff88c0d0"
             ],
-            "FontUrl": "<font-url>",
             "Padding": 5,
             "BackgroundImageUrl": "<image-url>",
             "StrokeRatio": 0.01,
