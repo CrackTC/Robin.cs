@@ -35,7 +35,7 @@ public partial class WordCloudFunction(
 
             .On<GroupMessageEvent>("show word cloud")
             .OnCommand("word_cloud")
-            .Do(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token))
+            .DoExpensive(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token), ctx => ctx, _context)
 
             .OnCron("0 0 0 * * ?", "word cloud cron")
             .Do(async token =>
@@ -56,7 +56,7 @@ public partial class WordCloudFunction(
     }
 
 
-    private async Task SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
+    private async Task<bool> SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
     {
         var messages = await GetGroupMessagesAsync(groupId, token);
         var content = string.Join('\n', messages);
@@ -69,7 +69,7 @@ public partial class WordCloudFunction(
         if (!response.IsSuccessStatusCode)
         {
             LogApiRequestFailed(_context.Logger, groupId);
-            return;
+            return false;
         }
 
         await using var stream = await response.Content.ReadAsStreamAsync(token);
@@ -78,12 +78,13 @@ public partial class WordCloudFunction(
         if (url is null)
         {
             LogApiRequestFailed(_context.Logger, groupId);
-            return;
+            return false;
         }
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_context, token);
+        return await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_context, token)
+            is { Success: true };
     }
 
     public override async Task StopAsync(CancellationToken token)
