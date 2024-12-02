@@ -8,17 +8,29 @@ RUN dotnet build -c Release
 FROM abstraction AS build-impl
 WORKDIR /robin/Implementations
 COPY ./Implementations ./
-RUN find . ! -path . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Implementations/{}' \;
+RUN for impl in */; do \
+    cd $impl; \
+    dotnet publish -c Release -o /out/Implementations/$impl || exit 1; \
+    cd -; \
+done
 
 FROM abstraction AS build-mid
 WORKDIR /robin/Middlewares
 COPY ./Middlewares ./
-RUN find . ! -path . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Middlewares/{}' \;
+RUN for mid in */; do \
+    cd $mid; \
+    dotnet publish -c Release -o /out/Middlewares/$mid || exit 1; \
+    cd -; \
+done
 
 FROM build-mid AS build-ext
 WORKDIR /robin/Extensions
 COPY ./Extensions ./
-RUN find . ! -path . -maxdepth 1 -type d -exec sh -c 'cd {} && dotnet publish -c Release -o /out/Extensions/{}' \;
+RUN for ext in */; do \
+    cd $ext; \
+    dotnet publish -c Release -o /out/Extensions/$ext || exit 1; \
+    cd -; \
+done
 
 FROM build-mid AS build-app
 WORKDIR /robin/Robin.App
