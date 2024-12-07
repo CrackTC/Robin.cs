@@ -8,6 +8,7 @@ public record CloudOption
     // JsonPropertyName only used for serialization
     [JsonPropertyName("width")] public int Width { get; set; }
     [JsonPropertyName("height")] public int Height { get; set; }
+    [JsonPropertyName("scale")] public float Scale { get; set; }
     [JsonPropertyName("stroke_width")] public int StrokeWidth { get; set; }
     [JsonPropertyName("stroke_ratio")] public float StrokeRatio { get; set; }
     [JsonPropertyName("stroke_colors")] public List<string>? StrokeColors { get; set; }
