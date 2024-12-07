@@ -5,6 +5,7 @@ namespace Robin.Extensions.WordCloud;
 [Serializable]
 public record CloudOption
 {
+    // JsonPropertyName only used for serialization
     [JsonPropertyName("width")] public int Width { get; set; }
     [JsonPropertyName("height")] public int Height { get; set; }
     [JsonPropertyName("stroke_width")] public int StrokeWidth { get; set; }
@@ -14,6 +15,7 @@ public record CloudOption
     [JsonPropertyName("padding")] public int Padding { get; set; }
     [JsonPropertyName("background_image_blur")] public int BackgroundImageBlur { get; set; }
     [JsonPropertyName("background_image_url")] public string? BackgroundImageUrl { get; set; }
+    [JsonPropertyName("background_size_limit")] public int? BackgroundSizeLimit { get; set; }
 
     // Not used for configuration
     [JsonPropertyName("text")] public required string Text { get; set; }
