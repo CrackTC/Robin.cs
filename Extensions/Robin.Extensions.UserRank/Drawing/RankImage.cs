@@ -49,12 +49,15 @@ internal class RankImage(
 
         var userAvatars = await Task.WhenAll(ranks.Select(rank => FetchUserAvatarAsync(rank.userId, token)));
 
+        uint? max = null;
+
         float y = cardHeight + cardGap * 2;
         for (int i = 0; i < ranks.Count; i++)
         {
+            max ??= ranks.Max(rank => rank.count);
             var (userRank, userId, userName, userCount, userDelta) = ranks[i];
             using var userAvatar = userAvatars[i];
-            var rankCard = new RankCard(userRank, userAvatar, userName, (float)userCount / count, userCount, userDelta, palette, primaryFontSize);
+            var rankCard = new RankCard(userRank, userAvatar, userName, (float)userCount / max.Value, userCount, userDelta, palette, primaryFontSize);
             rankCard.Draw(surface.Canvas, measurement, SKRect.Create(cardGap, y, cardWidth, cardHeight));
             y += cardHeight + cardGap;
         }
