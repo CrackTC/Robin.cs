@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,8 +8,10 @@ using Robin.Abstractions.Message.Entity;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Abstractions.Utility;
+using Robin.Extensions.UserRank.Drawing;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
+using SkiaSharp;
 
 namespace Robin.Extensions.UserRank;
 
@@ -19,58 +20,65 @@ public partial class UserRankFunction(
     FunctionContext<UserRankOption> context
 ) : BotFunction<UserRankOption>(context), IFluentFunction
 {
-    public override async Task StopAsync(CancellationToken token)
+    private RankImage Image = null!;
+
+    private async Task<bool> SendUserRankAsync(long groupId, int n, long? userId, CancellationToken token)
     {
-        _semaphore.Dispose();
-        await _db.DisposeAsync();
-    }
+        n = n > 0 ? n : _context.Configuration.TopN;
 
-    private async Task SendUserRankAsync(long groupId, int n, long? userId, CancellationToken token)
-    {
-        var peopleCount = await GetGroupPeopleCountAsync(groupId, token);
-        var msgCount = await GetGroupMessageCountAsync(groupId, token);
-        var top = await GetGroupTopNAsync(groupId, n > 0 ? n : _context.Configuration.TopN, token);
-        if (userId is null) await ClearGroupMessagesAsync(groupId, token);
+        var members = await GetGroupMembersAsync(groupId, token);
+        var peopleCount = members.Where(member => member.Count is > 0).Count();
+        var messageCount = (uint)members.Sum(member => member.Count);
 
-        string message;
+        var currentRank = members.Where(member => member.Count is > 0)
+            .OrderByDescending(member => member.Count)
+            .ThenBy(member => member.Timestamp)
+            .ToList();
 
-        if (peopleCount is 0 || msgCount is 0) message = "本群暂无发言记录";
-        else
+        var prevRank = members.Where(member => member.PrevCount is > 0)
+            .OrderByDescending(member => member.PrevCount)
+            .ThenBy(member => member.PrevTimestamp)
+            .Index()
+            .ToDictionary(pair => pair.Item, pair => pair.Index);
+
+        var delta = currentRank.Select((member, index) => (prevRank.TryGetValue(member, out var rank) ? rank : prevRank.Count) - index).ToList();
+
+        if (await new GetGroupMemberListRequest(groupId, NoCache: true).SendAsync(_context, token)
+            is not { Members: { } memberInfos }) return false;
+
+        var dict = memberInfos.ToDictionary(member => member.UserId, member => member.Card switch
         {
-            if (await new GetGroupMemberListRequest(groupId, true).SendAsync(_context, token)
-                is not { Members: { } members })
-                return;
+            null or "" => member.Nickname,
+            _ => member.Card
+        });
 
-            var dict = members
-                .Select(member => (
-                    member.UserId,
-                    Name: member.Card switch
-                    {
-                        null or "" => member.Nickname,
-                        _ => member.Card
-                    }
-                ))
-                .ToDictionary(pair => pair.UserId, pair => pair.Name);
+        if (await new GetGroupInfoRequest(groupId, NoCache: true).SendAsync(_context, token)
+            is not { Info: { GroupName: { } groupName } }) return false;
 
-            var stringBuilder = new StringBuilder(
-                $"""
-                本群 {peopleCount} 位朋友共产生 {msgCount} 条发言
-                活跃用户排行榜
+        var ranks = new List<(int rank, long userId, string name, uint count, int delta)>(n + 1);
 
-                """
-            );
-
-            stringBuilder.AppendJoin('\n', top.Select(
-                pair => $"{(dict.TryGetValue(pair.Item1, out var value) ? value : pair.Item1)} 贡献：{pair.Item2}"
-            ));
-
-            if (userId is not null)
-                stringBuilder.Append('\n').Append($"你的排名：{await GetUserRankAsync(groupId, userId.Value, token)}");
-
-            message = stringBuilder.ToString();
+        if (userId is not null)
+        {
+            int index = currentRank.FindIndex(member => member.UserId == userId);
+            var name = dict.TryGetValue(userId.Value, out var value) ? value : userId.ToString();
+            if (index >= 0)
+                ranks.Add((index + 1, userId.Value, name!, currentRank[index].Count, delta[index]));
+            else
+                ranks.Add((currentRank.Count + 1, userId.Value, name!, 0, 0));
         }
 
-        await new SendGroupMessageRequest(groupId, [new TextData(message)]).SendAsync(_context, token);
+        ranks.AddRange(currentRank.Take(n).Select((member, index) =>
+        {
+            var name = dict.TryGetValue(member.UserId, out var value) ? value : member.UserId.ToString();
+            return (index + 1, member.UserId, name!, member.Count, delta[index]);
+        }));
+
+        using var image = await Image.GenerateAsync(groupName, groupId, peopleCount, (uint)messageCount, ranks, token);
+        using var data = image.Encode(SKEncodedImageFormat.Webp, 100);
+
+        return await new SendGroupMessageRequest(groupId, [
+            new ImageData("base64://" + Convert.ToBase64String(data.AsSpan()))
+        ]).SendAsync(_context, token) is { Success: true };
     }
 
 
@@ -81,23 +89,32 @@ public partial class UserRankFunction(
     {
         await CreateTableAsync(token);
 
+        Image = new(
+            _context.Configuration.FontPaths,
+            _context.Configuration.ColorPalette,
+            _context.Configuration.CardWidth,
+            _context.Configuration.CardHeight,
+            _context.Configuration.CardGap,
+            _context.Configuration.PrimaryFontSize
+        );
+
         builder.On<GroupMessageEvent>("collect message")
             .AsIntrinsic()
-            .Do(ctx => InsertDataAsync(ctx.Event.GroupId, ctx.Event.UserId, ctx.Token))
+            .Do(ctx => IncreaseCountAsync(ctx.Event.GroupId, ctx.Event.UserId, ctx.Event.Time, ctx.Token))
 
             .On<GroupMessageEvent>("show rank")
             .OnRegex(RankRegex)
-            .Do(async tuple =>
+            .DoExpensive(async tuple =>
             {
                 var (ctx, match) = tuple;
                 var (e, t) = ctx;
 
-                await SendUserRankAsync(e.GroupId, match.Groups["n"] switch
+                return await SendUserRankAsync(e.GroupId, match.Groups["n"] switch
                 {
                     { Success: true, Value: { } value } => int.Min(int.Parse(value), 50),
                     _ => 0
                 }, e.UserId, t);
-            })
+            }, tuple => tuple.EventContext, _context)
 
             .OnCron("0 0 0 * * ?", "rank cron")
             .Do(async token =>
@@ -105,6 +122,7 @@ public partial class UserRankFunction(
                 try
                 {
                     await Task.WhenAll((await GetGroupsAsync(token)).Select(group => SendUserRankAsync(group, n: 0, userId: null, token)));
+                    await ClearAsync(token);
                 }
                 catch (Exception e)
                 {
@@ -112,83 +130,80 @@ public partial class UserRankFunction(
                 }
             });
     }
+}
 
-    #region Database
-
+// DB
+public partial class UserRankFunction
+{
     private readonly UserRankDbContext _db = new(context.BotContext.Uin);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token) =>
         _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
-    private Task InsertDataAsync(long groupId, long userId, CancellationToken token) =>
+    private Task IncreaseCountAsync(long groupId, long userId, long timestamp, CancellationToken token) =>
         _semaphore.ConsumeAsync(() =>
         {
-            _db.Records.Add(new Record { GroupId = groupId, UserId = userId });
+            if (_db.Members.Find(groupId, userId) is not { } member)
+                _db.Members.Add(new Member
+                {
+                    GroupId = groupId,
+                    UserId = userId,
+                    Count = 1,
+                    Timestamp = timestamp,
+                    PrevCount = 0,
+                    PrevTimestamp = 0
+                });
+            else
+            {
+                member.Count++;
+                member.Timestamp = timestamp;
+            }
             return _db.SaveChangesAsync(token);
         }, token);
 
     private Task<List<long>> GetGroupsAsync(CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Select(record => record.GroupId)
+        _semaphore.ConsumeAsync(() => _db.Members
+            .Where(member => member.Count > 0)
+            .Select(member => member.GroupId)
             .Distinct()
             .ToListAsync(token), token);
 
-    private Task<int> GetGroupPeopleCountAsync(long groupId, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Where(record => record.GroupId == groupId)
-            .Select(record => record.UserId)
-            .Distinct()
-            .CountAsync(token), token);
+    private Task<List<Member>> GetGroupMembersAsync(long groupId, CancellationToken token) =>
+        _semaphore.ConsumeAsync(() => _db.Members.AsNoTracking().Where(member => member.GroupId == groupId).ToListAsync(token), token);
 
-    private Task<int> GetGroupMessageCountAsync(long groupId, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Where(record => record.GroupId == groupId)
-            .CountAsync(token), token);
-
-    private Task<List<Tuple<long, int>>> GetGroupTopNAsync(
-        long groupId,
-        int n,
-        CancellationToken token
-    ) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Where(record => record.GroupId == groupId)
-            .GroupBy(record => record.UserId)
-            .OrderByDescending(group => group.Count())
-            .Select(group => Tuple.Create(group.Key, group.Count()))
-            .Take(n)
-            .ToListAsync(token), token);
-
-    private Task<int> GetUserRankAsync(
-        long groupId,
-        long userId,
-        CancellationToken token
-    ) =>
-        _semaphore.ConsumeAsync(async Task<int> () =>
+    private Task ClearAsync(CancellationToken token) =>
+        _semaphore.ConsumeAsync(async Task () =>
         {
-            var count = await _db.Records
-                .Where(record => record.GroupId == groupId && record.UserId == userId)
-                .CountAsync(token);
-            return 1 + await _db.Records
-                .Where(record => record.GroupId == groupId)
-                .GroupBy(record => record.UserId)
-                .Where(group => group.Count() > count)
-                .CountAsync(token);
+            var inactiveMembers = await _db.Members
+                .Where(member => member.Count == 0)
+                .ToListAsync(token);
+            _db.Members.RemoveRange(inactiveMembers);
+
+            var activeMembers = await _db.Members
+                .Where(member => member.Count > 0)
+                .ToListAsync(token);
+            activeMembers.ForEach(member =>
+            {
+                member.PrevCount = member.Count;
+                member.PrevTimestamp = member.Timestamp;
+                member.Count = 0;
+                member.Timestamp = 0;
+            });
+            await _db.SaveChangesAsync(token);
         }, token);
 
-    private Task ClearGroupMessagesAsync(long groupId, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() =>
-        {
-            _db.Records.RemoveRange(_db.Records.Where(records => records.GroupId == groupId));
-            return _db.SaveChangesAsync(token);
-        }, token);
 
-    #endregion
+    public override async Task StopAsync(CancellationToken token)
+    {
+        _semaphore.Dispose();
+        await _db.DisposeAsync();
+    }
+}
 
-    #region Log
-
+// Log
+public partial class UserRankFunction
+{
     [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
-
-    #endregion
 }

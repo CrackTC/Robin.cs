@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS abstraction
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS abstraction
 WORKDIR /robin/Robin.Abstractions
 COPY ./Robin.Abstractions/Robin.Abstractions.csproj ./
 RUN dotnet restore
@@ -39,13 +39,12 @@ RUN dotnet restore
 COPY ./Robin.App ./
 RUN dotnet publish -c Release -o /out/Robin.App
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0-alpine AS final
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apk add --no-cache icu-libs freetype
+FROM mcr.microsoft.com/dotnet/runtime:9.0 AS final
+RUN apt-get update && apt-get install -y fontconfig
 WORKDIR /app
 COPY --from=build-app /out/Robin.App .
 COPY --from=build-impl /out/Implementations ./Implementations
 COPY --from=build-ext /out/Extensions ./Extensions
 RUN for f in $(ls *.dll); do rm -f /app/Extensions/*/$(basename $f); done
 WORKDIR /app/data
-ENTRYPOINT ["dotnet", "exec", "/app/Robin.App.dll"]
+ENTRYPOINT ["/app/Robin.App"]

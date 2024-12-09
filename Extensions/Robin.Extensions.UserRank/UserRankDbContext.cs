@@ -4,7 +4,7 @@ namespace Robin.Extensions.UserRank;
 
 internal class UserRankDbContext(long uin = 0) : DbContext
 {
-    public DbSet<Record> Records { get; set; } = null!;
+    public DbSet<Member> Members { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -14,11 +14,13 @@ internal class UserRankDbContext(long uin = 0) : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Record>(records =>
+        modelBuilder.Entity<Member>(members =>
         {
-            records.HasKey(record => record.RecordId);
-            records.Property(record => record.GroupId).IsRequired();
-            records.Property(record => record.UserId).IsRequired();
+            members.HasKey(member => new { member.GroupId, member.UserId });
+            members.Property(member => member.Count).IsRequired();
+            members.Property(member => member.Timestamp).IsRequired();
+            members.Property(member => member.PrevCount).IsRequired();
+            members.Property(member => member.PrevTimestamp).IsRequired();
         });
     }
 }
