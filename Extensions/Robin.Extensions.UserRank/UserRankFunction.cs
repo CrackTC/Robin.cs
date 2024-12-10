@@ -21,6 +21,7 @@ public partial class UserRankFunction(
 ) : BotFunction<UserRankOption>(context), IFluentFunction
 {
     private RankImage Image = null!;
+    private readonly SemaphoreSlim _drawingSemaphore = new(1, 1);
 
     private async Task<bool> SendUserRankAsync(long groupId, int n, long? userId, CancellationToken token)
     {
@@ -53,7 +54,7 @@ public partial class UserRankFunction(
         });
 
         if (await new GetGroupInfoRequest(groupId, NoCache: true).SendAsync(_context, token)
-            is not { Info: { GroupName: { } groupName } }) return false;
+            is not { Info.GroupName: { } groupName }) return false;
 
         var ranks = new List<(int rank, long userId, string name, uint count, int delta)>(n + 1);
 
@@ -73,7 +74,10 @@ public partial class UserRankFunction(
             return (index + 1, member.UserId, name!, member.Count, delta[index]);
         }));
 
-        using var image = await Image.GenerateAsync(groupName, groupId, peopleCount, (uint)messageCount, ranks, token);
+        using var image = await _drawingSemaphore.ConsumeAsync(
+            () => Image.GenerateAsync(groupName, groupId, peopleCount, messageCount, ranks, token),
+            token
+        );
         using var data = image.Encode(SKEncodedImageFormat.Webp, 100);
 
         return await new SendGroupMessageRequest(groupId, [
@@ -130,19 +134,26 @@ public partial class UserRankFunction(
                 }
             });
     }
+
+    public override async Task StopAsync(CancellationToken token)
+    {
+        _drawingSemaphore.Dispose();
+        _dbSemaphore.Dispose();
+        await _db.DisposeAsync();
+    }
 }
 
 // DB
 public partial class UserRankFunction
 {
     private readonly UserRankDbContext _db = new(context.BotContext.Uin);
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    private readonly SemaphoreSlim _dbSemaphore = new(1, 1);
 
     private Task<bool> CreateTableAsync(CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
+        _dbSemaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
-    private Task IncreaseCountAsync(long groupId, long userId, long timestamp, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() =>
+    private Task<int> IncreaseCountAsync(long groupId, long userId, long timestamp, CancellationToken token) =>
+        _dbSemaphore.ConsumeAsync(() =>
         {
             if (_db.Members.Find(groupId, userId) is not { } member)
                 _db.Members.Add(new Member
@@ -163,17 +174,18 @@ public partial class UserRankFunction
         }, token);
 
     private Task<List<long>> GetGroupsAsync(CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Members
+        _dbSemaphore.ConsumeAsync(() => _db.Members
+            .AsNoTracking()
             .Where(member => member.Count > 0)
             .Select(member => member.GroupId)
             .Distinct()
             .ToListAsync(token), token);
 
     private Task<List<Member>> GetGroupMembersAsync(long groupId, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Members.AsNoTracking().Where(member => member.GroupId == groupId).ToListAsync(token), token);
+        _dbSemaphore.ConsumeAsync(() => _db.Members.AsNoTracking().Where(member => member.GroupId == groupId).ToListAsync(token), token);
 
-    private Task ClearAsync(CancellationToken token) =>
-        _semaphore.ConsumeAsync(async Task () =>
+    private Task<int> ClearAsync(CancellationToken token) =>
+        _dbSemaphore.ConsumeAsync(async Task<int> () =>
         {
             var inactiveMembers = await _db.Members
                 .Where(member => member.Count == 0)
@@ -190,15 +202,8 @@ public partial class UserRankFunction
                 member.Count = 0;
                 member.Timestamp = 0;
             });
-            await _db.SaveChangesAsync(token);
+            return await _db.SaveChangesAsync(token);
         }, token);
-
-
-    public override async Task StopAsync(CancellationToken token)
-    {
-        _semaphore.Dispose();
-        await _db.DisposeAsync();
-    }
 }
 
 // Log
