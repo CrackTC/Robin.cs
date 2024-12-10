@@ -15,7 +15,7 @@ internal class RankHeader(
     float primaryFontSize
 )
 {
-    private static readonly SKSamplingOptions _samplingOptions = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+    private static readonly SKSamplingOptions _samplingOptions = new(SKFilterMode.Linear, SKMipmapMode.Linear);
     private void DrawAvatar(
         SKCanvas canvas,
         SKRect region

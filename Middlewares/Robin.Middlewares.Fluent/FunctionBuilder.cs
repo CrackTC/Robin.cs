@@ -42,7 +42,7 @@ public class FunctionBuilder(BotFunction function)
             .Description ?? typeof(TEvent).Name);
 
     public CronTunnelBuilder<CancellationToken> OnCron(string cron, string name = "main cron") =>
-        new CronTunnelBuilder<CancellationToken>(
+        new(
             this,
             cron,
             name,

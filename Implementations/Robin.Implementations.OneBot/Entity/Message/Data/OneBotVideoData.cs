@@ -27,7 +27,7 @@ internal class OneBotVideoData : IOneBotSegmentData
         Url = d.Url;
         Cache = d.UseCache is not false ? "1" : "0";
         Proxy = d.UseProxy is not false ? "1" : "0";
-        Timeout = d.Timeout is not null ? d.Timeout.ToString() : null;
+        Timeout = d.Timeout?.ToString();
         return new OneBotSegment { Type = "video", Data = JsonSerializer.SerializeToNode(this) };
     }
 }

@@ -63,7 +63,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
             .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
             {
                 var (e, t) = tuple;
-                if (!_latestAt!.ContainsKey(e.GroupId) || !_latestAt[e.GroupId].ContainsKey(e.Sender.UserId))
+                if (!_latestAt!.TryGetValue(e.GroupId, out var ats) || !ats.ContainsKey(e.Sender.UserId))
                 {
                     await e.NewMessageRequest([
                         new ReplyData(e.MessageId),

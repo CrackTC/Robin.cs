@@ -9,9 +9,9 @@ using System.Web;
 
 namespace Robin.Extensions.Oa.Fetcher;
 
-internal class OaFetcher
+internal partial class OaFetcher
 {
-    protected static readonly Uri _oaUri = new Uri("https://oa.jlu.edu.cn/");
+    protected static readonly Uri _oaUri = new("https://oa.jlu.edu.cn/");
     protected static readonly HtmlParser _parser = new();
     protected readonly CookieContainer _cookies = new();
     protected readonly HttpClient _client;
@@ -49,11 +49,17 @@ internal class OaFetcher
         return new Uri($"/defaultroot/rd/download/attachdownload.jsp?res={resId}", UriKind.Relative);
     }
 
+    [GeneratedRegex(@"<!--.*?-->")]
+    private static partial Regex CommentTagRegex { get; }
+
+    [GeneratedRegex(@"<[^>]+>")]
+    private static partial Regex TagRegex { get; }
+
     private static string ExtractText(IElement? elem)
     {
         string str = elem?.InnerHtml.Replace("<br>", "\n").Replace("<p", "\n<p").Replace("<div>", "\n<div>") ?? string.Empty;
-        str = Regex.Replace(str, @"<!--.*?-->", string.Empty);
-        str = Regex.Replace(str, @"<[^>]+>", string.Empty);
+        str = CommentTagRegex.Replace(str, string.Empty);
+        str = TagRegex.Replace(str, string.Empty);
         return HttpUtility.HtmlDecode(str).Trim();
     }
 

@@ -3,14 +3,9 @@ using System.Runtime.Loader;
 
 namespace Robin.App;
 
-internal class BotExtensionLoadContext : AssemblyLoadContext
+internal class BotExtensionLoadContext(string extensionPath) : AssemblyLoadContext
 {
-    private AssemblyDependencyResolver _resolver;
-
-    public BotExtensionLoadContext(string extensionPath)
-    {
-        _resolver = new AssemblyDependencyResolver(extensionPath);
-    }
+    private readonly AssemblyDependencyResolver _resolver = new(extensionPath);
 
     protected override Assembly? Load(AssemblyName assemblyName) =>
         _resolver.ResolveAssemblyToPath(assemblyName) switch

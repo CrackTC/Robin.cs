@@ -108,10 +108,9 @@ public partial class FluentFunction
 
         foreach (var (funcName, function, tunnel) in tuples)
         {
-            string cron;
-            if (_context.Configuration.Crons.TryGetValue(funcName, out var funcCrons) && funcCrons.ContainsKey(tunnel.Name!))
-                cron = funcCrons[tunnel.Name!];
-            else cron = tunnel.Cron;
+            if (!_context.Configuration.Crons.TryGetValue(funcName, out var funcCrons)
+                || !funcCrons.TryGetValue(tunnel.Name!, out string? cron))
+                cron = tunnel.Cron;
 
             {
                 var descTunnel = tunnel with

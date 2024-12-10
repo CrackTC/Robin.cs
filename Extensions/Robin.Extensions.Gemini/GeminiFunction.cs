@@ -165,7 +165,7 @@ public partial class GeminiFunction(
     private Task<bool> CreateTablesAsync(CancellationToken token) =>
         _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
-    private Task RemoveLastAsync(long userId, CancellationToken token) =>
+    private Task<int> RemoveLastAsync(long userId, CancellationToken token) =>
         _semaphore.ConsumeAsync(() =>
         {
             var last = _db.Messages
@@ -177,7 +177,7 @@ public partial class GeminiFunction(
             return _db.SaveChangesAsync(token);
         }, token);
 
-    private Task RemoveAllAsync(long userId, CancellationToken token) =>
+    private Task<int> RemoveAllAsync(long userId, CancellationToken token) =>
         _semaphore.ConsumeAsync(() =>
         {
             var all = _db.Messages.Where(msg => msg.User.UserId == userId);
@@ -197,14 +197,14 @@ public partial class GeminiFunction(
             })
             .ToListAsync(token), token);
 
-    private Task AddHistoryAsync(
+    private Task<int> AddHistoryAsync(
         long userId,
         GeminiRole role,
         string content,
         long timestamp,
         CancellationToken token
     ) =>
-        _semaphore.ConsumeAsync(async Task () =>
+        _semaphore.ConsumeAsync(async Task<int> () =>
         {
             var user = await _db.Users.FindAsync([userId], token);
             if (user is null)
@@ -226,7 +226,7 @@ public partial class GeminiFunction(
                 Timestamp = timestamp
             });
 
-            await _db.SaveChangesAsync(token);
+            return await _db.SaveChangesAsync(token);
         }, token);
 
     private ValueTask<string> GetModelAsync(long userId, CancellationToken token) =>
@@ -236,8 +236,8 @@ public partial class GeminiFunction(
             return user?.ModelName ?? _context.Configuration.Model;
         }, token);
 
-    private Task SetModelAsync(long userId, string model, CancellationToken token) =>
-        _semaphore.ConsumeAsync(async Task () =>
+    private Task<int> SetModelAsync(long userId, string model, CancellationToken token) =>
+        _semaphore.ConsumeAsync(async Task<int> () =>
         {
             var user = await _db.Users.FindAsync([userId], token);
             if (user is null)
@@ -255,7 +255,7 @@ public partial class GeminiFunction(
                 user.ModelName = model;
             }
 
-            await _db.SaveChangesAsync(token);
+            return await _db.SaveChangesAsync(token);
         }, token);
 
     private ValueTask<string> GetSystem(long userId, CancellationToken token) =>
@@ -265,8 +265,8 @@ public partial class GeminiFunction(
             return user?.SystemCommand ?? string.Empty;
         }, token);
 
-    private Task SetSystemAsync(long userId, string system, CancellationToken token) =>
-        _semaphore.ConsumeAsync(async Task () =>
+    private Task<int> SetSystemAsync(long userId, string system, CancellationToken token) =>
+        _semaphore.ConsumeAsync(async Task<int> () =>
         {
             var user = await _db.Users.FindAsync([userId], token);
             if (user is null)
@@ -284,7 +284,7 @@ public partial class GeminiFunction(
                 user.SystemCommand = system;
             }
 
-            await _db.SaveChangesAsync(token);
+            return await _db.SaveChangesAsync(token);
         }, token);
 
     #endregion

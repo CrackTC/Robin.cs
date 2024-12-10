@@ -28,7 +28,7 @@ internal class OneBotRecordData : IOneBotSegmentData
         Magic = d.IsMagic ? "1" : "0";
         Cache = d.UseCache is not false ? "1" : "0";
         Proxy = d.UseProxy is not false ? "1" : "0";
-        Timeout = d.Timeout is not null ? d.Timeout.ToString() : null;
+        Timeout = d.Timeout?.ToString();
         return new OneBotSegment { Type = "record", Data = JsonSerializer.SerializeToNode(this) };
     }
 }

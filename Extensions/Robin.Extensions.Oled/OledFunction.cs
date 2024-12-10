@@ -14,8 +14,8 @@ namespace Robin.Extensions.Oled;
 [BotFunctionInfo("oled", "OLED display")]
 public class OledFunction(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    private static readonly OpSsd1306 _oled = new OpSsd1306(sdaPort: 0, sclPort: 1, lineHeight: 12);
-    private static readonly Font _font = new Font("wenquanyi_9pt.pcf");
+    private static readonly OpSsd1306 _oled = new(sdaPort: 0, sclPort: 1, lineHeight: 12);
+    private static readonly Font _font = new("wenquanyi_9pt.pcf");
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     static OledFunction()
@@ -31,7 +31,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
             await new GetGroupInfoRequest(groupId)
                 .SendAsync(_context, token) is { Info: { } info } =>
                     info.GroupName,
-        PrivateMessageEvent { Sender: { Nickname: var nickname } } => nickname,
+        PrivateMessageEvent { Sender.Nickname: var nickname } => nickname,
         _ => e.SourceId.ToString()
     };
 
@@ -42,7 +42,7 @@ public class OledFunction(FunctionContext context) : BotFunction(context), IFlue
         GroupMessageEvent { GroupId: var groupId } when
             await new GetGroupMemberInfoRequest(groupId, uin).SendAsync(_context, token) is { Info: { } info } =>
                     info.Card switch { null or "" => info.Nickname, _ => info.Card },
-        PrivateMessageEvent { Sender: { Nickname: var nickname } } => nickname,
+        PrivateMessageEvent { Sender.Nickname: var nickname } => nickname,
         _ => uin.ToString()
     };
 

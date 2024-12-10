@@ -11,7 +11,7 @@ internal class RankImage(
     float cardHeight = 120,
     float cardGap = 20,
     float primaryFontSize = 40
-)
+) : IDisposable
 {
     private readonly FontMeasurement measurement = new(fontPaths.Select(fontPath => SKTypeface.FromFile(fontPath)).ToList());
     private readonly ColorPalette palette = ColorPalette.FromDictionary(paletteDict);
@@ -64,4 +64,13 @@ internal class RankImage(
 
         return surface.Snapshot();
     }
+
+    public void Dispose()
+    {
+        measurement.Dispose();
+        _client.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    ~RankImage() => Dispose();
 }

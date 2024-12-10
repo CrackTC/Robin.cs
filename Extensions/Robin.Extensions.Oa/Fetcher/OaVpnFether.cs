@@ -31,9 +31,9 @@ file static class WebVpnHelper
 
 internal class OaVpnFetcher : OaFetcher
 {
-    private static readonly Uri _vpnUri = new Uri("https://vpn.jlu.edu.cn/");
-    private static readonly Uri _vpnLoginUri = new Uri(_vpnUri, "/login?cas_login=true");
-    private static readonly Uri _vpnCasUri = new Uri(_vpnUri, WebVpnHelper.CalculateVpnPath($"https://cas.jlu.edu.cn/tpass/login?service={_vpnLoginUri}"));
+    private static readonly Uri _vpnUri = new("https://vpn.jlu.edu.cn/");
+    private static readonly Uri _vpnLoginUri = new(_vpnUri, "/login?cas_login=true");
+    private static readonly Uri _vpnCasUri = new(_vpnUri, WebVpnHelper.CalculateVpnPath($"https://cas.jlu.edu.cn/tpass/login?service={_vpnLoginUri}"));
     private const string TicketCookieName = "wengine_vpn_ticketvpn_jlu_edu_cn";
 
     private readonly string _username;
@@ -68,7 +68,7 @@ internal class OaVpnFetcher : OaFetcher
             KeyValuePair.Create("lt", lt),
             KeyValuePair.Create("execution", "e1s1"),
             KeyValuePair.Create("_eventId", "submit"),
-        ]));
+        ]), token);
 
         return ticket;
     }
