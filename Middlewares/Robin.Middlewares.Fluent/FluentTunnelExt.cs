@@ -6,5 +6,5 @@ internal static class FluentTunnelExt
         tunnels.Select(GetDescription);
 
     public static string GetDescription<T>(this FluentTunnel<T> tunnel) =>
-        tunnel.Name is null ? string.Empty : tunnel.Name + ": " + string.Join(" 且 ", tunnel.Descriptions);
+        (tunnel.Name is null ? string.Empty : tunnel.Name + ": ") + string.Join(" 且 ", tunnel.Descriptions);
 }
