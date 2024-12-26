@@ -13,5 +13,5 @@ internal class OneBotFriendRecallEvent : OneBotNoticeEvent
     [JsonPropertyName("message_id")] public long MessageId { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter) =>
-        new FriendRecallEvent(Time, UserId, MessageId);
+        new FriendRecallEvent(Time, UserId, MessageId.ToString());
 }

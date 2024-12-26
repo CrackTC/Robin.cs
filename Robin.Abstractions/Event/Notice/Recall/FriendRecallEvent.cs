@@ -4,5 +4,5 @@ namespace Robin.Abstractions.Event.Notice.Recall;
 public record FriendRecallEvent(
     long Time,
     long UserId,
-    long MessageId
+    string MessageId
 ) : RecallEvent(Time, UserId, MessageId), IPrivateEvent;

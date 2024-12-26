@@ -16,5 +16,5 @@ internal class OneBotSendMessageResponseData : IOneBotResponseData
     [JsonPropertyName("message_id")] public int MessageId { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _) =>
-        new ResponseType(response.Status is not "failed", response.ReturnCode, null, MessageId);
+        new ResponseType(response.Status is not "failed", response.ReturnCode, null, MessageId.ToString());
 }

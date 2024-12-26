@@ -4,5 +4,5 @@ namespace Robin.Abstractions.Event.Notice.Recall;
 public abstract record RecallEvent(
     long Time,
     long UserId,
-    long MessageId
+    string MessageId
 ) : NoticeEvent(Time);

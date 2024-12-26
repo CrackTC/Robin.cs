@@ -4,5 +4,5 @@ public record SendMessageResponse(
     bool Success,
     int ReturnCode,
     string? ErrorMessage,
-    int? MessageId
+    string? MessageId
 ) : Response(Success, ReturnCode, ErrorMessage);
