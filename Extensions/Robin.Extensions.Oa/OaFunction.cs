@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Message.Entity;
@@ -12,7 +13,7 @@ using Robin.Middlewares.Fluent;
 namespace Robin.Extensions.Oa;
 
 [BotFunctionInfo("oa", "JLU校务通知")]
-public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), IFluentFunction
+public partial class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOption>(context), IFluentFunction
 {
     private readonly OaFetcher _fetcher = context.Configuration.UseVpn
         ? new OaVpnFetcher(context.Configuration.VpnUsername!, context.Configuration.VpnPassword!)
@@ -123,12 +124,25 @@ public class OaFunction(FunctionContext<OaOption> context) : BotFunction<OaOptio
         builder.OnCron("0 0 * * * ?")
             .Do(token => _semaphore.ConsumeAsync(async Task () =>
             {
-                if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
-                    await Task.WhenAll((await GetGroupsAsync(token)).Select(
-                        groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)
-                    ));
+                try
+                {
+                    if (await FetchNewPostsAsync(token) is { Count: > 0 } nodes)
+                        await Task.WhenAll((await GetGroupsAsync(token)).Select(
+                            groupId => new SendGroupForwardMessageRequest(groupId, nodes).SendAsync(_context, token)
+                        ));
+                }
+                catch (Exception e)
+                {
+                    LogException(_context.Logger, e);
+                }
             }, token));
 
         return Task.CompletedTask;
     }
+}
+
+public partial class OaFunction
+{
+    [LoggerMessage(EventId = 0, Level = LogLevel.Warning, Message = "Failed to fetch oa posts")]
+    private static partial void LogException(ILogger logger, Exception e);
 }
