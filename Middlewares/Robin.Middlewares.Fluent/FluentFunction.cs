@@ -154,6 +154,7 @@ public partial class FluentFunction
 {
     public override async Task StartAsync(CancellationToken token)
     {
+        Quartz.Logging.LogProvider.SetCurrentLogProvider(new CronLogProvider(_context.Logger));
         var pairs = (await Task.WhenAll(_context.BotContext.Functions
             .OfType<IFluentFunction>()
             .Select(async function =>
