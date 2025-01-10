@@ -1,8 +1,4 @@
-using System.Numerics;
-using System.Globalization;
 using System.Text;
-using System.Runtime.ConstrainedExecution;
-using Quartz.Util;
 
 namespace Robin.Extensions.Oa.Fetcher;
 
@@ -14,7 +10,8 @@ internal static class OaDes
 
     public static string StrEnc(string data)
     {
-        var encData = new StringBuilder();
+        var encDataBuilder = new StringBuilder();
+        var partBuilder = new StringBuilder();
 
         for (var i = 0; i < data.Length; i += 4)
         {
@@ -22,10 +19,20 @@ internal static class OaDes
             tmp = Enc(tmp, a);
             tmp = Enc(tmp, b);
             tmp = Enc(tmp, c);
-            encData.Append(BigInteger.Parse(string.Join("", tmp), NumberStyles.BinaryNumber).ToString("x").PadLeft(16, '0'));
+
+            partBuilder.Clear();
+            partBuilder.Append('0', (64 - tmp.Length) / 4);
+
+            for (var j = 0; j < tmp.Length; j += 4)
+            {
+                int num = 0;
+                for (var k = 0; k < 4; k++) num = (num << 1) | tmp[j + k];
+                partBuilder.Append(num.ToString("x"));
+            }
+            encDataBuilder.Append(partBuilder);
         }
 
-        return encData.ToString();
+        return encDataBuilder.ToString();
     }
 
     private static int[] Str2Bits(string str)

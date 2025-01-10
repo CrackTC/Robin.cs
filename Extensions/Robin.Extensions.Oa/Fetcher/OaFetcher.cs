@@ -99,14 +99,14 @@ internal partial class OaFetcher
 
     public async virtual Task<IEnumerable<(bool Pinned, int Id)>> FetchPostsAsync(CancellationToken token)
     {
-        await using var stream = await _client.GetStreamAsync("/defaultroot/PortalInformation!jldxList.action?channelId=179577", token);
+        await using var stream = await _client.GetStreamAsync("./defaultroot/PortalInformation!jldxList.action?channelId=179577", token);
         using var document = await _parser.ParseDocumentAsync(stream, token);
         return GetPostsFromDocument(document);
     }
 
     public async virtual Task<OaPost> FetchPostAsync(int postId, CancellationToken token)
     {
-        await using var stream = await _client.GetStreamAsync($"/defaultroot/PortalInformation!getInformation.action?id={postId}&channelId=179577", token);
+        await using var stream = await _client.GetStreamAsync($"./defaultroot/PortalInformation!getInformation.action?id={postId}&channelId=179577", token);
         using var document = await _parser.ParseDocumentAsync(stream, token);
         return GetPostFromDocument(document, postId);
     }
