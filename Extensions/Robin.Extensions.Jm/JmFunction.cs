@@ -17,7 +17,7 @@ public partial class JmFunction(
     [GeneratedRegex(@"^/jm (?<id>\d+)$")]
     private static partial Regex JmRegex { get; }
 
-    private static readonly HttpClient _client = new();
+    private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(10) };
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
@@ -36,11 +36,7 @@ public partial class JmFunction(
 
                 if (!Directory.Exists("jm")) Directory.CreateDirectory("jm");
 
-                string fileName = Path.Combine(
-                        "jm",
-                        resp.Content.Headers.ContentDisposition?.FileNameStar
-                            ?? resp.Content.Headers.ContentDisposition?.FileName
-                            ?? $"jm_{id}.pdf");
+                string fileName = Path.Combine("jm", $"jm_{id}.pdf");
 
                 using (var targetStream = File.Create(fileName))
                 {
