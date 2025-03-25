@@ -28,11 +28,7 @@ public partial class GrayFunction(
                     return false;
 
                 var url = $"{_context.Configuration.ApiAddress}/?id={id}";
-                if (await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token)
-                    is not { Success: true })
-                    return false;
-
-                return true;
+                return await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token) is { Success: true };
             }, t => t.EventContext, _context);
 
         return Task.CompletedTask;
