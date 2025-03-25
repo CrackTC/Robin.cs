@@ -28,19 +28,22 @@ public partial class JmFunction(
                 var (ctx, match) = t;
                 var id = int.Parse(match.Groups["id"].Value);
 
-                var location = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}", ctx.Token);
-                var fileUrl = $"{_context.Configuration.ApiAddress}{location}";
-
-                using var resp = await _client.GetAsync(fileUrl, ctx.Token);
-                if (!resp.IsSuccessStatusCode) return false;
-
-                if (!Directory.Exists("jm")) Directory.CreateDirectory("jm");
-
                 string fileName = Path.Combine("jm", $"jm_{id}.pdf");
 
-                using (var targetStream = File.Create(fileName))
+                if (!File.Exists(fileName))
                 {
-                    await resp.Content.CopyToAsync(targetStream, ctx.Token);
+                    var location = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}", ctx.Token);
+                    var fileUrl = $"{_context.Configuration.ApiAddress}{location}";
+
+                    using var resp = await _client.GetAsync(fileUrl, ctx.Token);
+                    if (!resp.IsSuccessStatusCode) return false;
+
+                    if (!Directory.Exists("jm")) Directory.CreateDirectory("jm");
+
+                    using (var targetStream = File.Create(fileName))
+                    {
+                        await resp.Content.CopyToAsync(targetStream, ctx.Token);
+                    }
                 }
 
                 if (await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token)
