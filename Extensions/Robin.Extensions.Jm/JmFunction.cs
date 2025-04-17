@@ -26,7 +26,7 @@ public partial class JmFunction(
             new TextData(message)
         ]).SendAsync(_context, ctx.Token)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
-    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
+    public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<GroupMessageEvent>()
             .OnRegex(JmRegex)
@@ -53,7 +53,11 @@ public partial class JmFunction(
 
                 var fileName = Path.Combine("jm", $"jm_{id}_{index ?? 0}.pdf");
                 if (File.Exists(fileName))
-                    return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true };
+                    return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true }
+                        && await ctx.Event.NewMessageRequest([
+                            new ReplyData(ctx.Event.MessageId),
+                            new ImageData($"{_context.Configuration.ApiAddress}/preview/{id}/{(index ?? 0) + 1}/00001.webp")
+                        ]).SendAsync(_context, ctx.Token) is { Success: true };
 
                 int photoCount;
                 try
@@ -83,14 +87,23 @@ public partial class JmFunction(
 
                 if (!Directory.Exists("jm")) Directory.CreateDirectory("jm");
 
-                var location = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}&index={index ?? 0}", ctx.Token);
+                var resp = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}&index={index ?? 0}", ctx.Token);
+                if (resp.Split(',') is not [var location, var preview])
+                {
+                    await SendErrorAsync(ctx, "下载失败>_<");
+                    return false;
+                }
                 using var stream = await _client.GetStreamAsync($"{_context.Configuration.ApiAddress}{location}", ctx.Token);
                 using (var targetStream = File.Create(fileName))
                 {
                     await stream.CopyToAsync(targetStream, ctx.Token);
                 }
 
-                return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true };
+                return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true }
+                    && await ctx.Event.NewMessageRequest([
+                        new ReplyData(ctx.Event.MessageId),
+                        new ImageData($"{_context.Configuration.ApiAddress}{preview}")
+                    ]).SendAsync(_context, ctx.Token) is { Success: true };
             }, t => t.EventContext, _context);
 
         return Task.CompletedTask;
