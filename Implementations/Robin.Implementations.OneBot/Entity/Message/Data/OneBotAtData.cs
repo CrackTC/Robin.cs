@@ -13,7 +13,7 @@ internal class OneBotAtData : IOneBotSegmentData
     [JsonPropertyName("qq")] public required string Uin { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
-        new AtData(Convert.ToInt64(Uin));
+        new AtData(Uin is "all" ? 0 : Convert.ToInt64(Uin));
 
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {
