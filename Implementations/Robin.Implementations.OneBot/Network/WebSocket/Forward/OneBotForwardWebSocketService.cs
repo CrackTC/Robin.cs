@@ -85,27 +85,34 @@ internal partial class OneBotForwardWebSocketService(
 
     private event Action<OneBotResponse>? OnResponse;
 
-    private async Task DispatchMessageAsync(string message, CancellationToken token)
+    private async void DispatchMessageAsync(string message, CancellationToken token)
     {
-        var node = JsonNode.Parse(message);
-        if (node is null) return;
-
-        if (node["post_type"] is null)
+        try
         {
-            if (node.Deserialize<OneBotResponse>() is not { } response)
+            var node = JsonNode.Parse(message);
+            if (node is null) return;
+
+            if (node["post_type"] is null)
             {
-                LogInvalidResponse(_logger, message);
+                if (node.Deserialize<OneBotResponse>() is not { } response)
+                {
+                    LogInvalidResponse(_logger, message);
+                    return;
+                }
+
+                OnResponse?.Invoke(response);
                 return;
             }
 
-            OnResponse?.Invoke(response);
-            return;
+            if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
+                return;
+
+            if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
         }
-
-        if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
-            return;
-
-        if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
+        catch (Exception e)
+        {
+            LogDispatchException(_logger, message, e);
+        }
     }
 
     private async Task KeepAliveAsync(BotEvent @event, CancellationToken token)
@@ -150,7 +157,7 @@ internal partial class OneBotForwardWebSocketService(
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, received);
                     LogReceiveMessage(_logger, message);
-                    _ = DispatchMessageAsync(message, token);
+                    DispatchMessageAsync(message, token);
                     buffer = new byte[1024];
                     received = 0;
                 }
@@ -244,6 +251,9 @@ internal partial class OneBotForwardWebSocketService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Websocket throws an exception")]
     private static partial void LogWebSocketException(ILogger logger, Exception e);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occured while dispatching message: {Message}")]
+    private static partial void LogDispatchException(ILogger logger, string message, Exception e);
 
     #endregion
 }
