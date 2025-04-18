@@ -80,7 +80,7 @@ public partial class JmFunction(
                 {
                     if (index is null)
                     {
-                        await SendErrorAsync(ctx, $"存在多个章节，请指定章节号喵[1-{photoCount}]: /jm <id> <章节号>");
+                        await SendErrorAsync(ctx, $"存在多个章节，请指定章节号喵[1-{photoCount}]: /jm {id} <章节号>");
                         return false;
                     }
 
