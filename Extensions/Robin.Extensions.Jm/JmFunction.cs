@@ -48,15 +48,15 @@ public partial class JmFunction(
                         return false;
                     }
 
-                    index = parsedIndex - 1;
+                    index = parsedIndex;
                 }
 
-                var fileName = Path.Combine("jm", $"jm_{id}_{index ?? 0}.pdf");
+                var fileName = Path.Combine("jm", $"jm_{id}_{index.GetValueOrDefault(1)}.pdf");
                 if (File.Exists(fileName))
                     return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true }
                         && await ctx.Event.NewMessageRequest([
                             new ReplyData(ctx.Event.MessageId),
-                            new ImageData($"{_context.Configuration.ApiAddress}/preview/{id}/{(index ?? 0) + 1}/00001.webp")
+                            new ImageData($"{_context.Configuration.ApiAddress}/preview/{id}/{index.GetValueOrDefault(1)}/00001.webp")
                         ]).SendAsync(_context, ctx.Token) is { Success: true };
 
                 int photoCount;
@@ -70,7 +70,13 @@ public partial class JmFunction(
                     return false;
                 }
 
-                if (photoCount > 1)
+                if (photoCount is -1)
+                {
+                    await SendErrorAsync(ctx, "没有这本喵");
+                    return false;
+                }
+
+                if (photoCount is > 1)
                 {
                     if (index is null)
                     {
@@ -78,7 +84,7 @@ public partial class JmFunction(
                         return false;
                     }
 
-                    if (index < 0 || index >= photoCount)
+                    if (index is < 1 || index > photoCount)
                     {
                         await SendErrorAsync(ctx, $"没有那一章喵[1-{photoCount}]");
                         return false;
@@ -87,17 +93,16 @@ public partial class JmFunction(
 
                 if (!Directory.Exists("jm")) Directory.CreateDirectory("jm");
 
-                var resp = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}&index={index ?? 0}", ctx.Token);
+                var resp = await _client.GetStringAsync($"{_context.Configuration.ApiAddress}/download?id={id}&index={index.GetValueOrDefault(1)}", ctx.Token);
                 if (resp.Split(',') is not [var location, var preview])
                 {
                     await SendErrorAsync(ctx, "下载失败>_<");
                     return false;
                 }
-                using var stream = await _client.GetStreamAsync($"{_context.Configuration.ApiAddress}{location}", ctx.Token);
-                using (var targetStream = File.Create(fileName))
-                {
+
+                await using (var targetStream = File.Create(fileName))
+                await using (var stream = await _client.GetStreamAsync($"{_context.Configuration.ApiAddress}{location}", ctx.Token))
                     await stream.CopyToAsync(targetStream, ctx.Token);
-                }
 
                 return await new UploadGroupFileRequest(ctx.Event.GroupId, fileName).SendAsync(_context, ctx.Token) is { Success: true }
                     && await ctx.Event.NewMessageRequest([
