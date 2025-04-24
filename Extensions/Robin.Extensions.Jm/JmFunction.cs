@@ -39,6 +39,12 @@ public partial class JmFunction(
                     return false;
                 }
 
+                if (_context.Configuration.BannedIds.Contains(id))
+                {
+                    await SendErrorAsync(ctx, "不可以喵");
+                    return false;
+                }
+
                 int? index = null;
                 if (match.Groups["index"].Success)
                 {
