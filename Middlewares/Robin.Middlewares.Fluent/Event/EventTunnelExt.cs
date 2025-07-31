@@ -91,12 +91,18 @@ public static class EventTunnelExt
     public static FunctionBuilder DoExpensive<TOut>(
         this EventTunnelBuilder<TOut> builder,
         Func<TOut, Task<bool>> something,
-        Func<TOut, EventContext<GroupMessageEvent>> eventSelector,
+        Func<TOut, EventContext<MessageEvent>> eventSelector,
         FunctionContext context
     ) =>
         builder.Do(async data =>
         {
-            var (e, t) = eventSelector(data);
+            var (msgEvent, t) = eventSelector(data);
+            if (msgEvent is not GroupMessageEvent e)
+            {
+                await something(data);
+                return;
+            }
+
             try
             {
                 await new SetGroupReactionRequest(e.GroupId, e.MessageId, "128164", true).SendAsync(context, t);
