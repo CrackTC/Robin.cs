@@ -167,7 +167,12 @@ internal partial class MilkyClientService(
 
                     var peerId = Convert.ToInt64(peerIdStr);
                     var messageSeq = Convert.ToInt64(messageSeqStr);
-                    var result = await client.Message.GetMessageAsync(new(GetMessageScene(messageScene), peerId, messageSeq), token);
+                    var result = await client.RequestAsync("get_message",
+                        new(GetMessageScene(messageScene), peerId, messageSeq),
+                        _milkyJsonSerializerContext.GetMessageInput,
+                        _milkyJsonSerializerContext.GetMessageOutput,
+                        token
+                    );
                     var resp = new GetMessageResponse(
                         true,
                         0,
