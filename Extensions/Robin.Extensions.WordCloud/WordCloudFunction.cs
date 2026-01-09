@@ -29,7 +29,7 @@ public partial class WordCloudFunction(
             .AsIntrinsic()
             .Do(ctx => InsertDataAsync(
                 ctx.Event.GroupId,
-                string.Join(' ', ctx.Event.Message.OfType<TextData>().Select(s => s.Text)),
+                string.Join(' ', ctx.Event.Message.OfType<TextData>().Where(s => s.Text is not "当前QQ版本不支持此应用，请升级").Select(s => s.Text)),
                 ctx.Token
             ))
 
@@ -102,9 +102,11 @@ public partial class WordCloudFunction(
     private Task<bool> CreateTableAsync(CancellationToken token) =>
         _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
-    private Task InsertDataAsync(long groupId, string message, CancellationToken token) =>
+    private Task<int> InsertDataAsync(long groupId, string message, CancellationToken token) =>
         _semaphore.ConsumeAsync(() =>
         {
+            if (string.IsNullOrWhiteSpace(message))
+                return Task.FromResult(0);
             _db.Records.Add(new Record { GroupId = groupId, Content = message });
             return _db.SaveChangesAsync(token);
         }, token);
