@@ -7,13 +7,14 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
+using Microsoft.Extensions.Logging;
 
 namespace Robin.Extensions.Seiyuu;
 
 [BotFunctionInfo("seiyuu", "声优图片")]
 public partial class SeiyuuFunction(
-    FunctionContext context
-) : BotFunction(context), IFluentFunction
+    FunctionContext<SeiyuuOption> context
+) : BotFunction<SeiyuuOption>(context), IFluentFunction
 {
     [GeneratedRegex(@"^/加图\s*(?<name>\S+)$")]
     private static partial Regex AddImageRegex { get; }
@@ -34,12 +35,14 @@ public partial class SeiyuuFunction(
         return name.Trim()
             .Replace('/', '_')
             .Replace(' ', '_')
-            .Replace('\\', '_');
+            .Replace('\\', '_')
+            .Replace('.', '_');
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
         builder.On<MessageEvent>()
+            .Where(t => !_context.Configuration.BannedIds.Contains(t.Event.UserId))
             .OnRegex(AddAliasRegex)
             .DoExpensive(async t =>
             {
@@ -64,6 +67,7 @@ public partial class SeiyuuFunction(
                 return true;
             }, t => t.EventContext, _context)
             .On<MessageEvent>()
+            .Where(t => !_context.Configuration.BannedIds.Contains(t.Event.UserId))
             .OnRegex(AddImageRegex)
             .Select(e => e.EventContext)
             .OnReply()
@@ -128,15 +132,28 @@ public partial class SeiyuuFunction(
                 return successCount == imgs.Count;
             }, t => t.EventContext, _context)
             .On<MessageEvent>()
+            .Where(t => !_context.Configuration.BannedIds.Contains(t.Event.UserId))
             .AsFallback()
             .Where(ctx => ctx.Event.Message.All(data => data is TextData))
             .OnText()
-            .Where(t => Directory.Exists(Path.Join("seiyuu", EscapeName(t.Text))))
+            .Where(t =>
+            {
+                var name = EscapeName(t.Text);
+                if (string.IsNullOrEmpty(name)) return false;
+                if (_context.Configuration.GroupLimits.ContainsKey(name))
+                {
+                    var limits = _context.Configuration.GroupLimits[name];
+                    if (!limits.Contains(t.EventContext.Event.SourceId)) return false;
+                }
+                var path = Path.Join("seiyuu", name);
+                return Directory.Exists(path) && Directory.EnumerateFiles(path).Any();
+            })
             .DoExpensive(async t =>
             {
                 var dir = Path.Join("seiyuu", EscapeName(t.Text));
                 var files = Directory.GetFiles(dir);
                 var file = files[Random.Shared.Next(files.Length)];
+                _context.Logger.LogInformation("Sending seiyuu image from {File}", Path.GetFullPath(file));
                 return await t.EventContext.Event.NewMessageRequest([
                     new ReplyData(t.EventContext.Event.MessageId),
                     new ImageData($"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(
