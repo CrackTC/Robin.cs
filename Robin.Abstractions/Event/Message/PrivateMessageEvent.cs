@@ -9,7 +9,7 @@ public record PrivateMessageEvent(
     string MessageId,
     long UserId,
     MessageChain Message,
-    int Font,
+    int? Font,
     MessageSender Sender
 ) : MessageEvent(Time, MessageId, UserId, Message, Font), IPrivateEvent
 {

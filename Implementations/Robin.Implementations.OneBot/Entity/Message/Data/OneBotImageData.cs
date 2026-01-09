@@ -19,14 +19,14 @@ internal class OneBotImageData : IOneBotSegmentData
     [JsonPropertyName("timeout")] public string? Timeout { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
-        new ImageData(File, Type, Url, Summary, Cache is not "0", Proxy is not "0",
+        new ImageData(File, ImageSubType.Normal, Url, Summary, Cache is not "0", Proxy is not "0",
             Timeout is not null ? Convert.ToDouble(Timeout) : null);
 
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {
         var d = data as ImageData;
         File = d!.File;
-        Type = d.Type;
+        Type = null; // always use normal
         Url = d.Url;
         Summary = d.Summary;
         Cache = d.UseCache is not false ? "1" : "0";

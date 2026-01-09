@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS abstraction
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS abstraction
 WORKDIR /robin/Robin.Abstractions
 COPY ./Robin.Abstractions/Robin.Abstractions.csproj ./
 RUN dotnet restore
@@ -39,7 +39,7 @@ RUN dotnet restore
 COPY ./Robin.App ./
 RUN dotnet publish -c Release -o /out/Robin.App
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS final
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
 RUN apt-get update && apt-get install -y fontconfig
 WORKDIR /app
 COPY --from=build-app /out/Robin.App .

@@ -1,3 +1,6 @@
 namespace Robin.Abstractions.Operation;
 
-public record Response(bool Success, int ReturnCode, string? ErrorMessage);
+public record Response(bool Success, int ReturnCode, string? ErrorMessage)
+{
+    public static readonly Response OK = new(true, 0, null);
+}
