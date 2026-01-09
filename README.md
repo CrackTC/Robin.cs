@@ -184,7 +184,7 @@ Here is an example configuration file:
      </ItemGroup>
 
      <PropertyGroup>
-       <TargetFramework>net9.0</TargetFramework>
+       <TargetFramework>net10.0</TargetFramework>
        <ImplicitUsings>enable</ImplicitUsings>
        <Nullable>enable</Nullable>
        <!-- Enable dynamic loading for proper dependency resolution -->
