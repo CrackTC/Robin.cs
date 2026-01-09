@@ -140,9 +140,8 @@ public partial class SeiyuuFunction(
             {
                 var name = EscapeName(t.Text);
                 if (string.IsNullOrEmpty(name)) return false;
-                if (_context.Configuration.GroupLimits.ContainsKey(name))
+                if (_context.Configuration.GroupLimits.TryGetValue(name, out List<long>? limits))
                 {
-                    var limits = _context.Configuration.GroupLimits[name];
                     if (!limits.Contains(t.EventContext.Event.SourceId)) return false;
                 }
                 var path = Path.Join("seiyuu", name);
