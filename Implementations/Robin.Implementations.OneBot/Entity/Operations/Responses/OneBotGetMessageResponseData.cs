@@ -30,9 +30,15 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
             null,
             new MessageInfo(
                 Time,
-                MessageType,
-                MessageId,
-                RealId,
+                MessageType switch
+                {
+                    "private" => Abstractions.Entity.MessageType.Friend,
+                    "group" => Abstractions.Entity.MessageType.Group,
+                    "temp" => Abstractions.Entity.MessageType.Temp,
+                    _ => throw new InvalidOperationException($"Unsupported message type: {MessageType}")
+                },
+                MessageId.ToString(),
+                RealId.ToString(),
                 new GroupMessageSender(
                     Sender.UserId,
                     Sender.Nickname,
@@ -45,7 +51,7 @@ internal class OneBotGetMessageResponseData : IOneBotResponseData
                     },
                     Sender.Age,
                     Sender.Area,
-                    Sender.Level,
+                    Sender.Level is not null ? Convert.ToInt32(Sender.Level) : null,
                     Sender.Role switch
                     {
                         "owner" => GroupMemberRole.Owner,

@@ -8,7 +8,7 @@ public abstract record MessageEvent(
     string MessageId,
     long UserId,
     MessageChain Message,
-    int Font
+    int? Font
 ) : BotEvent(Time)
 {
     public abstract long SourceId { get; }

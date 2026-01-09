@@ -1,6 +1,6 @@
 namespace Robin.Abstractions.Entity;
 
 public record ForwardResult(
-    int MessageId,
+    string MessageId,
     string ResId
 );

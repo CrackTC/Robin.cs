@@ -23,7 +23,7 @@ internal class OneBotGroupMessageEvent : OneBotMessageEvent
             Font,
             new GroupMessageSender(Sender.UserId, Sender.Nickname, Sender.Card,
                 Sender.Sex switch { "male" => UserSex.Male, "female" => UserSex.Female, _ => UserSex.Unknown },
-                Sender.Age, Sender.Area, Sender.Level,
+                Sender.Age, Sender.Area, Sender.Level is not null ? Convert.ToInt32(Sender.Level) : null,
                 Sender.Role switch
                 {
                     "owner" => GroupMemberRole.Owner,

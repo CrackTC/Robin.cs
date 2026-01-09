@@ -53,7 +53,7 @@ internal class OneBotGetGroupMemberInfoResponseData : IOneBotResponseData
                 Area,
                 JoinTime,
                 LastSentTime,
-                Level,
+                string.IsNullOrEmpty(Level) ? null : int.Parse(Level),
                 Role switch
                 {
                     "owner" => GroupMemberRole.Owner,

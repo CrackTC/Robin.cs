@@ -25,7 +25,7 @@ internal class OneBotRecordData : IOneBotSegmentData
     {
         var d = data as RecordData;
         File = d!.File;
-        Magic = d.IsMagic ? "1" : "0";
+        Magic = d.IsMagic is true ? "1" : "0";
         Cache = d.UseCache is not false ? "1" : "0";
         Proxy = d.UseProxy is not false ? "1" : "0";
         Timeout = d.Timeout?.ToString();

@@ -1,0 +1,36 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Extensions/">
+    <Project Path="Extensions/Robin.Extensions.Approve/Robin.Extensions.Approve.csproj" />
+    <Project Path="Extensions/Robin.Extensions.AtPoke/Robin.Extensions.AtPoke.csproj" />
+    <Project Path="Extensions/Robin.Extensions.B23/Robin.Extensions.B23.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Dice/Robin.Extensions.Dice.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Gemini/Robin.Extensions.Gemini.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Gray/Robin.Extensions.Gray.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Help/Robin.Extensions.Help.csproj" />
+    <Project Path="Extensions/Robin.Extensions.PokeBack/Robin.Extensions.PokeBack.csproj" />
+    <Project Path="Extensions/Robin.Extensions.RandReply/Robin.Extensions.RandReply.csproj" />
+    <Project Path="Extensions/Robin.Extensions.ReplyAction/Robin.Extensions.ReplyAction.csproj" />
+    <Project Path="Extensions/Robin.Extensions.SauceNao/Robin.Extensions.SauceNao.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Status/Robin.Extensions.Status.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Test/Robin.Extensions.Test.csproj" />
+    <Project Path="Extensions/Robin.Extensions.UserRank/Robin.Extensions.UserRank.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Welcome/Robin.Extensions.Welcome.csproj" />
+    <Project Path="Extensions/Robin.Extensions.WhoAtMe/Robin.Extensions.WhoAtMe.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Wife/Robin.Extensions.Wife.csproj" />
+    <Project Path="Extensions/Robin.Extensions.WordCloud/Robin.Extensions.WordCloud.csproj" />
+  </Folder>
+  <Folder Name="/Implementations/">
+    <Project Path="Implementations/Robin.Implementations.OneBot/Robin.Implementations.OneBot.csproj" />
+    <Project Path="Implementations/Robin.Implementations.Milky/Robin.Implementations.Milky.csproj" />
+  </Folder>
+  <Folder Name="/Middlewares/">
+    <Project Path="Middlewares/Robin.Middlewares.Fluent/Robin.Middlewares.Fluent.csproj" />
+  </Folder>
+  <Project Path="Robin.Abstractions/Robin.Abstractions.csproj" />
+  <Project Path="Robin.App/Robin.App.csproj" />
+</Solution>

@@ -11,7 +11,7 @@ public record GroupMessageEvent(
     long UserId,
     AnonymousInfo? Anonymous,
     MessageChain Message,
-    int Font,
+    int? Font,
     GroupMessageSender Sender
 ) : MessageEvent(Time, MessageId, UserId, Message, Font), IGroupEvent
 {

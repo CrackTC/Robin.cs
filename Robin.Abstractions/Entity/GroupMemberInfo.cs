@@ -6,13 +6,14 @@ public record GroupMemberInfo(
     string Nickname,
     string? Card,
     UserSex Sex,
-    int Age,
-    string Area,
+    int? Age,
+    string? Area,
     long JoinTime,
     long LastSentTime,
-    string Level,
+    int? Level,
     GroupMemberRole Role,
-    bool Unfriendly,
+    bool? Unfriendly,
     string Title,
-    long TitleExpireTime,
-    bool CardChangeable);
+    long? TitleExpireTime,
+    bool? CardChangeable
+);

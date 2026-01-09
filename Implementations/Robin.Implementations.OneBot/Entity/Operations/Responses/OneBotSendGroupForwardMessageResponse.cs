@@ -17,5 +17,5 @@ internal class OneBotSendGroupForwardMessageResponseData : IOneBotResponseData
     [JsonPropertyName("forward_id")] public required string ForwardId { get; set; }
 
     public Response ToResponse(OneBotResponse response, OneBotMessageConverter _)
-        => new ResponseType(response.Status is not "failed", response.ReturnCode, null, new(MessageId, ForwardId));
+        => new ResponseType(response.Status is not "failed", response.ReturnCode, null, new(MessageId.ToString(), ForwardId));
 }

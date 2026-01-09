@@ -6,7 +6,7 @@ Robin.cs is a bot framework written in C# that supports extending its functional
 
 
 - **Automatic Extension/Implementation Discovery**: Robin automatically discovers and loads extensions/implementations from `Extensions/` and `Implementations/` using reflection.
-- **Multiple Protocol Support**: Theoretically, Robin can support multiple protocols by implementing the `IBackendFactory` interface. Currently, only OneBot v11 is implemented.
+- **Multiple Protocol Support**: Theoretically, Robin can support multiple protocols by implementing the `IBackendFactory` interface. Currently, OneBot v11 & Milky is implemented.
 - **Fluent Middleware**: A middleware system that allows you to easily create bot functions using a fluent API.
 
 
@@ -20,8 +20,6 @@ Robin.cs is a bot framework written in C# that supports extending its functional
 - **Gemini**: Gemini chat bot in private chat.
 - **Gray**: [It's Ikuyover](https://github.com/CrackTC/Gray)
 - **Help**: List all extensions & descriptions.
-- **Oa**: JLU OA announcement.
-- **Oled**: Display messages on my SSD1306 OLED screen using OrangePi 5 Plus, **you may need to modify the code to adapt to your own hardware**.
 - **PokeBack**: Poke back the one who poked you.
 - **RandReply**: Random reply to the one who @ you.
 - **ReplyAction**: Reply to a message with `/{verb} {adverb}` results in `{your name} {verb} {sender name} {adverb}`.
@@ -83,15 +81,6 @@ Here is an example configuration file:
         "Url": "http://<host>:<port>"
       },
       "Filters": {
-        "oa": {
-          "Group": {
-            "Whitelist": true,
-            "Ids": [
-              123456789,
-              987654321
-            ]
-          }
-        },
         "gemini": {
           "Private": {
             "Whitelist": false,
@@ -109,9 +98,6 @@ Here is an example configuration file:
             },
             "word_cloud": {
               "word cloud cron": "0 0 0 * * ?"
-            },
-            "oa": {
-              "main cron": "0 0 * * * ?"
             }
           }
         },
@@ -158,10 +144,6 @@ Here is an example configuration file:
             "123456789": "Welcome {at}",
             "987654321": "{at} 我讨厌你😡"
           }
-        },
-        "oa": {
-          "TempGroup": 123456789
-          "UseVpn": false
         }
       ]
     }
