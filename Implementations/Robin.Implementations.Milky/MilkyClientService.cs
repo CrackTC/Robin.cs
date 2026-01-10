@@ -205,37 +205,72 @@ internal partial class MilkyClientService(
                 }
             case SendGroupForwardMessageRequest sendGroupForwardMsg:
                 {
-                    var result = await client.Message.SendGroupMessageAsync(
-                        new SendGroupMessageInput(
-                            sendGroupForwardMsg.GroupId,
-                            [ConvertFromCustomNodes(sendGroupForwardMsg.Messages)]
-                        ),
-                        token
-                    );
-                    var resp = new SendGroupForwardMessageResponse(
-                        true,
-                        0,
-                        null,
+                    SendGroupMessageOutput result;
+                    var triesRemain = options.SendMessageMaxRetry + 1;
+
+                    while (true)
+                    {
+                        triesRemain--;
+                        try
+                        {
+                            result = await client.Message.SendGroupMessageAsync(
+                                new SendGroupMessageInput(
+                                    sendGroupForwardMsg.GroupId,
+                                    [ConvertFromCustomNodes(sendGroupForwardMsg.Messages)]
+                                ),
+                                token
+                            );
+                            break;
+                        }
+                        catch (MilkyException e) when (e.Message is "Internal server error")
+                        {
+                            if (triesRemain > 0) 
+                            {
+                                _logger.LogSendingMessageFailedDueToInternalServerError(triesRemain);
+                                continue;
+                            }
+
+                            throw;
+                        }
+                    }
+
+                    return new SendGroupForwardMessageResponse(true, 0, null,
                         new ForwardResult(GenerateMessageId(MessageScene.Group, sendGroupForwardMsg.GroupId, result.MessageSeq), "")
-                    );
-                    return resp as TResp;
+                    ) as TResp;
                 }
             case SendGroupMessageRequest sendGroupMsg:
                 {
-                    var result = await client.Message.SendGroupMessageAsync(
-                        new SendGroupMessageInput(
-                            sendGroupMsg.GroupId,
-                            ConvertFromMessageChain(sendGroupMsg.Message)
-                        ),
-                        token
-                    );
-                    var resp = new SendMessageResponse(
-                        true,
-                        0,
-                        null,
+                    SendGroupMessageOutput result;
+                    var triesRemain = options.SendMessageMaxRetry + 1;
+                    while (true)
+                    {
+                        triesRemain--;
+                        try
+                        {
+                            result = await client.Message.SendGroupMessageAsync(
+                                new SendGroupMessageInput(
+                                    sendGroupMsg.GroupId,
+                                    ConvertFromMessageChain(sendGroupMsg.Message)
+                                ),
+                                token
+                            );
+                            break;
+                        }
+                        catch (MilkyException e) when (e.Message is "Internal server error")
+                        {
+                            if (triesRemain > 0) 
+                            {
+                                _logger.LogSendingMessageFailedDueToInternalServerError(triesRemain);
+                                continue;
+                            }
+
+                            throw;
+                        }
+                    }
+
+                    return new SendMessageResponse(true, 0, null,
                         GenerateMessageId(MessageScene.Group, sendGroupMsg.GroupId, result.MessageSeq)
-                    );
-                    return resp as TResp;
+                    ) as TResp;
                 }
             case SendGroupPokeRequest sendGroupPoke:
                 {
@@ -244,20 +279,36 @@ internal partial class MilkyClientService(
                 }
             case SendPrivateMessageRequest sendPrivateMsg:
                 {
-                    var result = await client.Message.SendPrivateMessageAsync(
-                        new SendPrivateMessageInput(
-                            sendPrivateMsg.UserId,
-                            ConvertFromMessageChain(sendPrivateMsg.Message)
-                        ),
-                        token
-                    );
-                    var resp = new SendMessageResponse(
-                        true,
-                        0,
-                        null,
+                    SendPrivateMessageOutput result;
+                    var triesRemain = options.SendMessageMaxRetry + 1;
+                    while (true)
+                    {
+                        triesRemain--;
+                        try
+                        {
+                            result = await client.Message.SendPrivateMessageAsync(
+                                new SendPrivateMessageInput(
+                                    sendPrivateMsg.UserId,
+                                    ConvertFromMessageChain(sendPrivateMsg.Message)
+                                ),
+                                token
+                            );
+                            break;
+                        }
+                        catch (MilkyException e) when (e.Message is "Internal server error")
+                        {
+                            if (triesRemain > 0)
+                            {
+                                _logger.LogSendingMessageFailedDueToInternalServerError(triesRemain);
+                                continue;
+                            }
+
+                            throw;
+                        }
+                    }
+                    return new SendMessageResponse(true, 0, null,
                         GenerateMessageId(MessageScene.Friend, sendPrivateMsg.UserId, result.MessageSeq)
-                    );
-                    return resp as TResp;
+                    ) as TResp;
                 }
             case SetFriendAddRequestRequest setFriendAddReq:
                 {
@@ -603,4 +654,7 @@ internal static partial class MilkyClientServiceLoggerExtension
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Unknown message scene: {MessageScene}")]
     public static partial void LogUnknownMessageScene(this ILogger<MilkyClientService> logger, string messageScene);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Sending message failed due to internal server error, remaining tries: {TriesRemain}")]
+    public static partial void LogSendingMessageFailedDueToInternalServerError(this ILogger<MilkyClientService> logger, int triesRemain);
 }
