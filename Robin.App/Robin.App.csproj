@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Robin.Abstractions\Robin.Abstractions.csproj" />
-    <ProjectReference Include="..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj" />
   </ItemGroup>
 
 </Project>
