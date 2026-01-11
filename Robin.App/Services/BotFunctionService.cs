@@ -39,7 +39,7 @@ internal partial class BotFunctionService(
 
                 if (instance is not BotFunction function)
                 {
-                    LogFunctionNotRegistered(logger, info.Name);
+                    LogNonBotFuncMarkedWithFuncAttr(logger, info.Name);
                     continue;
                 }
 
@@ -53,6 +53,7 @@ internal partial class BotFunctionService(
                     else
                         _eventToFunctions[eventType] = [function];
                 }
+                LogRegisteredFunction(logger, info.Name, type.FullName!);
             }
             catch (Exception e)
             {
@@ -140,8 +141,11 @@ internal partial class BotFunctionService(
 
     #region Log
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Function {Name} is not registered")]
-    private static partial void LogFunctionNotRegistered(ILogger logger, string name);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Type marked with BotFunctionInfoAttribute is not a BotFunction: {Name}")]
+    private static partial void LogNonBotFuncMarkedWithFuncAttr(ILogger logger, string name);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Registered function: {Name} -> {Type}")]
+    private static partial void LogRegisteredFunction(ILogger logger, string name, string type);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
     private static partial void LogReceivedEvent(ILogger logger, string type, string @event);
