@@ -9,7 +9,6 @@ using Robin.Abstractions.Communication;
 using Robin.Abstractions.Context;
 using Robin.App;
 using Robin.App.Services;
-using Robin.Middlewares.Fluent;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("config.json");
@@ -21,12 +20,13 @@ builder.Logging.AddSimpleConsole(options =>
 });
 
 var implementations = LoadAssemblies("Implementations");
+var middlewares = LoadAssemblies("Middlewares");
 var extensions = LoadAssemblies("Extensions");
 ConfigureBackend(implementations);
 
 builder.Services.AddHostedService<BotCreationService>()
     .AddSingleton<IEnumerable<Assembly>>([
-        typeof(FluentFunction).Assembly,
+        .. middlewares,
         .. extensions
     ])
     .AddScoped<BotFunctionService>()
@@ -54,7 +54,10 @@ void ConfigureBackend(IEnumerable<Assembly> implementations)
 IEnumerable<Assembly> LoadAssemblies(string dir)
 {
     var path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? string.Empty, dir);
-    return Directory.GetDirectories(path).Select(subDir =>
-        new BotExtensionLoadContext(Path.Combine(subDir, $"{Path.GetFileName(subDir)}.dll"))
-            .LoadFromAssemblyName(new AssemblyName(Path.GetFileName(subDir)))).ToList();
+    return [..
+        Directory.GetDirectories(path).Select(subDir =>
+            new BotExtensionLoadContext(Path.Combine(subDir, $"{Path.GetFileName(subDir)}.dll"))
+                .LoadFromAssemblyName(new AssemblyName(Path.GetFileName(subDir)))
+        )
+    ];
 }
