@@ -35,7 +35,23 @@ public class EventTunnelBuilder<TOut>
         _descriptions
     );
 
+    public EventTunnelBuilder<TOut> Where(Func<TOut, Task<bool>> predicate) => new(
+        _functionBuilder,
+        _name,
+        _tunnel.Where(predicate),
+        _priority,
+        _descriptions
+    );
+
     public EventTunnelBuilder<TNewOut> Select<TNewOut>(Func<TOut, TNewOut> selector) => new(
+        _functionBuilder,
+        _name,
+        _tunnel.Select(selector),
+        _priority,
+        _descriptions
+    );
+
+    public EventTunnelBuilder<TNewOut> Select<TNewOut>(Func<TOut, Task<TNewOut>> selector) => new(
         _functionBuilder,
         _name,
         _tunnel.Select(selector),
