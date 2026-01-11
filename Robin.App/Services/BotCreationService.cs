@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Collections.Frozen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,12 +35,8 @@ internal partial class BotCreationService(
         context.OperationProvider =
             await operationProviderFactory.GetOperationProviderAsync(
                 botConfig.GetRequiredSection("OperationProviderConfig"), token);
-        context.FunctionConfigurations = botConfig.GetSection("Configurations")
-            .GetChildren()
-            .ToFrozenDictionary(child => child.Key!);
-        context.FilterConfigurations = botConfig.GetSection("Filters")
-            .GetChildren()
-            .ToFrozenDictionary(child => child.Key!);
+        context.FunctionConfigurations = botConfig.GetSection("Configurations");
+        context.FilterConfigurations = botConfig.GetSection("Filters");
 
         var functionService = scope.ServiceProvider.GetRequiredService<BotFunctionService>();
         await functionService.StartAsync(token);
