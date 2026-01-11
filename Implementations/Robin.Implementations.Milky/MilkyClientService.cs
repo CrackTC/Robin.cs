@@ -224,7 +224,7 @@ internal partial class MilkyClientService(
                         }
                         catch (MilkyException e) when (e.Message is "Internal server error")
                         {
-                            if (triesRemain > 0) 
+                            if (triesRemain > 0)
                             {
                                 _logger.LogSendingMessageFailedDueToInternalServerError(triesRemain);
                                 continue;
@@ -258,7 +258,7 @@ internal partial class MilkyClientService(
                         }
                         catch (MilkyException e) when (e.Message is "Internal server error")
                         {
-                            if (triesRemain > 0) 
+                            if (triesRemain > 0)
                             {
                                 _logger.LogSendingMessageFailedDueToInternalServerError(triesRemain);
                                 continue;
