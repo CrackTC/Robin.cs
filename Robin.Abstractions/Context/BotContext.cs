@@ -17,8 +17,8 @@ public partial class BotContext(
     public IBotEventInvoker? EventInvoker { get; set; }
     public IOperationProvider OperationProvider { get; set; } = null!;
     public IEnumerable<BotFunction> Functions => functions;
-    public FrozenDictionary<string, IConfigurationSection>? FunctionConfigurations { get; set; }
-    public FrozenDictionary<string, IConfigurationSection>? FilterConfigurations { get; set; }
+    public IConfigurationSection? FunctionConfigurations { get; set; }
+    public IConfigurationSection? FilterConfigurations { get; set; }
 
     private static Type? GetOptionType(Type functionType)
     {
@@ -39,25 +39,20 @@ public partial class BotContext(
     {
         var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(functionType);
 
-        var groupFilter = new EventFilter([]);
-        var privateFilter = new EventFilter([]);
+        var filterSection = FilterConfigurations!.GetSection(functionName);
+        var groupFilter = GetEventFilter(filterSection.GetSection("Group"));
+        var privateFilter = GetEventFilter(filterSection.GetSection("Private"));
 
-        if (FilterConfigurations?.TryGetValue(functionName, out var section) is true)
-        {
-            groupFilter = GetEventFilter(section.GetSection("Group"));
-            privateFilter = GetEventFilter(section.GetSection("Private"));
-        }
-
-        // no configuration
-        if (FunctionConfigurations?.TryGetValue(functionName, out section) is not true)
-            return new FunctionContext(logger, this, null, groupFilter, privateFilter);
+        var funcConfigSection = FunctionConfigurations!.GetSection(functionName);
 
         // non-generic BotFunction, pass IConfigurationSection directly
         if (GetOptionType(functionType) is not { } configType)
-            return new FunctionContext(logger, this, section, groupFilter, privateFilter);
+            return new FunctionContext(logger, this, funcConfigSection, groupFilter, privateFilter);
 
         // generic BotFunction<>, bind configuration, instantiate FunctionContext<>
-        if (section.Get(configType) is not { } config)
+        var config = configType.GetConstructor(Type.EmptyTypes)?.Invoke([]);
+        funcConfigSection.Bind(config);
+        if (config is null)
         {
             LogOptionBindingFailed(logger);
             return null;
