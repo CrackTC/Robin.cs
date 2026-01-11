@@ -44,31 +44,27 @@ public partial class FluentFunction(FunctionContext<FluentOption> context) : Bot
         _intrinsicEventTuns = intrinsicTuns;
     }
 
-    public override Task OnEventAsync(EventContext<BotEvent> eventContext)
+    public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
         var tasks = new List<Task>();
-
-        tasks.AddRange(_intrinsicEventTuns
-            .Select(tunnel => tunnel.Tunnel(eventContext))
+        tasks.AddRange((await Task.WhenAll(_intrinsicEventTuns.Select(tun => tun.Tunnel(eventContext))))
             .Where(res => res.Accept)
             .Select(res => res.Data!));
 
         foreach (var list in _eventTunLists)
         {
-            var fired = list
-                .Select(tunnel => tunnel.Tunnel(eventContext))
+            var fired = (await Task.WhenAll(list.Select(tunnel => tunnel.Tunnel(eventContext))))
                 .Where(res => res.Accept)
-                .Select(res => res.Data!)
-                .ToList();
+                .Select(res => res.Data!);
 
-            if (fired is not [])
+            if (fired.Any())
             {
                 tasks.AddRange(fired);
                 break;
             }
         }
 
-        return Task.WhenAll(tasks);
+        await Task.WhenAll(tasks);
     }
 }
 #endregion

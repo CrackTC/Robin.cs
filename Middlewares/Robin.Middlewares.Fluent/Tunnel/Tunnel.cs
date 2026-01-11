@@ -1,3 +1,3 @@
 namespace Robin.Middlewares.Fluent.Tunnel;
 
-internal delegate ITunnelResult<TOut> Tunnel<in TIn, out TOut>(TIn input);
+internal delegate Task<ITunnelResult<TOut>> Tunnel<in TIn, TOut>(TIn input);

@@ -1,6 +1,6 @@
 namespace Robin.Middlewares.Fluent.Tunnel;
 
-internal interface ITunnelResult<out T>
+internal interface ITunnelResult<T>
 {
     T? Data { get; }
     bool Accept { get; }

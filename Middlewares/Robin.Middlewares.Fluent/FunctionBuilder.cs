@@ -26,7 +26,7 @@ public class FunctionBuilder(BotFunction function)
             this,
             name,
             new Tunnel<EventContext<BotEvent>, EventContext<TEvent>>(
-                ctx => ctx.Event switch
+                ctx => Task.FromResult(ctx.Event switch
                 {
                     TEvent e and IGroupEvent { GroupId: var id } =>
                         new(new(e, ctx.Token), _function.Context.GroupFilter.IsIdEnabled(id)),
@@ -34,7 +34,7 @@ public class FunctionBuilder(BotFunction function)
                         new(new(e, ctx.Token), _function.Context.PrivateFilter.IsIdEnabled(id)),
                     TEvent e => new(new(e, ctx.Token), true),
                     _ => new TunnelResult<EventContext<TEvent>>(default, false)
-                }
+                } as ITunnelResult<EventContext<TEvent>>)
             )
         )
         .WithDescription("收到" + typeof(TEvent)
@@ -47,7 +47,7 @@ public class FunctionBuilder(BotFunction function)
             cron,
             name,
             new Tunnel<CancellationToken, CancellationToken>(
-                token => new TunnelResult<CancellationToken>(token, true)
+                token => Task.FromResult(new TunnelResult<CancellationToken>(token, true) as ITunnelResult<CancellationToken>)
             )
         );
 }
