@@ -4,5 +4,5 @@ namespace Robin.Extensions.Seiyuu;
 public class SeiyuuOption
 {
     public List<long> BannedIds { get; set; } = [];
-    public Dictionary<string, List<long>> GroupLimits { get; set; } = [];
+    public Dictionary<string, HashSet<long>> GroupLimits { get; set; } = [];
 }
