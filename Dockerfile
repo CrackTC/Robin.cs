@@ -1,50 +1,58 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS abstraction
-WORKDIR /robin/Robin.Abstractions
-COPY ./Robin.Abstractions/Robin.Abstractions.csproj ./
-RUN dotnet restore
-COPY ./Robin.Abstractions ./
-RUN dotnet build -c Release
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-base
+COPY ./build.ps1 /robin/
+WORKDIR /robin
+
+FROM build-base AS abstraction
+COPY ./Robin.Abstractions/*.csproj /robin/Robin.Abstractions/
+RUN pwsh -Command ". ./build.ps1; Restore-Abstraction"
+COPY ./Robin.Abstractions /robin/Robin.Abstractions
+RUN pwsh -Command ". ./build.ps1; Build-Abstraction"
 
 FROM abstraction AS build-impl
-WORKDIR /robin/Implementations
-COPY ./Implementations ./
-RUN for impl in */; do \
-    cd $impl; \
-    dotnet publish -c Release -o /out/Implementations/$impl || exit 1; \
-    cd -; \
+COPY ./Implementations/*/*.csproj /robin/Implementations/
+RUN for file in $(ls /robin/Implementations/*.csproj); do \
+    mkdir -p Implementations/$(basename ${file%.*}) && mv $file Implementations/$(basename ${file%.*})/; \
 done
+RUN pwsh -Command ". ./build.ps1; Restore-Implementations"
+COPY ./Implementations /robin/Implementations
+RUN pwsh -Command ". ./build.ps1; Publish-Implementations"
 
 FROM abstraction AS build-mid
-WORKDIR /robin/Middlewares
-COPY ./Middlewares ./
-RUN for mid in */; do \
-    cd $mid; \
-    dotnet publish -c Release -o /out/Middlewares/$mid || exit 1; \
-    cd -; \
+COPY ./Middlewares/*/*.csproj /robin/Middlewares/
+RUN for file in $(ls /robin/Middlewares/*.csproj); do \
+    mkdir -p Middlewares/$(basename ${file%.*}) && mv $file Middlewares/$(basename ${file%.*})/; \
 done
+RUN pwsh -Command ". ./build.ps1; Restore-Middlewares"
+COPY ./Middlewares /robin/Middlewares
+RUN pwsh -Command ". ./build.ps1; Publish-Middlewares"
 
 FROM build-mid AS build-ext
-WORKDIR /robin/Extensions
-COPY ./Extensions ./
-RUN for ext in */; do \
-    cd $ext; \
-    dotnet publish -c Release -o /out/Extensions/$ext || exit 1; \
-    cd -; \
+COPY ./Extensions/*/*.csproj /robin/Extensions/
+RUN for file in $(ls /robin/Extensions/*.csproj); do \
+    mkdir -p Extensions/$(basename ${file%.*}) && mv $file Extensions/$(basename ${file%.*})/; \
 done
+RUN pwsh -Command ". ./build.ps1; Restore-Extensions"
+COPY ./Extensions /robin/Extensions
+RUN pwsh -Command ". ./build.ps1; Publish-Extensions"
 
-FROM build-mid AS build-app
-WORKDIR /robin/Robin.App
-COPY ./Robin.App/Robin.App.csproj ./
-RUN dotnet restore
-COPY ./Robin.App ./
-RUN dotnet publish -c Release -o /out/Robin.App
+FROM abstraction AS build-app
+COPY ./Robin.App/*.csproj /robin/Robin.App/
+RUN pwsh -Command ". ./build.ps1; Restore-App"
+COPY ./Robin.App /robin/Robin.App
+RUN pwsh -Command ". ./build.ps1; Publish-App"
+
+FROM build-base AS merge
+COPY --from=build-app /robin/out/Robin.App /robin/out/Robin.App
+COPY --from=build-impl /robin/out/Implementations /robin/out/Implementations
+RUN pwsh -Command ". ./build.ps1; Remove-TransitiveDependencies -DirName Implementations"
+COPY --from=build-mid /robin/out/Middlewares /robin/out/Middlewares
+RUN pwsh -Command ". ./build.ps1; Remove-TransitiveDependencies -DirName Middlewares"
+COPY --from=build-ext /robin/out/Extensions /robin/out/Extensions
+RUN pwsh -Command ". ./build.ps1; Remove-TransitiveDependencies -DirName Extensions"
+RUN pwsh -Command ". ./build.ps1; Build-FinalStructure"
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
 RUN apt-get update && apt-get install -y fontconfig
-WORKDIR /app
-COPY --from=build-app /out/Robin.App .
-COPY --from=build-impl /out/Implementations ./Implementations
-COPY --from=build-ext /out/Extensions ./Extensions
-RUN for f in $(ls *.dll); do rm -f /app/Extensions/*/$(basename $f); done
+COPY --from=merge /robin/out /app
 WORKDIR /app/data
 ENTRYPOINT ["/app/Robin.App"]
