@@ -597,7 +597,6 @@ internal partial class MilkyClientService(
 
         RegisterEventHandlers(token);
 
-        using var ws = new ClientWebSocket();
         var wsUri = new UriBuilder(baseUri)
         {
             Scheme = baseUri.Scheme == Uri.UriSchemeHttp ? Uri.UriSchemeWs : Uri.UriSchemeWss,
@@ -608,6 +607,7 @@ internal partial class MilkyClientService(
         {
             try
             {
+                using var ws = new ClientWebSocket();
                 _logger.LogConnectingWebSocket(wsUri);
                 await ws.ConnectAsync(wsUri, token);
                 _logger.LogConnectedWebSocket(wsUri);
