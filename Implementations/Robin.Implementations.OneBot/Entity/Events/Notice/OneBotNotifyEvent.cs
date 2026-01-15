@@ -18,6 +18,9 @@ internal class OneBotNotifyEvent : OneBotNoticeEvent
     [JsonPropertyName("user_id")]
     public long UserId { get; set; }
 
+    [JsonPropertyName("sender_id")]
+    public long SenderId { get; set; }
+
     [JsonPropertyName("target_id")]
     public long TargetId { get; set; }
 
@@ -27,7 +30,12 @@ internal class OneBotNotifyEvent : OneBotNoticeEvent
     public override BotEvent ToBotEvent(OneBotMessageConverter converter) =>
         SubType switch
         {
-            "poke" => new GroupPokeEvent(Time, GroupId, UserId, TargetId),
+            // "poke" => new GroupPokeEvent(Time, GroupId, UserId, TargetId),
+            "poke" => GroupId switch
+            {
+                0 => new FriendPokeEvent(Time, UserId, SenderId, TargetId),
+                _ => new GroupPokeEvent(Time, GroupId, UserId, TargetId),
+            },
             "lucky_king" => new LuckyKingEvent(Time, GroupId, UserId, TargetId),
             _ => HonorType switch
             {

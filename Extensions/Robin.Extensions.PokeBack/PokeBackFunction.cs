@@ -17,8 +17,8 @@ public class PokeBackFunction(FunctionContext context) : BotFunction(context), I
             .On<GroupPokeEvent>()
             .OnPokeSelf(_context.BotContext.Uin)
             .Do(ctx =>
-                ctx.Event.SenderId != _context.BotContext.Uin
-                    ? new SendGroupPoke(ctx.Event.GroupId, ctx.Event.SenderId).SendAsync(
+                ctx.Event.UserId != _context.BotContext.Uin
+                    ? new SendGroupPoke(ctx.Event.GroupId, ctx.Event.UserId).SendAsync(
                         _context,
                         ctx.Token
                     )
