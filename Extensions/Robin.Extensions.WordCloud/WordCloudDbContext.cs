@@ -8,8 +8,7 @@ internal class WordCloudDbContext(long uin = 0) : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder
-            .UseSqlite($"Data Source=word_cloud-{uin}.db");
+        optionsBuilder.UseSqlite($"Data Source=word_cloud-{uin}.db");
     }
 
     protected override void OnModelCreating(ModelBuilder model)

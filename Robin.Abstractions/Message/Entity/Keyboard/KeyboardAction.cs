@@ -6,4 +6,5 @@ public record KeyboardAction(
     string UnsupportedTips,
     string Data,
     bool? Reply,
-    bool? Enter);
+    bool? Enter
+);

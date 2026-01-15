@@ -17,10 +17,14 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     static OneBotMessageConverter()
     {
-        var dataTypes = typeof(OneBotMessageConverter).Assembly
-            .GetTypes()
-            .Select(type => (Type: type, Attribute: type.GetCustomAttribute<OneBotSegmentDataAttribute>()))
-            .Where(pair => pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotSegmentData)));
+        var dataTypes = typeof(OneBotMessageConverter)
+            .Assembly.GetTypes()
+            .Select(type =>
+                (Type: type, Attribute: type.GetCustomAttribute<OneBotSegmentDataAttribute>())
+            )
+            .Where(pair =>
+                pair.Attribute is not null && pair.Type.IsAssignableTo(typeof(IOneBotSegmentData))
+            );
 
         foreach (var (type, attribute) in dataTypes)
         {
@@ -34,7 +38,8 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
 
     public MessageChain? ParseMessageChain(JsonNode? messageNode)
     {
-        if (messageNode is null) return null;
+        if (messageNode is null)
+            return null;
         switch (messageNode.GetValueKind())
         {
             case JsonValueKind.Array:
@@ -70,7 +75,8 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
         var list = new List<OneBotSegment>();
         foreach (var segmentData in chain)
         {
-            if (FromSegmentData(segmentData) is not { } data) return null;
+            if (FromSegmentData(segmentData) is not { } data)
+                return null;
             list.Add(data);
         }
 
@@ -110,16 +116,11 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
     [GeneratedRegex(@"\[CQ:([^,\]]+)(?:,([^,\]]+))*\]")]
     private static partial Regex CqCodeRegex { get; }
 
-    private static string UnescapeCq(string str)
-        => str.Replace("&#91;", "[")
-            .Replace("&#93;", "]")
-            .Replace("&#44;", ",")
-            .Replace("&amp;", "&");
+    private static string UnescapeCq(string str) =>
+        str.Replace("&#91;", "[").Replace("&#93;", "]").Replace("&#44;", ",").Replace("&amp;", "&");
 
-    private static string UnescapeText(string str)
-        => str.Replace("&#91;", "[")
-            .Replace("&#93;", "]")
-            .Replace("&amp;", "&");
+    private static string UnescapeText(string str) =>
+        str.Replace("&#91;", "[").Replace("&#93;", "]").Replace("&amp;", "&");
 
     private MessageChain? ParseFromString(string segmentString)
     {
@@ -129,7 +130,8 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
         var textStart = 0;
         foreach (Match match in matches)
         {
-            if (match.Index > textStart) chain.Add(new TextData(UnescapeText(segmentString[textStart..match.Index])));
+            if (match.Index > textStart)
+                chain.Add(new TextData(UnescapeText(segmentString[textStart..match.Index])));
             textStart = match.Index + match.Length;
 
             var type = match.Groups[1].Value;

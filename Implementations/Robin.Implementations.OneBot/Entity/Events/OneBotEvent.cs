@@ -10,9 +10,14 @@ namespace Robin.Implementations.OneBot.Entity.Events;
 [Serializable]
 internal abstract class OneBotEvent
 {
-    [JsonPropertyName("time")] public long Time { get; set; }
-    [JsonPropertyName("self_id")] public long SelfId { get; set; }
-    [JsonPropertyName("post_type")] public string PostType { get; set; } = string.Empty;
+    [JsonPropertyName("time")]
+    public long Time { get; set; }
+
+    [JsonPropertyName("self_id")]
+    public long SelfId { get; set; }
+
+    [JsonPropertyName("post_type")]
+    public string PostType { get; set; } = string.Empty;
 
     public abstract BotEvent ToBotEvent(OneBotMessageConverter converter);
 
@@ -20,12 +25,19 @@ internal abstract class OneBotEvent
 
     static OneBotEvent()
     {
-        var types = typeof(OneBotEvent).Assembly
-            .GetTypes()
+        var types = typeof(OneBotEvent)
+            .Assembly.GetTypes()
             .Where(type => type.BaseType?.IsAssignableTo(typeof(OneBotEvent)) ?? false)
-            .Select(type => (Type: type, EventTypeAttribute: type.GetCustomAttribute<OneBotEventTypeAttribute>(),
-                PostTypeAttribute: type.BaseType?.GetCustomAttribute<OneBotPostTypeAttribute>()))
-            .Where(pair => pair.EventTypeAttribute is not null && pair.PostTypeAttribute is not null);
+            .Select(type =>
+                (
+                    Type: type,
+                    EventTypeAttribute: type.GetCustomAttribute<OneBotEventTypeAttribute>(),
+                    PostTypeAttribute: type.BaseType?.GetCustomAttribute<OneBotPostTypeAttribute>()
+                )
+            )
+            .Where(pair =>
+                pair.EventTypeAttribute is not null && pair.PostTypeAttribute is not null
+            );
 
         foreach (var (type, eventTypeAttribute, postTypeAttribute) in types)
         {
@@ -35,12 +47,16 @@ internal abstract class OneBotEvent
 
     public static Type? GetEventType(JsonNode node)
     {
-        if (node["post_type"] is not { } postTypeNode) return null;
-        if (postTypeNode.GetValueKind() != JsonValueKind.String) return null;
+        if (node["post_type"] is not { } postTypeNode)
+            return null;
+        if (postTypeNode.GetValueKind() != JsonValueKind.String)
+            return null;
         var postType = postTypeNode.GetValue<string>();
 
-        if (node[$"{postType}_type"] is not { } eventTypeNode) return null;
-        if (eventTypeNode.GetValueKind() != JsonValueKind.String) return null;
+        if (node[$"{postType}_type"] is not { } eventTypeNode)
+            return null;
+        if (eventTypeNode.GetValueKind() != JsonValueKind.String)
+            return null;
         var eventType = eventTypeNode.GetValue<string>();
 
         return _eventTypeToType.GetValueOrDefault((postType, eventType));

@@ -17,14 +17,17 @@ internal partial class OneBotReverseWebSocketService(
     OneBotReverseWebSocketOption options
 ) : BackgroundService, IBotEventInvoker
 {
-    private readonly ILogger<OneBotReverseWebSocketService> _logger =
-        service.GetRequiredService<ILogger<OneBotReverseWebSocketService>>();
+    private readonly ILogger<OneBotReverseWebSocketService> _logger = service.GetRequiredService<
+        ILogger<OneBotReverseWebSocketService>
+    >();
 
-    private readonly OneBotMessageConverter _messageConverter =
-        new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
+    private readonly OneBotMessageConverter _messageConverter = new(
+        service.GetRequiredService<ILogger<OneBotMessageConverter>>()
+    );
 
-    private readonly OneBotEventConverter _eventConverter =
-        new(service.GetRequiredService<ILogger<OneBotEventConverter>>());
+    private readonly OneBotEventConverter _eventConverter = new(
+        service.GetRequiredService<ILogger<OneBotEventConverter>>()
+    );
 
     private System.Net.WebSockets.WebSocket? _websocket;
 
@@ -33,17 +36,20 @@ internal partial class OneBotReverseWebSocketService(
     private async Task DispatchMessageAsync(string message, CancellationToken token)
     {
         var node = JsonNode.Parse(message);
-        if (node is null) return;
+        if (node is null)
+            return;
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;
 
-        if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
+        if (OnEventAsync is not null)
+            await OnEventAsync.Invoke(@event, token);
     }
 
     private async Task KeepAliveAsync(BotEvent @event, CancellationToken token)
     {
-        if (@event is not HeartbeatEvent e) return;
+        if (@event is not HeartbeatEvent e)
+            return;
 
         var alive = false;
         Func<BotEvent, CancellationToken, Task> setAlive = null!;
@@ -59,7 +65,8 @@ internal partial class OneBotReverseWebSocketService(
 
         await Task.Delay(TimeSpan.FromMilliseconds(e.Interval * 3), token);
 
-        if (!alive) _websocket!.Abort();
+        if (!alive)
+            _websocket!.Abort();
     }
 
     private async Task ReceiveLoop(CancellationToken token)
@@ -111,8 +118,10 @@ internal partial class OneBotReverseWebSocketService(
         {
             var context = await listener.GetContextAsync();
 
-            if (!string.IsNullOrEmpty(options.AccessToken) &&
-                context.Request.Headers["Authorization"] != $"Bearer {options.AccessToken}")
+            if (
+                !string.IsNullOrEmpty(options.AccessToken)
+                && context.Request.Headers["Authorization"] != $"Bearer {options.AccessToken}"
+            )
             {
                 context.Response.StatusCode = 401;
                 context.Response.Close();

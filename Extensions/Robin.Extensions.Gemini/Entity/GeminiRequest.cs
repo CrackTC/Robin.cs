@@ -1,7 +1,7 @@
-using Robin.Extensions.Gemini.Entity.Responses;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Robin.Extensions.Gemini.Entity.Responses;
 
 namespace Robin.Extensions.Gemini.Entity;
 
@@ -29,20 +29,35 @@ internal class GeminiRequest
         _serializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     }
 
-    public async Task<GeminiResponse?> GenerateContentAsync(GeminiRequestBody body, CancellationToken token)
+    public async Task<GeminiResponse?> GenerateContentAsync(
+        GeminiRequestBody body,
+        CancellationToken token
+    )
     {
         const string endpoint = "generateContent";
 
         var url = $"{_apiPrefix}/{_apiVersion}/models/{_model}:{endpoint}?key={_apiKey}";
 
-        var response = await _httpClient.PostAsync(url,
-            new StringContent(JsonSerializer.Serialize(body, _serializerOptions), Encoding.UTF8, "application/json"), token);
+        var response = await _httpClient.PostAsync(
+            url,
+            new StringContent(
+                JsonSerializer.Serialize(body, _serializerOptions),
+                Encoding.UTF8,
+                "application/json"
+            ),
+            token
+        );
 
         if (!response.IsSuccessStatusCode)
             return await JsonSerializer.DeserializeAsync<GeminiErrorResponse>(
-                await response.Content.ReadAsStreamAsync(token), cancellationToken: token);
+                await response.Content.ReadAsStreamAsync(token),
+                cancellationToken: token
+            );
 
         return await JsonSerializer.DeserializeAsync<GeminiGenerateDataResponse>(
-            await response.Content.ReadAsStreamAsync(token), _serializerOptions, cancellationToken: token);
+            await response.Content.ReadAsStreamAsync(token),
+            _serializerOptions,
+            cancellationToken: token
+        );
     }
 }

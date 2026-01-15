@@ -5,14 +5,15 @@ using Robin.Abstractions.Communication;
 namespace Robin.Implementations.Milky;
 
 [Backend("MilkyClient")]
-public class MilkyClientFactory(
-    IServiceProvider provider,
-    ILogger<MilkyClientFactory> logger
-) : IBackendFactory
+public class MilkyClientFactory(IServiceProvider provider, ILogger<MilkyClientFactory> logger)
+    : IBackendFactory
 {
     private static readonly Dictionary<string, MilkyClientService> _services = [];
 
-    private async Task<MilkyClientService> GetServiceAsync(IConfiguration config, CancellationToken token)
+    private async Task<MilkyClientService> GetServiceAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         var option = config.Get<MilkyClientOption>()!;
 
@@ -27,13 +28,19 @@ public class MilkyClientFactory(
         return service;
     }
 
-    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token)
+    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         logger.LogGetBotEventInvoker();
         return await GetServiceAsync(config, token);
     }
 
-    public async Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token)
+    public async Task<IOperationProvider> GetOperationProviderAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         logger.LogGetOperationProvider();
         return await GetServiceAsync(config, token);

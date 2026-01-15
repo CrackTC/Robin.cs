@@ -10,10 +10,17 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("share", typeof(ShareData))]
 internal class OneBotShareData : IOneBotSegmentData
 {
-    [JsonPropertyName("url")] public required string Url { get; set; }
-    [JsonPropertyName("title")] public required string Title { get; set; }
-    [JsonPropertyName("content")] public string? Content { get; set; }
-    [JsonPropertyName("image")] public string? Image { get; set; }
+    [JsonPropertyName("url")]
+    public required string Url { get; set; }
+
+    [JsonPropertyName("title")]
+    public required string Title { get; set; }
+
+    [JsonPropertyName("content")]
+    public string? Content { get; set; }
+
+    [JsonPropertyName("image")]
+    public string? Image { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
         new ShareData(Url, Title, Content, Image);

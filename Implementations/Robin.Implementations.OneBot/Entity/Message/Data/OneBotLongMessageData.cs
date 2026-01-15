@@ -10,7 +10,8 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("longmsg", typeof(LongMessageData))]
 internal class OneBotLongMessageData : IOneBotSegmentData
 {
-    [JsonPropertyName("id")] public required string Id { get; set; }
+    [JsonPropertyName("id")]
+    public required string Id { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter converter) => new LongMessageData(Id);
 

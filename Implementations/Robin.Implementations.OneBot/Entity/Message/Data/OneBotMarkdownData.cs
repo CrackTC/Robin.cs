@@ -10,17 +10,16 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("markdown", typeof(MarkdownData))]
 internal class OneBotMarkdownData : IOneBotSegmentData
 {
-    [JsonPropertyName("content")] public required string Content { get; set; }
+    [JsonPropertyName("content")]
+    public required string Content { get; set; }
+
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {
         var d = data as MarkdownData;
         Content = JsonSerializer.Serialize(new { content = d!.Content });
-        return new OneBotSegment
-        {
-            Type = "markdown",
-            Data = JsonSerializer.SerializeToNode(this)
-        };
+        return new OneBotSegment { Type = "markdown", Data = JsonSerializer.SerializeToNode(this) };
     }
 
-    public SegmentData ToSegmentData(OneBotMessageConverter converter) => throw new NotImplementedException();
+    public SegmentData ToSegmentData(OneBotMessageConverter converter) =>
+        throw new NotImplementedException();
 }

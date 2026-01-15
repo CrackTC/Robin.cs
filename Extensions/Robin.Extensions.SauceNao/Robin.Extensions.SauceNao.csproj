@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
-    <ProjectReference
-      Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
+    <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
@@ -23,5 +21,4 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
   </PropertyGroup>
-
 </Project>

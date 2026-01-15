@@ -10,9 +10,8 @@ using Robin.Abstractions.Operation.Requests;
 namespace Robin.Extensions.Welcome;
 
 [BotFunctionInfo("welcome", "入群欢迎", typeof(GroupIncreaseEvent))]
-public partial class WelcomeFunction(
-    FunctionContext<WelcomeOption> context
-) : BotFunction<WelcomeOption>(context)
+public partial class WelcomeFunction(FunctionContext<WelcomeOption> context)
+    : BotFunction<WelcomeOption>(context)
 {
     public override Task StartAsync(CancellationToken token)
     {
@@ -26,17 +25,18 @@ public partial class WelcomeFunction(
 
     public override async Task OnEventAsync(EventContext<BotEvent> eventContext)
     {
-        if (eventContext.Event is not GroupIncreaseEvent e) return;
+        if (eventContext.Event is not GroupIncreaseEvent e)
+            return;
 
-        if (!_context.Configuration.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text)) return;
+        if (!_context.Configuration.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text))
+            return;
 
         var parts = text.Split("{at}");
 
-        await new SendGroupMessage(e.GroupId, [
-            new TextData(parts[0]),
-            new AtData(e.UserId),
-            new TextData(parts[1])
-        ]).SendAsync(_context, eventContext.Token);
+        await new SendGroupMessage(
+            e.GroupId,
+            [new TextData(parts[0]), new AtData(e.UserId), new TextData(parts[1])]
+        ).SendAsync(_context, eventContext.Token);
     }
 
     #region Log

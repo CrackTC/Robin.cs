@@ -7,10 +7,20 @@ namespace Robin.Implementations.OneBot.Converter.Operation.Responses;
 
 internal class SendMessage : IOneBotResponseConverter<SendMessageResponse>
 {
-    public async Task<SendMessageResponse> ConvertFromResponseStream(Stream respStream, OneBotMessageConverter _, CancellationToken token)
+    public async Task<SendMessageResponse> ConvertFromResponseStream(
+        Stream respStream,
+        OneBotMessageConverter _,
+        CancellationToken token
+    )
     {
-        if (await JsonSerializer.DeserializeAsync<OneBotResponse<OneBotMessageId>>(respStream, cancellationToken: token)
-            is not { Data: { } data }) throw new();
+        if (
+            await JsonSerializer.DeserializeAsync<OneBotResponse<OneBotMessageId>>(
+                respStream,
+                cancellationToken: token
+            )
+            is not { Data: { } data }
+        )
+            throw new();
 
         return new(data.ToMessageId());
     }

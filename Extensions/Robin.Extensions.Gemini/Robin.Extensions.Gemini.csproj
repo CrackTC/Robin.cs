@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference
-      Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
+    <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
@@ -23,5 +21,4 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0-rc.2.24474.1" />
   </ItemGroup>
-
 </Project>

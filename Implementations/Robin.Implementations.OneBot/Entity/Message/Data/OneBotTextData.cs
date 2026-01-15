@@ -10,9 +10,11 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("text", typeof(TextData))]
 internal class OneBotTextData : IOneBotSegmentData
 {
-    [JsonPropertyName("text")] public required string Text { get; set; }
+    [JsonPropertyName("text")]
+    public required string Text { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) => new TextData(Text);
+
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {
         var d = data as TextData;

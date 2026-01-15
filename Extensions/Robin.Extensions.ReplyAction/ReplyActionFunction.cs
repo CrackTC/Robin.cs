@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Robin.Abstractions;
 using Robin.Abstractions.Context;
 using Robin.Abstractions.Event.Message;
@@ -6,12 +7,13 @@ using Robin.Abstractions.Operation;
 using Robin.Abstractions.Operation.Requests;
 using Robin.Middlewares.Fluent;
 using Robin.Middlewares.Fluent.Event;
-using System.Text.RegularExpressions;
 
 namespace Robin.Extensions.ReplyAction;
 
 [BotFunctionInfo("reply_action", "把字句制造机")]
-public partial class ReplyActionFunction(FunctionContext context) : BotFunction(context), IFluentFunction
+public partial class ReplyActionFunction(FunctionContext context)
+    : BotFunction(context),
+        IFluentFunction
 {
     [GeneratedRegex(@"^/\S")]
     private static partial Regex IsAction { get; }
@@ -21,7 +23,8 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<GroupMessageEvent>()
+        builder
+            .On<GroupMessageEvent>()
             .OnRegex(IsAction)
             .Select(e => e.EventContext)
             .OnReply()
@@ -32,41 +35,47 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                 var (e, token) = ctx;
 
                 var match = ActionParts.Match(
-                    string.Join(
-                        null,
-                        e.Message.OfType<TextData>()
-                            .Select(data => data.Text.Trim())
-                    )
+                    string.Join(null, e.Message.OfType<TextData>().Select(data => data.Text.Trim()))
                 );
 
                 var verb = match.Groups["verb"];
                 var adverb = match.Groups["adverb"];
 
-                if (await new GetMessage(msgId).SendAsync(_context, token)
-                    is not { Message.Sender.UserId: var senderId })
+                if (
+                    await new GetMessage(msgId).SendAsync(_context, token)
+                    is not { Message.Sender.UserId: var senderId }
+                )
                     return;
 
-                if (await new GetGroupMemberInfo(e.GroupId, senderId, true).SendAsync(_context, token)
-                    is not { Info: { } info })
+                if (
+                    await new GetGroupMemberInfo(e.GroupId, senderId, true).SendAsync(
+                        _context,
+                        token
+                    )
+                    is not { Info: { } info }
+                )
                     return;
 
                 var sourceName = e.Sender.Card switch
                 {
                     null or "" => e.Sender.Nickname,
-                    _ => e.Sender.Card
+                    _ => e.Sender.Card,
                 };
 
                 var targetName = info.Card switch
                 {
                     null or "" => info.Nickname,
-                    _ => info.Card
+                    _ => info.Card,
                 };
 
                 await e.NewMessageRequest([
-                    new TextData($"{sourceName} {verb.Value} {targetName}{(
+                        new TextData(
+                            $"{sourceName} {verb.Value} {targetName}{(
                         adverb.Success ? ' ' + adverb.Value : string.Empty
-                    )}")
-                ]).SendAsync(_context, token);
+                    )}"
+                        ),
+                    ])
+                    .SendAsync(_context, token);
             });
 
         return Task.CompletedTask;

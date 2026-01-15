@@ -14,14 +14,17 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
-        builder.On<GroupMessageEvent>()
+        builder
+            .On<GroupMessageEvent>()
             .OnCommand("今日老婆", string.Empty)
             .Do(async ctx =>
             {
                 var (e, t) = ctx;
 
-                if (await new GetGroupMemberList(e.GroupId).SendAsync(_context, t)
-                    is not { Members: { } members })
+                if (
+                    await new GetGroupMemberList(e.GroupId).SendAsync(_context, t)
+                    is not { Members: { } members }
+                )
                     return;
 
                 var member = members[Random.Shared.Next(members.Count)];
@@ -29,14 +32,17 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
                     member = members[Random.Shared.Next(members.Count)];
 
                 await e.NewMessageRequest([
-                    new ReplyData(e.MessageId),
-                    new TextData($"今天的老婆是：{member.Card switch
+                        new ReplyData(e.MessageId),
+                        new TextData(
+                            $"今天的老婆是：{member.Card switch
                     {
                         null or "" => member.Nickname,
                         _ => member.Card
-                    }}"),
-                    new ImageData($"https://q1.qlogo.cn/g?b=qq&nk={member.UserId}&s=640"),
-                ]).SendAsync(_context, t);
+                    }}"
+                        ),
+                        new ImageData($"https://q1.qlogo.cn/g?b=qq&nk={member.UserId}&s=640"),
+                    ])
+                    .SendAsync(_context, t);
             });
 
         return Task.CompletedTask;

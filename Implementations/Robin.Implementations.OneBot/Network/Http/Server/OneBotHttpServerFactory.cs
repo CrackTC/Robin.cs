@@ -12,7 +12,10 @@ public partial class OneBotHttpServerFactory(
 {
     private static readonly Dictionary<int, OneBotHttpServerService> _services = [];
 
-    private async Task<OneBotHttpServerService> GetServiceAsync(IConfiguration config, CancellationToken token)
+    private async Task<OneBotHttpServerService> GetServiceAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         var option = config.Get<OneBotHttpServerOption>()!;
 
@@ -27,14 +30,19 @@ public partial class OneBotHttpServerFactory(
         return service;
     }
 
-    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token)
+    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         LogGetBotEventInvoker(logger);
         return await GetServiceAsync(config, token);
     }
 
-    public Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token) =>
-        throw new NotSupportedException("Http server does not support sending operations.");
+    public Task<IOperationProvider> GetOperationProviderAsync(
+        IConfiguration config,
+        CancellationToken token
+    ) => throw new NotSupportedException("Http server does not support sending operations.");
 
     #region Log
 

@@ -12,7 +12,10 @@ public partial class OneBotReverseWebSocketFactory(
 {
     private static readonly Dictionary<int, OneBotReverseWebSocketService> _services = [];
 
-    private async Task<OneBotReverseWebSocketService> GetServiceAsync(IConfiguration config, CancellationToken token)
+    private async Task<OneBotReverseWebSocketService> GetServiceAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         var option = config.Get<OneBotReverseWebSocketOption>()!;
 
@@ -27,13 +30,19 @@ public partial class OneBotReverseWebSocketFactory(
         return service;
     }
 
-    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token)
+    public async Task<IBotEventInvoker> GetBotEventInvokerAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         LogGetBotEventInvoker(logger);
         return await GetServiceAsync(config, token);
     }
 
-    public async Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token)
+    public async Task<IOperationProvider> GetOperationProviderAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         throw new NotSupportedException();
     }

@@ -13,5 +13,5 @@ public record ImageData(
 public enum ImageSubType
 {
     Normal,
-    Sticker
+    Sticker,
 }

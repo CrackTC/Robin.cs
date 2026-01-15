@@ -7,10 +7,20 @@ namespace Robin.Implementations.OneBot.Converter.Operation.Responses;
 
 internal class GetGroupInfo : IOneBotResponseConverter<GetGroupInfoResponse>
 {
-    public async Task<GetGroupInfoResponse> ConvertFromResponseStream(Stream respStream, OneBotMessageConverter _, CancellationToken token)
+    public async Task<GetGroupInfoResponse> ConvertFromResponseStream(
+        Stream respStream,
+        OneBotMessageConverter _,
+        CancellationToken token
+    )
     {
-        if (await JsonSerializer.DeserializeAsync<OneBotResponse<OneBotGroupInfo>>(respStream, cancellationToken: token)
-            is not { Data: { } data }) throw new();
+        if (
+            await JsonSerializer.DeserializeAsync<OneBotResponse<OneBotGroupInfo>>(
+                respStream,
+                cancellationToken: token
+            )
+            is not { Data: { } data }
+        )
+            throw new();
 
         return new(data.ToGroupInfo());
     }

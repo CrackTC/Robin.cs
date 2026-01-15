@@ -14,9 +14,16 @@ public class ApproveFunction(FunctionContext context) : BotFunction(context), IF
     {
         builder
             .On<GroupInviteRequestEvent>("approve group invite")
-            .Do(t => new SetGroupAddRequest(t.Event.Flag, "invite", true, null).SendAsync(_context, t.Token))
+            .Do(t =>
+                new SetGroupAddRequest(t.Event.Flag, "invite", true, null).SendAsync(
+                    _context,
+                    t.Token
+                )
+            )
             .On<FriendRequestEvent>("approve friend request")
-            .Do(t => new SetFriendAddRequest(t.Event.Flag, true, null).SendAsync(_context, t.Token));
+            .Do(t =>
+                new SetFriendAddRequest(t.Event.Flag, true, null).SendAsync(_context, t.Token)
+            );
 
         return Task.CompletedTask;
     }

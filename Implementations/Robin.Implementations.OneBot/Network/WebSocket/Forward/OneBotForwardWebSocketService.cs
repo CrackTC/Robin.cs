@@ -16,14 +16,17 @@ internal partial class OneBotForwardWebSocketService(
     OneBotForwardWebSocketOption options
 ) : BackgroundService, IBotEventInvoker
 {
-    private readonly ILogger<OneBotForwardWebSocketService> _logger =
-        service.GetRequiredService<ILogger<OneBotForwardWebSocketService>>();
+    private readonly ILogger<OneBotForwardWebSocketService> _logger = service.GetRequiredService<
+        ILogger<OneBotForwardWebSocketService>
+    >();
 
-    private readonly OneBotMessageConverter _messageConverter =
-        new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
+    private readonly OneBotMessageConverter _messageConverter = new(
+        service.GetRequiredService<ILogger<OneBotMessageConverter>>()
+    );
 
-    private readonly OneBotEventConverter _eventConverter =
-        new(service.GetRequiredService<ILogger<OneBotEventConverter>>());
+    private readonly OneBotEventConverter _eventConverter = new(
+        service.GetRequiredService<ILogger<OneBotEventConverter>>()
+    );
 
     private ClientWebSocket? _websocket;
 
@@ -34,12 +37,14 @@ internal partial class OneBotForwardWebSocketService(
         try
         {
             var node = JsonNode.Parse(message);
-            if (node is null) return;
+            if (node is null)
+                return;
 
             if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
                 return;
 
-            if (OnEventAsync is not null) await OnEventAsync.Invoke(@event, token);
+            if (OnEventAsync is not null)
+                await OnEventAsync.Invoke(@event, token);
         }
         catch (Exception e)
         {
@@ -49,7 +54,8 @@ internal partial class OneBotForwardWebSocketService(
 
     private async Task KeepAliveAsync(BotEvent @event, CancellationToken token)
     {
-        if (@event is not HeartbeatEvent e) return;
+        if (@event is not HeartbeatEvent e)
+            return;
 
         var alive = false;
         Func<BotEvent, CancellationToken, Task> setAlive = null!;
@@ -65,7 +71,8 @@ internal partial class OneBotForwardWebSocketService(
 
         await Task.Delay(TimeSpan.FromMilliseconds(e.Interval * 3), token);
 
-        if (!alive) _websocket!.Abort();
+        if (!alive)
+            _websocket!.Abort();
     }
 
     private async Task ReceiveLoop(CancellationToken token)
@@ -121,7 +128,10 @@ internal partial class OneBotForwardWebSocketService(
             try
             {
                 if (!string.IsNullOrEmpty(options.AccessToken))
-                    _websocket.Options.SetRequestHeader("Authorization", $"Bearer {options.AccessToken}");
+                    _websocket.Options.SetRequestHeader(
+                        "Authorization",
+                        $"Bearer {options.AccessToken}"
+                    );
 
                 LogConnecting(_logger, options.Url);
                 await _websocket.ConnectAsync(uri, token);
@@ -159,7 +169,10 @@ internal partial class OneBotForwardWebSocketService(
     [LoggerMessage(Level = LogLevel.Debug, Message = "Receive message: {Message}")]
     private static partial void LogReceiveMessage(ILogger logger, string message);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Connection closed, reconnect after {Interval} seconds")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Connection closed, reconnect after {Interval} seconds"
+    )]
     private static partial void LogReconnect(ILogger logger, int interval);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Connected to {Uri}")]
@@ -171,7 +184,10 @@ internal partial class OneBotForwardWebSocketService(
     [LoggerMessage(Level = LogLevel.Warning, Message = "Websocket throws an exception")]
     private static partial void LogWebSocketException(ILogger logger, Exception e);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occured while dispatching message: {Message}")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Exception occured while dispatching message: {Message}"
+    )]
     private static partial void LogDispatchException(ILogger logger, string message, Exception e);
 
     #endregion

@@ -16,11 +16,9 @@ namespace Robin.Extensions.B23;
 [BotFunctionInfo("b23", "不要b23")]
 public partial class B23Function(FunctionContext context) : BotFunction(context), IFluentFunction
 {
-    private static readonly HttpClient _client = new(new HttpClientHandler
-    {
-        AllowAutoRedirect = false,
-        UseCookies = false,
-    });
+    private static readonly HttpClient _client = new(
+        new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false }
+    );
 
     [GeneratedRegex(@"^https://www\.bilibili\.com/video/[^?]+")]
     private partial Regex RawUrlRegex { get; }
@@ -29,9 +27,12 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
     {
         using var resp = await _client.GetAsync(b23Url, token);
 
-        if (resp is not { StatusCode: HttpStatusCode.Found, Headers.Location: { } location }) return null;
+        if (resp is not { StatusCode: HttpStatusCode.Found, Headers.Location: { } location })
+            return null;
         LogB23Redirect(_context.Logger, location);
-        return RawUrlRegex.Match(location.ToString()) is { Success: true, Value: var value } ? value : null;
+        return RawUrlRegex.Match(location.ToString()) is { Success: true, Value: var value }
+            ? value
+            : null;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
@@ -40,14 +41,17 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
         LinkedList<(string orig, DateTime expire)> expiration = [];
 
         // cat card.json | jq .Message[0].Content --raw-output | jq .meta.detail_1.qqdocurl
-        builder.On<MessageEvent>()
+        builder
+            .On<MessageEvent>()
             .OnJson()
-            .Select(t => (
-                ctx: t.EventContext,
-                url: t.Json?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>()
-                    ?? t.Json?["meta"]?["news"]?["jumpUrl"]?.GetValue<string>()
-                    ?? string.Empty
-            ))
+            .Select(t =>
+                (
+                    ctx: t.EventContext,
+                    url: t.Json?["meta"]?["detail_1"]?["qqdocurl"]?.GetValue<string>()
+                        ?? t.Json?["meta"]?["news"]?["jumpUrl"]?.GetValue<string>()
+                        ?? string.Empty
+                )
+            )
             .Where(t => t.url.StartsWith("https://b23.tv/"))
             .Do(async t =>
             {
@@ -55,13 +59,20 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
 
                 LogExtractB23(_context.Logger, url);
 
-                if (await ResolveB23(url, ctx.Token) is not { } resolved) return;
+                if (await ResolveB23(url, ctx.Token) is not { } resolved)
+                    return;
                 LogB23Resolved(_context.Logger, resolved);
 
-                if (await ctx.Event.NewMessageRequest([
-                    new ReplyData(ctx.Event.MessageId),
-                    new TextData(resolved)
-                ]).SendAsync(_context, ctx.Token) is not { MessageId: { } id }) return;
+                if (
+                    await ctx
+                        .Event.NewMessageRequest([
+                            new ReplyData(ctx.Event.MessageId),
+                            new TextData(resolved),
+                        ])
+                        .SendAsync(_context, ctx.Token)
+                    is not { MessageId: { } id }
+                )
+                    return;
 
                 conversion.Add(ctx.Event.MessageId, id);
                 expiration.AddLast((ctx.Event.MessageId, DateTime.Now.AddMinutes(5)));
@@ -72,10 +83,11 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
                     expiration.RemoveFirst();
                 }
             })
-
             .On<RecallEvent>()
             .Where(ctx => conversion.ContainsKey(ctx.Event.MessageId))
-            .Do(ctx => new RecallMessage(conversion[ctx.Event.MessageId]).SendAsync(_context, ctx.Token));
+            .Do(ctx =>
+                new RecallMessage(conversion[ctx.Event.MessageId]).SendAsync(_context, ctx.Token)
+            );
 
         return Task.CompletedTask;
     }

@@ -1,13 +1,13 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Robin.Abstractions;
-using Robin.Abstractions.Event;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Robin.Abstractions.Event.Meta;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Robin.Abstractions;
 using Robin.Abstractions.Context;
+using Robin.Abstractions.Event;
+using Robin.Abstractions.Event.Meta;
 
 namespace Robin.App.Services;
 
@@ -47,7 +47,8 @@ internal partial class BotFunctionService(
 
                 foreach (var eventType in info.EventTypes)
                 {
-                    if (!eventType.IsAssignableTo(typeof(BotEvent))) continue;
+                    if (!eventType.IsAssignableTo(typeof(BotEvent)))
+                        continue;
                     if (_eventToFunctions.TryGetValue(eventType, out var eventFunctions))
                         eventFunctions.Add(function);
                     else
@@ -67,7 +68,7 @@ internal partial class BotFunctionService(
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
     };
 
     private async Task InvokeFunction(BotFunction function, EventContext<BotEvent> eventContext)
@@ -90,11 +91,7 @@ internal partial class BotFunctionService(
             if (logger.IsEnabled(LogLevel.Information))
             {
                 var type = @event.GetType();
-                var eventString = JsonSerializer.Serialize(
-                    @event,
-                    type,
-                    _jsonSerializerOptions
-                );
+                var eventString = JsonSerializer.Serialize(@event, type, _jsonSerializerOptions);
                 LogReceivedEvent(logger, type, eventString);
             }
         }
@@ -104,13 +101,22 @@ internal partial class BotFunctionService(
 
         for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
         {
-            if (!_eventToFunctions.TryGetValue(type, out var eventFunctions)) continue;
-            tasks.AddRange(eventFunctions.Where(function => @event switch
-            {
-                IGroupEvent { GroupId: var id } => function.Context.GroupFilter.IsIdEnabled(id),
-                IPrivateEvent { UserId: var id } => function.Context.PrivateFilter.IsIdEnabled(id),
-                _ => true
-            }).Select(function => InvokeFunction(function, eventContext)));
+            if (!_eventToFunctions.TryGetValue(type, out var eventFunctions))
+                continue;
+            tasks.AddRange(
+                eventFunctions
+                    .Where(function =>
+                        @event switch
+                        {
+                            IGroupEvent { GroupId: var id } =>
+                                function.Context.GroupFilter.IsIdEnabled(id),
+                            IPrivateEvent { UserId: var id } =>
+                                function.Context.PrivateFilter.IsIdEnabled(id),
+                            _ => true,
+                        }
+                    )
+                    .Select(function => InvokeFunction(function, eventContext))
+            );
         }
 
         return Task.WhenAll(tasks);
@@ -142,7 +148,10 @@ internal partial class BotFunctionService(
 
     #region Log
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Type marked with BotFunctionInfoAttribute is not a BotFunction: {Name}")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Type marked with BotFunctionInfoAttribute is not a BotFunction: {Name}"
+    )]
     private static partial void LogNonBotFuncMarkedWithFuncAttr(ILogger logger, string name);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Registered function: {Name} -> {Type}")]
@@ -152,13 +161,21 @@ internal partial class BotFunctionService(
     private static partial void LogReceivedEvent(ILogger logger, Type type, string @event);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
-    private static partial void LogCreateFunctionFailed(ILogger logger, string name, Exception exception);
+    private static partial void LogCreateFunctionFailed(
+        ILogger logger,
+        string name,
+        Exception exception
+    );
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid option {Name}")]
     private static partial void LogInvalidOption(ILogger logger, string name);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Error while invoking function {Name}")]
-    private static partial void LogInvokeFunctionFailed(ILogger logger, string name, Exception exception);
+    private static partial void LogInvokeFunctionFailed(
+        ILogger logger,
+        string name,
+        Exception exception
+    );
 
     #endregion
 }

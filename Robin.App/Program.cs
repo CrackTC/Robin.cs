@@ -24,11 +24,9 @@ var middlewares = LoadAssemblies("Middlewares");
 var extensions = LoadAssemblies("Extensions");
 ConfigureBackend(implementations);
 
-builder.Services.AddHostedService<BotCreationService>()
-    .AddSingleton<IEnumerable<Assembly>>([
-        .. middlewares,
-        .. extensions
-    ])
+builder
+    .Services.AddHostedService<BotCreationService>()
+    .AddSingleton<IEnumerable<Assembly>>([.. middlewares, .. extensions])
     .AddScoped<BotFunctionService>()
     .AddScoped<BotContext>()
     .AddScoped<List<BotFunction>>();
@@ -54,10 +52,14 @@ void ConfigureBackend(IEnumerable<Assembly> implementations)
 IEnumerable<Assembly> LoadAssemblies(string dir)
 {
     var path = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? string.Empty, dir);
-    return [..
-        Directory.GetDirectories(path).Select(subDir =>
-            new BotExtensionLoadContext(Path.Combine(subDir, $"{Path.GetFileName(subDir)}.dll"))
-                .LoadFromAssemblyName(new AssemblyName(Path.GetFileName(subDir)))
-        )
+    return
+    [
+        .. Directory
+            .GetDirectories(path)
+            .Select(subDir =>
+                new BotExtensionLoadContext(
+                    Path.Combine(subDir, $"{Path.GetFileName(subDir)}.dll")
+                ).LoadFromAssemblyName(new AssemblyName(Path.GetFileName(subDir)))
+            ),
     ];
 }

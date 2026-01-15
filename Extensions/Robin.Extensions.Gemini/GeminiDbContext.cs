@@ -9,8 +9,7 @@ internal class GeminiDbContext(long uin = 0) : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder
-            .UseSqlite($"Data Source=gemini-{uin}.db");
+        optionsBuilder.UseSqlite($"Data Source=gemini-{uin}.db");
     }
 
     protected override void OnModelCreating(ModelBuilder model)

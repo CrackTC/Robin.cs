@@ -8,8 +8,7 @@ internal class UserRankDbContext(long uin = 0) : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder
-            .UseSqlite($"Data Source=user_rank-{uin}.db");
+        optionsBuilder.UseSqlite($"Data Source=user_rank-{uin}.db");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

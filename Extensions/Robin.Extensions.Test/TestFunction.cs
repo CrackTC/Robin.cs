@@ -13,11 +13,15 @@ public class TestFunction(FunctionContext context) : BotFunction(context), IFlue
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<GroupMessageEvent>()
+        builder
+            .On<GroupMessageEvent>()
             .Where(ctx => ctx.Event.Message.Any(segment => segment is TextData { Text: "/ping" }))
             .Select(ctx => (ctx.Event.GroupId, ctx.Token))
             .Do(ctx =>
-                new SendGroupMessage(ctx.GroupId, [new TextData("pong!")]).SendAsync(_context, ctx.Token)
+                new SendGroupMessage(ctx.GroupId, [new TextData("pong!")]).SendAsync(
+                    _context,
+                    ctx.Token
+                )
             );
 
         return Task.CompletedTask;

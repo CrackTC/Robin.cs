@@ -9,8 +9,11 @@ namespace Robin.Implementations.OneBot.Entity.Events.Notice;
 [OneBotEventType("friend_recall")]
 internal class OneBotFriendRecallEvent : OneBotNoticeEvent
 {
-    [JsonPropertyName("user_id")] public long UserId { get; set; }
-    [JsonPropertyName("message_id")] public long MessageId { get; set; }
+    [JsonPropertyName("user_id")]
+    public long UserId { get; set; }
+
+    [JsonPropertyName("message_id")]
+    public long MessageId { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter) =>
         new FriendRecallEvent(Time, UserId, MessageId.ToString());

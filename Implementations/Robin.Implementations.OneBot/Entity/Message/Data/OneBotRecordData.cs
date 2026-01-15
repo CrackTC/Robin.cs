@@ -10,16 +10,33 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("record", typeof(RecordData))]
 internal class OneBotRecordData : IOneBotSegmentData
 {
-    [JsonPropertyName("file")] public required string File { get; set; }
-    [JsonPropertyName("magic")] public string? Magic { get; set; }
-    [JsonPropertyName("url")] public string? Url { get; set; }
-    [JsonPropertyName("cache")] public string? Cache { get; set; }
-    [JsonPropertyName("proxy")] public string? Proxy { get; set; }
-    [JsonPropertyName("timeout")] public string? Timeout { get; set; }
+    [JsonPropertyName("file")]
+    public required string File { get; set; }
+
+    [JsonPropertyName("magic")]
+    public string? Magic { get; set; }
+
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    [JsonPropertyName("cache")]
+    public string? Cache { get; set; }
+
+    [JsonPropertyName("proxy")]
+    public string? Proxy { get; set; }
+
+    [JsonPropertyName("timeout")]
+    public string? Timeout { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
-        new RecordData(File, Magic is "1", Url, Cache is not "0", Proxy is not "0",
-            Timeout is not null ? Convert.ToDouble(Timeout) : null);
+        new RecordData(
+            File,
+            Magic is "1",
+            Url,
+            Cache is not "0",
+            Proxy is not "0",
+            Timeout is not null ? Convert.ToDouble(Timeout) : null
+        );
 
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {

@@ -15,9 +15,9 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.WordCloud;
 
 [BotFunctionInfo("word_cloud", "群词云生成")]
-public partial class WordCloudFunction(
-    FunctionContext<WordCloudOption> context
-) : BotFunction<WordCloudOption>(context), IFluentFunction
+public partial class WordCloudFunction(FunctionContext<WordCloudOption> context)
+    : BotFunction<WordCloudOption>(context),
+        IFluentFunction
 {
     private static readonly HttpClient _client = new() { Timeout = TimeSpan.FromMinutes(3) };
 
@@ -25,18 +25,28 @@ public partial class WordCloudFunction(
     {
         await CreateTableAsync(token);
 
-        builder.On<GroupMessageEvent>("collect message")
+        builder
+            .On<GroupMessageEvent>("collect message")
             .AsIntrinsic()
-            .Do(ctx => InsertDataAsync(
-                ctx.Event.GroupId,
-                string.Join(' ', ctx.Event.Message.OfType<TextData>().Where(s => s.Text is not "当前QQ版本不支持此应用，请升级").Select(s => s.Text)),
-                ctx.Token
-            ))
-
+            .Do(ctx =>
+                InsertDataAsync(
+                    ctx.Event.GroupId,
+                    string.Join(
+                        ' ',
+                        ctx.Event.Message.OfType<TextData>()
+                            .Where(s => s.Text is not "当前QQ版本不支持此应用，请升级")
+                            .Select(s => s.Text)
+                    ),
+                    ctx.Token
+                )
+            )
             .On<GroupMessageEvent>("show word cloud")
             .OnCommand("word_cloud")
-            .DoExpensive(ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token), ctx => ctx, _context)
-
+            .DoExpensive(
+                ctx => SendWordCloudAsync(ctx.Event.GroupId, token: ctx.Token),
+                ctx => ctx,
+                _context
+            )
             .OnCron("0 0 0 * * ?", "word cloud cron")
             .Do(async token =>
             {
@@ -55,14 +65,20 @@ public partial class WordCloudFunction(
             });
     }
 
-
-    private async Task<bool> SendWordCloudAsync(long groupId, bool clear = false, CancellationToken token = default)
+    private async Task<bool> SendWordCloudAsync(
+        long groupId,
+        bool clear = false,
+        CancellationToken token = default
+    )
     {
         var messages = await GetGroupMessagesAsync(groupId, token);
         var content = string.Join('\n', messages);
         using var response = await _client.PostAsJsonAsync(
             _context.Configuration.ApiAddress,
-            _context.Configuration.CloudOption with { Text = content },
+            _context.Configuration.CloudOption with
+            {
+                Text = content,
+            },
             cancellationToken: token
         );
 
@@ -81,7 +97,8 @@ public partial class WordCloudFunction(
             return false;
         }
 
-        if (clear) await ClearGroupMessagesAsync(groupId, token);
+        if (clear)
+            await ClearGroupMessagesAsync(groupId, token);
 
         await new SendGroupMessage(groupId, [new ImageData(url)]).SendAsync(_context, token);
         return true;
@@ -103,41 +120,57 @@ public partial class WordCloudFunction(
         _semaphore.ConsumeAsync(() => _db.Database.EnsureCreatedAsync(token), token);
 
     private Task<int> InsertDataAsync(long groupId, string message, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() =>
-        {
-            if (string.IsNullOrWhiteSpace(message))
-                return Task.FromResult(0);
-            _db.Records.Add(new Record { GroupId = groupId, Content = message });
-            return _db.SaveChangesAsync(token);
-        }, token);
+        _semaphore.ConsumeAsync(
+            () =>
+            {
+                if (string.IsNullOrWhiteSpace(message))
+                    return Task.FromResult(0);
+                _db.Records.Add(new Record { GroupId = groupId, Content = message });
+                return _db.SaveChangesAsync(token);
+            },
+            token
+        );
 
     private Task<List<long>> GetGroupsAsync(CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Select(r => r.GroupId)
-            .Distinct()
-            .ToListAsync(token), token);
+        _semaphore.ConsumeAsync(
+            () => _db.Records.Select(r => r.GroupId).Distinct().ToListAsync(token),
+            token
+        );
 
     private Task<List<string>> GetGroupMessagesAsync(long groupId, CancellationToken token) =>
-        _semaphore.ConsumeAsync(() => _db.Records
-            .Where(r => r.GroupId == groupId)
-            .Select(r => r.Content)
-            .ToListAsync(token), token);
+        _semaphore.ConsumeAsync(
+            () =>
+                _db
+                    .Records.Where(r => r.GroupId == groupId)
+                    .Select(r => r.Content)
+                    .ToListAsync(token),
+            token
+        );
 
     private async Task ClearGroupMessagesAsync(long groupId, CancellationToken token) =>
-        await _semaphore.ConsumeAsync(() =>
-        {
-            _db.Records.RemoveRange(_db.Records.Where(r => r.GroupId == groupId));
-            return _db.SaveChangesAsync(token);
-        }, token);
+        await _semaphore.ConsumeAsync(
+            () =>
+            {
+                _db.Records.RemoveRange(_db.Records.Where(r => r.GroupId == groupId));
+                return _db.SaveChangesAsync(token);
+            },
+            token
+        );
 
     #endregion
 
     #region Log
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Word cloud api request failed for group {GroupId}")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Word cloud api request failed for group {GroupId}"
+    )]
     private static partial void LogApiRequestFailed(ILogger logger, long groupId);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occurred while sending word cloud")]
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Exception occurred while sending word cloud"
+    )]
     private static partial void LogExceptionOccurred(ILogger logger, Exception exception);
 
     #endregion

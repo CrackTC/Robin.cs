@@ -4,5 +4,5 @@ public enum MessageType
 {
     Friend,
     Group,
-    Temp
+    Temp,
 }

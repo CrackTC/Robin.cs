@@ -11,10 +11,17 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("location", typeof(LocationData))]
 internal class OneBotLocationData : IOneBotSegmentData
 {
-    [JsonPropertyName("lat")] public required string Lat { get; set; }
-    [JsonPropertyName("lon")] public required string Lon { get; set; }
-    [JsonPropertyName("title")] public string? Title { get; set; }
-    [JsonPropertyName("content")] public string? Content { get; set; }
+    [JsonPropertyName("lat")]
+    public required string Lat { get; set; }
+
+    [JsonPropertyName("lon")]
+    public required string Lon { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("content")]
+    public string? Content { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
         new LocationData(Convert.ToDouble(Lat), Convert.ToDouble(Lon), Title, Content);

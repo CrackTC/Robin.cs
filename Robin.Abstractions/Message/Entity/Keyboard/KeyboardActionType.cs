@@ -4,5 +4,5 @@ public enum KeyboardActionType
 {
     Jump = 0,
     Callback = 1,
-    Command = 2
+    Command = 2,
 }

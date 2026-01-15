@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference
-      Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
+    <ProjectReference Include="..\..\Middlewares\Robin.Middlewares.Fluent\Robin.Middlewares.Fluent.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
@@ -19,5 +17,4 @@
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
   </ItemGroup>
-
 </Project>

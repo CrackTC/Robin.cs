@@ -11,23 +11,25 @@ using SauceNET;
 namespace Robin.Extensions.SauceNao;
 
 [BotFunctionInfo("sauce_nao", "Saucenao 插画反向搜索")]
-public partial class SauceNaoFunction(
-    FunctionContext<SauceNaoOption> context
-) : BotFunction<SauceNaoOption>(context), IFluentFunction
+public partial class SauceNaoFunction(FunctionContext<SauceNaoOption> context)
+    : BotFunction<SauceNaoOption>(context),
+        IFluentFunction
 {
     private SauceNETClient? _client;
 
     private async Task<bool> HandleEvent(MessageEvent e, string msgId, CancellationToken token)
     {
-        if (await new GetMessage(msgId).SendAsync(_context, token)
-            is not { Message.Message: { } origMsg })
+        if (
+            await new GetMessage(msgId).SendAsync(_context, token)
+            is not { Message.Message: { } origMsg }
+        )
             return false;
 
         if (origMsg.OfType<ImageData>().FirstOrDefault() is not { Url: { } url })
             return false;
 
-        var results = (await _client!.GetSauceAsync(url)).Results
-            .Where(result => double.TryParse(result.Similarity, out var s) && s >= 70.0)
+        var results = (await _client!.GetSauceAsync(url))
+            .Results.Where(result => double.TryParse(result.Similarity, out var s) && s >= 70.0)
             .Take(3)
             .Select(result =>
                 $"""
@@ -45,7 +47,8 @@ public partial class SauceNaoFunction(
             return false;
         }
 
-        await e.NewMessageRequest([new TextData(string.Join('\n', results))]).SendAsync(_context, token);
+        await e.NewMessageRequest([new TextData(string.Join('\n', results))])
+            .SendAsync(_context, token);
         return true;
     }
 
@@ -53,7 +56,8 @@ public partial class SauceNaoFunction(
     {
         _client = new SauceNETClient(_context.Configuration.ApiKey);
 
-        builder.On<GroupMessageEvent>("group sauce")
+        builder
+            .On<GroupMessageEvent>("group sauce")
             .OnCommand("搜图")
             .OnReply()
             .DoExpensive(

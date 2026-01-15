@@ -10,9 +10,14 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("poke", typeof(PokeData))]
 internal class OneBotPokeData : IOneBotSegmentData
 {
-    [JsonPropertyName("type")] public required string Type { get; set; }
-    [JsonPropertyName("id")] public required string Id { get; set; }
-    [JsonPropertyName("name")] public string? Name { get; set; }
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
+
+    [JsonPropertyName("id")]
+    public required string Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
         new PokeData(Convert.ToInt32(Type), Convert.ToInt32(Id), Name);

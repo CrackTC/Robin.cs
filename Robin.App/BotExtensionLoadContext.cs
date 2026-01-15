@@ -7,7 +7,9 @@ internal class BotExtensionLoadContext(string extensionPath) : AssemblyLoadConte
 {
     private readonly AssemblyDependencyResolver _extDirResolver = new(extensionPath);
     private static readonly WeakReference<Dictionary<string, Assembly>> _baseDirAssemblies = new(
-        AppDomain.CurrentDomain.GetAssemblies().ToDictionary(assembly => assembly.GetName().Name!, assembly => assembly)
+        AppDomain
+            .CurrentDomain.GetAssemblies()
+            .ToDictionary(assembly => assembly.GetName().Name!, assembly => assembly)
     );
     private static readonly Dictionary<string, Assembly> _loadedExtAssemblies = [];
     private static readonly Dictionary<string, nint?> _loadedExtUnmanagedDlls = [];
@@ -22,7 +24,9 @@ internal class BotExtensionLoadContext(string extensionPath) : AssemblyLoadConte
 
         if (!_baseDirAssemblies.TryGetTarget(out var baseDirAssemblies))
         {
-            baseDirAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToDictionary(assembly => assembly.GetName().Name!, assembly => assembly);
+            baseDirAssemblies = AppDomain
+                .CurrentDomain.GetAssemblies()
+                .ToDictionary(assembly => assembly.GetName().Name!, assembly => assembly);
             _baseDirAssemblies.SetTarget(baseDirAssemblies);
         }
 

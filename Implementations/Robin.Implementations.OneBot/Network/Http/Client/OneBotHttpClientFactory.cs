@@ -26,10 +26,15 @@ public partial class OneBotHttpClientFactory(
         return service;
     }
 
-    public Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token) =>
-        throw new NotSupportedException("Http client does not support receiving events.");
+    public Task<IBotEventInvoker> GetBotEventInvokerAsync(
+        IConfiguration config,
+        CancellationToken token
+    ) => throw new NotSupportedException("Http client does not support receiving events.");
 
-    public Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token)
+    public Task<IOperationProvider> GetOperationProviderAsync(
+        IConfiguration config,
+        CancellationToken token
+    )
     {
         LogGetOperationProvider(logger);
         return Task.FromResult<IOperationProvider>(GetService(config));

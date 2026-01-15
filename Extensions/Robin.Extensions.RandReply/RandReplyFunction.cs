@@ -10,30 +10,34 @@ using Robin.Middlewares.Fluent.Event;
 namespace Robin.Extensions.RandReply;
 
 [BotFunctionInfo("rand_reply", "随机回复")]
-public partial class RandReplyFunction(
-    FunctionContext<RandReplyOption> context
-) : BotFunction<RandReplyOption>(context), IFluentFunction
+public partial class RandReplyFunction(FunctionContext<RandReplyOption> context)
+    : BotFunction<RandReplyOption>(context),
+        IFluentFunction
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<GroupMessageEvent>()
+        builder
+            .On<GroupMessageEvent>()
             .OnAt(_context.BotContext.Uin)
             .AsFallback()
             .Do(async ctx =>
             {
-
                 var textCount = _context.Configuration.Texts?.Count ?? 0;
                 var imageCount = _context.Configuration.ImagePaths?.Count ?? 0;
                 var index = Random.Shared.Next(textCount + imageCount);
 
-                SegmentData content = index < textCount
-                    ? new TextData(_context.Configuration.Texts![index])
-                    : new ImageData($"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(
+                SegmentData content =
+                    index < textCount
+                        ? new TextData(_context.Configuration.Texts![index])
+                        : new ImageData(
+                            $"base64://{Convert.ToBase64String(await File.ReadAllBytesAsync(
                         _context.Configuration.ImagePaths![index - textCount],
                         ctx.Token
-                    ))}");
+                    ))}"
+                        );
 
-                await ctx.Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
+                await ctx
+                    .Event.NewMessageRequest([new ReplyData(ctx.Event.MessageId), content])
                     .SendAsync(_context, ctx.Token);
             });
 

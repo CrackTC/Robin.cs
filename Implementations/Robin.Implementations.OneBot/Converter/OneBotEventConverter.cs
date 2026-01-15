@@ -16,7 +16,8 @@ internal partial class OneBotEventConverter(ILogger<OneBotEventConverter> logger
             return null;
         }
 
-        if (eventNode.Deserialize(type) is OneBotEvent @event) return @event.ToBotEvent(converter);
+        if (eventNode.Deserialize(type) is OneBotEvent @event)
+            return @event.ToBotEvent(converter);
 
         LogInvalidEvent(logger, eventNode.ToJsonString());
         return null;

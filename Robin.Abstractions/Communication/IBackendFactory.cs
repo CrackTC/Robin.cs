@@ -6,5 +6,8 @@ namespace Robin.Abstractions.Communication;
 public interface IBackendFactory
 {
     Task<IBotEventInvoker> GetBotEventInvokerAsync(IConfiguration config, CancellationToken token);
-    Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token);
+    Task<IOperationProvider> GetOperationProviderAsync(
+        IConfiguration config,
+        CancellationToken token
+    );
 }

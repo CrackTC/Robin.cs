@@ -17,7 +17,8 @@ public partial class DiceFunction(FunctionContext context) : BotFunction(context
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<MessageEvent>()
+        builder
+            .On<MessageEvent>()
             .OnRegex(DiceRegex)
             .Do(async t =>
             {
@@ -29,17 +30,26 @@ public partial class DiceFunction(FunctionContext context) : BotFunction(context
                     ? int.Parse(match.Groups["modifier"].Value)
                     : 0;
 
-                var rolls = Enumerable.Range(0, count).Select(_ => Random.Shared.Next(sides) + 1).ToArray();
+                var rolls = Enumerable
+                    .Range(0, count)
+                    .Select(_ => Random.Shared.Next(sides) + 1)
+                    .ToArray();
                 var sum = rolls.Sum() + modifier;
 
-                await ctx.Event.NewMessageRequest([
-                    new TextData(
-                        $"""
-                         Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(modifier != 0 ? modifier : "")}...
-                         Result: {string.Join(" + ", rolls)}{(modifier != 0 ? $" + {modifier}" : "")} = {sum}
-                         """
-                    )
-                ]).SendAsync(_context, ctx.Token);
+                await ctx
+                    .Event.NewMessageRequest([
+                        new TextData(
+                            $"""
+                            Rolling {count}d{sides}{(modifier > 0 ? "+" : "")}{(
+                                modifier != 0 ? modifier : ""
+                            )}...
+                            Result: {string.Join(" + ", rolls)}{(
+                                modifier != 0 ? $" + {modifier}" : ""
+                            )} = {sum}
+                            """
+                        ),
+                    ])
+                    .SendAsync(_context, ctx.Token);
             });
 
         return Task.CompletedTask;

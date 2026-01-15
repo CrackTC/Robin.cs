@@ -22,19 +22,27 @@ internal partial class BotCreationService(
         var scope = service.CreateScope();
 
         var eventInvokerName = botConfig["EventInvokerName"];
-        var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(eventInvokerName);
+        var eventInvokerFactory = service.GetRequiredKeyedService<IBackendFactory>(
+            eventInvokerName
+        );
 
         var operationProviderName = botConfig["OperationProviderName"];
-        var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(operationProviderName);
+        var operationProviderFactory = service.GetRequiredKeyedService<IBackendFactory>(
+            operationProviderName
+        );
 
         var context = scope.ServiceProvider.GetRequiredService<BotContext>();
-        context.Uin = long.Parse(botConfig["Uin"] ?? throw new InvalidOperationException("Uin is not set"));
-        context.EventInvoker =
-            await eventInvokerFactory.GetBotEventInvokerAsync(
-                botConfig.GetRequiredSection("EventInvokerConfig"), token);
-        context.OperationProvider =
-            await operationProviderFactory.GetOperationProviderAsync(
-                botConfig.GetRequiredSection("OperationProviderConfig"), token);
+        context.Uin = long.Parse(
+            botConfig["Uin"] ?? throw new InvalidOperationException("Uin is not set")
+        );
+        context.EventInvoker = await eventInvokerFactory.GetBotEventInvokerAsync(
+            botConfig.GetRequiredSection("EventInvokerConfig"),
+            token
+        );
+        context.OperationProvider = await operationProviderFactory.GetOperationProviderAsync(
+            botConfig.GetRequiredSection("OperationProviderConfig"),
+            token
+        );
         context.FunctionConfigurations = botConfig.GetSection("Configurations");
         context.FilterConfigurations = botConfig.GetSection("Filters");
 

@@ -20,5 +20,5 @@ public abstract class BotFunction(FunctionContext context) : IHostedService
 
 public abstract class BotFunction<TConfig>(FunctionContext<TConfig> context) : BotFunction(context)
 {
-    protected readonly new FunctionContext<TConfig> _context = context;
+    protected new readonly FunctionContext<TConfig> _context = context;
 }

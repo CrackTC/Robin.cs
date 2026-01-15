@@ -10,17 +10,37 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("image", typeof(ImageData))]
 internal class OneBotImageData : IOneBotSegmentData
 {
-    [JsonPropertyName("file")] public required string File { get; set; }
-    [JsonPropertyName("type")] public string? Type { get; set; }
-    [JsonPropertyName("url")] public string? Url { get; set; }
-    [JsonPropertyName("summary")] public string? Summary { get; set; }
-    [JsonPropertyName("cache")] public string? Cache { get; set; }
-    [JsonPropertyName("proxy")] public string? Proxy { get; set; }
-    [JsonPropertyName("timeout")] public string? Timeout { get; set; }
+    [JsonPropertyName("file")]
+    public required string File { get; set; }
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    [JsonPropertyName("summary")]
+    public string? Summary { get; set; }
+
+    [JsonPropertyName("cache")]
+    public string? Cache { get; set; }
+
+    [JsonPropertyName("proxy")]
+    public string? Proxy { get; set; }
+
+    [JsonPropertyName("timeout")]
+    public string? Timeout { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
-        new ImageData(File, ImageSubType.Normal, Url, Summary, Cache is not "0", Proxy is not "0",
-            Timeout is not null ? Convert.ToDouble(Timeout) : null);
+        new ImageData(
+            File,
+            ImageSubType.Normal,
+            Url,
+            Summary,
+            Cache is not "0",
+            Proxy is not "0",
+            Timeout is not null ? Convert.ToDouble(Timeout) : null
+        );
 
     public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
     {

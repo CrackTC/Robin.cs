@@ -11,18 +11,18 @@ namespace Robin.Implementations.OneBot.Entity.Events.Message;
 [OneBotEventType("private")]
 internal class OneBotPrivateMessageEvent : OneBotMessageEvent
 {
-    [JsonPropertyName("sender")] public required OneBotMessageSender Sender { get; set; }
+    [JsonPropertyName("sender")]
+    public required OneBotMessageSender Sender { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter converter)
     {
-        return new PrivateMessageEvent(Time, MessageId.ToString(), UserId,
-            converter.ParseMessageChain(Message) ?? [], Font,
-            new MessageSender(
-                Sender.UserId,
-                Sender.Nickname,
-                Sender.Sex.ToUserSex(),
-                Sender.Age
-            )
+        return new PrivateMessageEvent(
+            Time,
+            MessageId.ToString(),
+            UserId,
+            converter.ParseMessageChain(Message) ?? [],
+            Font,
+            new MessageSender(Sender.UserId, Sender.Nickname, Sender.Sex.ToUserSex(), Sender.Age)
         );
     }
 }

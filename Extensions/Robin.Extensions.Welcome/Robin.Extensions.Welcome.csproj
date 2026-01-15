@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
     <ProjectReference Include="..\..\Robin.Abstractions\Robin.Abstractions.csproj">
       <Private>false</Private>
@@ -14,5 +13,4 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
   </PropertyGroup>
-
 </Project>

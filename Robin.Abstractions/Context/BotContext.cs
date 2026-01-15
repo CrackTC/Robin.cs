@@ -7,10 +7,8 @@ using Robin.Abstractions.Event;
 namespace Robin.Abstractions.Context;
 
 // scoped, every bot has its own option
-public partial class BotContext(
-    IServiceProvider serviceProvider,
-    List<BotFunction> functions
-) : IDisposable
+public partial class BotContext(IServiceProvider serviceProvider, List<BotFunction> functions)
+    : IDisposable
 {
     public long Uin { get; set; }
     public IBotEventInvoker? EventInvoker { get; set; }
@@ -36,7 +34,9 @@ public partial class BotContext(
 
     public FunctionContext? CreateFunctionContext(string functionName, Type functionType)
     {
-        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(functionType);
+        var logger = serviceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger(functionType);
 
         var filterSection = FilterConfigurations!.GetSection(functionName);
         var groupFilter = GetEventFilter(filterSection.GetSection("Group"));
@@ -58,8 +58,10 @@ public partial class BotContext(
         }
 
         var funcCtxType = typeof(FunctionContext<>).MakeGenericType(configType);
-        if (Activator.CreateInstance(funcCtxType, logger, this, config, groupFilter, privateFilter)
-                is not FunctionContext funcCtx)
+        if (
+            Activator.CreateInstance(funcCtxType, logger, this, config, groupFilter, privateFilter)
+            is not FunctionContext funcCtx
+        )
         {
             LogInstantiationFailed(logger);
             return null;

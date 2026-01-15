@@ -10,7 +10,8 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("anonymous", typeof(AnonymousData))]
 internal class OneBotAnonymousData : IOneBotSegmentData
 {
-    [JsonPropertyName("ignore")] public string? Ignore { get; set; }
+    [JsonPropertyName("ignore")]
+    public string? Ignore { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) => new AnonymousData(Ignore is "1");
 
@@ -18,6 +19,10 @@ internal class OneBotAnonymousData : IOneBotSegmentData
     {
         var d = data as AnonymousData;
         Ignore = d!.Ignore is true ? "1" : "0";
-        return new OneBotSegment { Type = "anonymous", Data = JsonSerializer.SerializeToNode(this) };
+        return new OneBotSegment
+        {
+            Type = "anonymous",
+            Data = JsonSerializer.SerializeToNode(this),
+        };
     }
 }

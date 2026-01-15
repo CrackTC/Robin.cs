@@ -10,7 +10,8 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 [OneBotSegmentData("at", typeof(AtData))]
 internal class OneBotAtData : IOneBotSegmentData
 {
-    [JsonPropertyName("qq")] public required string Uin { get; set; }
+    [JsonPropertyName("qq")]
+    public required string Uin { get; set; }
 
     public SegmentData ToSegmentData(OneBotMessageConverter _) =>
         new AtData(Uin is "all" ? 0 : Convert.ToInt64(Uin));

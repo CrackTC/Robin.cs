@@ -16,20 +16,31 @@ internal partial class OneBotHttpClientService(
     OneBotHttpClientOption options
 ) : IOperationProvider
 {
-    private readonly ILogger<OneBotHttpClientService> _logger =
-        service.GetRequiredService<ILogger<OneBotHttpClientService>>();
+    private readonly ILogger<OneBotHttpClientService> _logger = service.GetRequiredService<
+        ILogger<OneBotHttpClientService>
+    >();
 
-    private readonly OneBotMessageConverter _messageConverter =
-        new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
+    private readonly OneBotMessageConverter _messageConverter = new(
+        service.GetRequiredService<ILogger<OneBotMessageConverter>>()
+    );
 
-    private readonly OneBotOperationConverterProvider _opConvProvider =
-        new(options.OneBotVariant, service.GetRequiredService<ILogger<OneBotOperationConverterProvider>>());
+    private readonly OneBotOperationConverterProvider _opConvProvider = new(
+        options.OneBotVariant,
+        service.GetRequiredService<ILogger<OneBotOperationConverterProvider>>()
+    );
 
     private readonly HttpClient _client = new();
 
-    private readonly SemaphoreSlim _semaphore = new(options.RequestParallelism, options.RequestParallelism);
+    private readonly SemaphoreSlim _semaphore = new(
+        options.RequestParallelism,
+        options.RequestParallelism
+    );
 
-    public async Task<TResp> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
+    public async Task<TResp> SendRequestAsync<TResp>(
+        RequestFor<TResp> request,
+        CancellationToken token
+    )
+        where TResp : Response
     {
         var reqConverter = _opConvProvider.GetRequestConverter(request);
         var respConverter = _opConvProvider.GetResponseConverter(request);
@@ -37,24 +48,37 @@ internal partial class OneBotHttpClientService(
 
         LogSendingData(_logger, obReq);
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/{obReq.Endpoint}")
+        var requestMessage = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{options.Url}/{obReq.Endpoint}"
+        )
         {
-            Content = JsonContent.Create(obReq.Params)
+            Content = JsonContent.Create(obReq.Params),
         };
 
         if (!string.IsNullOrEmpty(options.AccessToken))
         {
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.AccessToken);
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                options.AccessToken
+            );
         }
 
-        var response = await _semaphore.ConsumeAsync(() => _client.SendAsync(requestMessage, token), token);
+        var response = await _semaphore.ConsumeAsync(
+            () => _client.SendAsync(requestMessage, token),
+            token
+        );
         if (!response.IsSuccessStatusCode)
         {
             LogSendFailed(_logger);
             throw new();
         }
 
-        return await respConverter.ConvertFromResponseStream(await response.Content.ReadAsStreamAsync(token), _messageConverter, token);
+        return await respConverter.ConvertFromResponseStream(
+            await response.Content.ReadAsStreamAsync(token),
+            _messageConverter,
+            token
+        );
     }
 
     public void Dispose() => _client.Dispose();

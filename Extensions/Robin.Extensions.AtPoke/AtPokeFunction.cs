@@ -14,15 +14,22 @@ public class AtPokeFunction(FunctionContext context) : BotFunction(context), IFl
 {
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken token)
     {
-        builder.On<GroupMessageEvent>()
+        builder
+            .On<GroupMessageEvent>()
             .OnAt()
             .AsFallback()
             .Do(async tuple =>
             {
                 var (e, t) = tuple;
 
-                long uin = e.Message switch { [AtData at, TextData { Text: " " }] => at.Uin, [AtData at] => at.Uin, _ => 0 };
-                if (uin is 0) return;
+                long uin = e.Message switch
+                {
+                    [AtData at, TextData { Text: " " }] => at.Uin,
+                    [AtData at] => at.Uin,
+                    _ => 0,
+                };
+                if (uin is 0)
+                    return;
 
                 await new SendGroupPoke(e.GroupId, uin).SendAsync(_context, t);
             });

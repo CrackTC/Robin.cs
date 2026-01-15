@@ -10,8 +10,11 @@ namespace Robin.Implementations.OneBot.Entity.Events.Meta;
 [OneBotEventType("heartbeat")]
 internal class OneBotHeartbeatEvent : OneBotMetaEvent
 {
-    [JsonPropertyName("status")] public required OneBotStatus Status { get; set; }
-    [JsonPropertyName("interval")] public long Interval { get; set; }
+    [JsonPropertyName("status")]
+    public required OneBotStatus Status { get; set; }
+
+    [JsonPropertyName("interval")]
+    public long Interval { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter _) =>
         new HeartbeatEvent(Time, Status.ToBotStatus(), Interval);

@@ -16,14 +16,17 @@ internal partial class OneBotHttpServerService(
     OneBotHttpServerOption options
 ) : BackgroundService, IBotEventInvoker
 {
-    private readonly ILogger<OneBotHttpServerService> _logger =
-        service.GetRequiredService<ILogger<OneBotHttpServerService>>();
+    private readonly ILogger<OneBotHttpServerService> _logger = service.GetRequiredService<
+        ILogger<OneBotHttpServerService>
+    >();
 
-    private readonly OneBotMessageConverter _messageConverter =
-        new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
+    private readonly OneBotMessageConverter _messageConverter = new(
+        service.GetRequiredService<ILogger<OneBotMessageConverter>>()
+    );
 
-    private readonly OneBotEventConverter _eventConverter =
-        new(service.GetRequiredService<ILogger<OneBotEventConverter>>());
+    private readonly OneBotEventConverter _eventConverter = new(
+        service.GetRequiredService<ILogger<OneBotEventConverter>>()
+    );
 
     public event Func<BotEvent, CancellationToken, Task>? OnEventAsync;
 
@@ -32,7 +35,8 @@ internal partial class OneBotHttpServerService(
     private async Task DispatchMessageAsync(string message, CancellationToken token)
     {
         var node = JsonNode.Parse(message);
-        if (node is null) return;
+        if (node is null)
+            return;
 
         if (_eventConverter.ParseBotEvent(node, _messageConverter) is not { } @event)
             return;

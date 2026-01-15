@@ -23,7 +23,10 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
         if (File.Exists("whoatme.json"))
         {
             await using var stream = File.OpenRead("whoatme.json");
-            _latestAt = await JsonSerializer.DeserializeAsync<Data>(stream, cancellationToken: token);
+            _latestAt = await JsonSerializer.DeserializeAsync<Data>(
+                stream,
+                cancellationToken: token
+            );
         }
         else
         {
@@ -45,38 +48,58 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)
     {
-        builder.On<GroupMessageEvent>("collect @")
+        builder
+            .On<GroupMessageEvent>("collect @")
             .OnAt()
             .AsIntrinsic()
-            .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
-            {
-                var (e, t) = tuple;
-                if (!_latestAt!.ContainsKey(e.GroupId)) _latestAt[e.GroupId] = [];
-                var targets = e.Message.OfType<AtData>().Select(at => at.Uin);
-                foreach (var target in targets)
-                    _latestAt[e.GroupId][target] = e.MessageId;
+            .Do(tuple =>
+                _semaphore.ConsumeAsync(
+                    async Task () =>
+                    {
+                        var (e, t) = tuple;
+                        if (!_latestAt!.ContainsKey(e.GroupId))
+                            _latestAt[e.GroupId] = [];
+                        var targets = e.Message.OfType<AtData>().Select(at => at.Uin);
+                        foreach (var target in targets)
+                            _latestAt[e.GroupId][target] = e.MessageId;
 
-                await SaveAsync(t);
-            }, tuple.Token))
+                        await SaveAsync(t);
+                    },
+                    tuple.Token
+                )
+            )
             .On<GroupMessageEvent>("show who @ me")
             .OnCommand("谁@我", prefix: string.Empty)
-            .Do(tuple => _semaphore.ConsumeAsync(async Task () =>
-            {
-                var (e, t) = tuple;
-                if (!_latestAt!.TryGetValue(e.GroupId, out var ats) || !ats.ContainsKey(e.Sender.UserId))
-                {
-                    await e.NewMessageRequest([
-                        new ReplyData(e.MessageId),
-                        new TextData("暂时没有新的@喵")
-                    ]).SendAsync(_context, t);
-                    return;
-                }
+            .Do(tuple =>
+                _semaphore.ConsumeAsync(
+                    async Task () =>
+                    {
+                        var (e, t) = tuple;
+                        if (
+                            !_latestAt!.TryGetValue(e.GroupId, out var ats)
+                            || !ats.ContainsKey(e.Sender.UserId)
+                        )
+                        {
+                            await e.NewMessageRequest([
+                                    new ReplyData(e.MessageId),
+                                    new TextData("暂时没有新的@喵"),
+                                ])
+                                .SendAsync(_context, t);
+                            return;
+                        }
 
-                await e.NewMessageRequest([new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]), new TextData("这里这里")]).SendAsync(_context, t);
+                        await e.NewMessageRequest([
+                                new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]),
+                                new TextData("这里这里"),
+                            ])
+                            .SendAsync(_context, t);
 
-                _latestAt[e.GroupId].Remove(e.Sender.UserId);
-                await SaveAsync(t);
-            }, tuple.Token));
+                        _latestAt[e.GroupId].Remove(e.Sender.UserId);
+                        await SaveAsync(t);
+                    },
+                    tuple.Token
+                )
+            );
         return Task.CompletedTask;
     }
 }

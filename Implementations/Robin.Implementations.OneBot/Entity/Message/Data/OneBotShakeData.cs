@@ -10,6 +10,7 @@ namespace Robin.Implementations.OneBot.Entity.Message.Data;
 internal class OneBotShakeData : IOneBotSegmentData
 {
     public SegmentData ToSegmentData(OneBotMessageConverter _) => new ShakeData();
-    public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter)
-        => new() { Type = "shake", Data = JsonSerializer.SerializeToNode(this) };
+
+    public OneBotSegment FromSegmentData(SegmentData data, OneBotMessageConverter converter) =>
+        new() { Type = "shake", Data = JsonSerializer.SerializeToNode(this) };
 }
