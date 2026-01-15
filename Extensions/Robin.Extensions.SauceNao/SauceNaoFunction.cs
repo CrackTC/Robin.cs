@@ -19,7 +19,7 @@ public partial class SauceNaoFunction(
 
     private async Task<bool> HandleEvent(MessageEvent e, string msgId, CancellationToken token)
     {
-        if (await new GetMessageRequest(msgId).SendAsync(_context, token)
+        if (await new GetMessage(msgId).SendAsync(_context, token)
             is not { Message.Message: { } origMsg })
             return false;
 
@@ -45,9 +45,8 @@ public partial class SauceNaoFunction(
             return false;
         }
 
-        return await e.NewMessageRequest([
-            new TextData(string.Join("\n", results))
-        ]).SendAsync(_context, token) is { Success: true };
+        await e.NewMessageRequest([new TextData(string.Join('\n', results))]).SendAsync(_context, token);
+        return true;
     }
 
     public Task OnCreatingAsync(FunctionBuilder builder, CancellationToken _)

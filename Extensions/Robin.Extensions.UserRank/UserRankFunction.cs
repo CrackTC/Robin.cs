@@ -28,7 +28,7 @@ public partial class UserRankFunction(
         n = n > 0 ? n : _context.Configuration.TopN;
 
         var members = await GetGroupMembersAsync(groupId, token);
-        var peopleCount = members.Where(member => member.Count is > 0).Count();
+        var peopleCount = members.Count(member => member.Count is > 0);
         var messageCount = (uint)members.Sum(member => member.Count);
 
         var currentRank = members.Where(member => member.Count is > 0)
@@ -44,7 +44,7 @@ public partial class UserRankFunction(
 
         var delta = currentRank.Select((member, index) => (prevRank.TryGetValue(member, out var rank) ? rank : prevRank.Count) - index).ToList();
 
-        if (await new GetGroupMemberListRequest(groupId, NoCache: true).SendAsync(_context, token)
+        if (await new GetGroupMemberList(groupId, NoCache: true).SendAsync(_context, token)
             is not { Members: { } memberInfos }) return false;
 
         var dict = memberInfos.ToDictionary(member => member.UserId, member => member.Card switch
@@ -53,7 +53,7 @@ public partial class UserRankFunction(
             _ => member.Card
         });
 
-        if (await new GetGroupInfoRequest(groupId, NoCache: true).SendAsync(_context, token)
+        if (await new GetGroupInfo(groupId, NoCache: true).SendAsync(_context, token)
             is not { Info.GroupName: { } groupName }) return false;
 
         var ranks = new List<(int rank, long userId, string name, uint count, int delta)>(n + 1);
@@ -80,9 +80,9 @@ public partial class UserRankFunction(
         );
         using var data = image.Encode(SKEncodedImageFormat.Webp, 100);
 
-        return await new SendGroupMessageRequest(groupId, [
-            new ImageData("base64://" + Convert.ToBase64String(data.AsSpan()))
-        ]).SendAsync(_context, token) is { Success: true };
+        await new SendGroupMessage(groupId, [new ImageData("base64://" + Convert.ToBase64String(data.AsSpan()))]).SendAsync(_context, token);
+
+        return true;
     }
 
 

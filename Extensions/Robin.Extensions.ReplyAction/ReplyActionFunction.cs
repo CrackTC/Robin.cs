@@ -42,11 +42,11 @@ public partial class ReplyActionFunction(FunctionContext context) : BotFunction(
                 var verb = match.Groups["verb"];
                 var adverb = match.Groups["adverb"];
 
-                if (await new GetMessageRequest(msgId).SendAsync(_context, token)
+                if (await new GetMessage(msgId).SendAsync(_context, token)
                     is not { Message.Sender.UserId: var senderId })
                     return;
 
-                if (await new GetGroupMemberInfoRequest(e.GroupId, senderId, true).SendAsync(_context, token)
+                if (await new GetGroupMemberInfo(e.GroupId, senderId, true).SendAsync(_context, token)
                     is not { Info: { } info })
                     return;
 

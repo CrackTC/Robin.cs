@@ -17,7 +17,7 @@ public class TestFunction(FunctionContext context) : BotFunction(context), IFlue
             .Where(ctx => ctx.Event.Message.Any(segment => segment is TextData { Text: "/ping" }))
             .Select(ctx => (ctx.Event.GroupId, ctx.Token))
             .Do(ctx =>
-                new SendGroupMessageRequest(ctx.GroupId, [new TextData("pong!")]).SendAsync(_context, ctx.Token)
+                new SendGroupMessage(ctx.GroupId, [new TextData("pong!")]).SendAsync(_context, ctx.Token)
             );
 
         return Task.CompletedTask;

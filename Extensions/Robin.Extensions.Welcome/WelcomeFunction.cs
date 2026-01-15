@@ -32,7 +32,7 @@ public partial class WelcomeFunction(
 
         var parts = text.Split("{at}");
 
-        await new SendGroupMessageRequest(e.GroupId, [
+        await new SendGroupMessage(e.GroupId, [
             new TextData(parts[0]),
             new AtData(e.UserId),
             new TextData(parts[1])

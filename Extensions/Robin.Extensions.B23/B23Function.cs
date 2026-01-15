@@ -30,7 +30,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
         using var resp = await _client.GetAsync(b23Url, token);
 
         if (resp is not { StatusCode: HttpStatusCode.Found, Headers.Location: { } location }) return null;
-        LogB23Redirect(_context.Logger, location.ToString());
+        LogB23Redirect(_context.Logger, location);
         return RawUrlRegex.Match(location.ToString()) is { Success: true, Value: var value } ? value : null;
     }
 
@@ -75,7 +75,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
 
             .On<RecallEvent>()
             .Where(ctx => conversion.ContainsKey(ctx.Event.MessageId))
-            .Do(ctx => new DeleteMessageRequest(conversion[ctx.Event.MessageId]).SendAsync(_context, ctx.Token));
+            .Do(ctx => new RecallMessage(conversion[ctx.Event.MessageId]).SendAsync(_context, ctx.Token));
 
         return Task.CompletedTask;
     }
@@ -86,7 +86,7 @@ public partial class B23Function(FunctionContext context) : BotFunction(context)
     private static partial void LogExtractB23(ILogger logger, string url);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "B23 redirect to {url}")]
-    private static partial void LogB23Redirect(ILogger logger, string url);
+    private static partial void LogB23Redirect(ILogger logger, Uri url);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "B23 resolved to {url}")]
     private static partial void LogB23Resolved(ILogger logger, string url);

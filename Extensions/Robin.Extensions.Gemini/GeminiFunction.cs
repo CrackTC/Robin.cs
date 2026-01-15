@@ -147,7 +147,7 @@ public partial class GeminiFunction(
     }
 
     private async Task<bool> SendReplyAsync(long userId, string reply, CancellationToken token) =>
-        await new SendPrivateMessageRequest(userId, [
+        await new SendPrivateMessage(userId, [
             new TextData(reply)
         ]).SendAsync(_context, token) is not null;
 

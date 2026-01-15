@@ -83,8 +83,8 @@ public partial class WordCloudFunction(
 
         if (clear) await ClearGroupMessagesAsync(groupId, token);
 
-        return await new SendGroupMessageRequest(groupId, [new ImageData(url)]).SendAsync(_context, token)
-            is { Success: true };
+        await new SendGroupMessage(groupId, [new ImageData(url)]).SendAsync(_context, token);
+        return true;
     }
 
     public override async Task StopAsync(CancellationToken token)

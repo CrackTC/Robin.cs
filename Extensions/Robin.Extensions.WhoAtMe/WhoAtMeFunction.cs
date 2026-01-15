@@ -72,14 +72,10 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
                     return;
                 }
 
-                if (await e.NewMessageRequest([
-                    new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]),
-                    new TextData("这里这里") // fix ui bug in mobile QQ
-                ]).SendAsync(_context, t) is { Success: true })
-                {
-                    _latestAt[e.GroupId].Remove(e.Sender.UserId);
-                    await SaveAsync(t);
-                }
+                await e.NewMessageRequest([new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]), new TextData("这里这里")]).SendAsync(_context, t);
+
+                _latestAt[e.GroupId].Remove(e.Sender.UserId);
+                await SaveAsync(t);
             }, tuple.Token));
         return Task.CompletedTask;
     }

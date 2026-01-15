@@ -22,8 +22,8 @@ public class StatusFunction(FunctionContext context) : BotFunction(context), IFl
             .OnCommand("status")
             .Do(async ctx =>
             {
-                if (await new GetFriendListRequest().SendAsync(_context, ctx.Token) is not { Friends.Count: var friendCount }) return;
-                if (await new GetGroupListRequest().SendAsync(_context, ctx.Token) is not { Groups.Count: var groupCount }) return;
+                if (await new GetFriendList().SendAsync(_context, ctx.Token) is not { Friends.Count: var friendCount }) return;
+                if (await new GetGroupList().SendAsync(_context, ctx.Token) is not { Groups.Count: var groupCount }) return;
                 await ctx.Event.NewMessageRequest([
                     new TextData(
                         $"""

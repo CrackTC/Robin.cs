@@ -23,12 +23,13 @@ public partial class GrayFunction(
             {
                 var (ctx, msgId) = t;
 
-                if (await new GetMessageRequest(msgId).SendAsync(_context, ctx.Token)
+                if (await new GetMessage(msgId).SendAsync(_context, ctx.Token)
                     is not { Message.Sender.UserId: var id })
                     return false;
 
                 var url = $"{_context.Configuration.ApiAddress}/?id={id}";
-                return await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token) is { Success: true };
+                await ctx.Event.NewMessageRequest([new ImageData(url)]).SendAsync(_context, ctx.Token);
+                return true;
             }, t => t.EventContext, _context);
 
         return Task.CompletedTask;

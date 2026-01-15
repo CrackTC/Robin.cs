@@ -20,7 +20,7 @@ public partial class WifeFunction(FunctionContext context) : BotFunction(context
             {
                 var (e, t) = ctx;
 
-                if (await new GetGroupMemberListRequest(e.GroupId).SendAsync(_context, t)
+                if (await new GetGroupMemberList(e.GroupId).SendAsync(_context, t)
                     is not { Members: { } members })
                     return;
 
