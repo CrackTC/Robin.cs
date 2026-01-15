@@ -20,10 +20,7 @@ public static partial class RequestExt
         try
         {
             var resp = await context.BotContext.OperationProvider.SendRequestAsync(request, token);
-            if (resp is not { Success: true })
-                LogSendFailed(context.Logger, request, resp);
-            else
-                LogSent(context.Logger, request, resp);
+            LogSent(context.Logger, request, resp);
             return resp;
         }
         catch (Exception e)
@@ -37,9 +34,6 @@ public static partial class RequestExt
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Sent request: {Request}, response: {Response}")]
     private static partial void LogSent(ILogger logger, Request request, Response response);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Sending request failed: {Request}, response: {Response}")]
-    private static partial void LogSendFailed(ILogger logger, Request request, Response? response);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Exception occured when sending request: {Request}")]
     private static partial void LogSendException(ILogger logger, Request request, Exception e);

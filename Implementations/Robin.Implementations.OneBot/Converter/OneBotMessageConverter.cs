@@ -74,7 +74,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
             list.Add(data);
         }
 
-        return new JsonArray(list.Select(segment => JsonSerializer.SerializeToNode(segment)).ToArray());
+        return [.. list.Select(segment => JsonSerializer.SerializeToNode(segment))];
     }
 
     private MessageChain? ParseFromArray(JsonArray segmentArray)

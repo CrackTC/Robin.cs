@@ -5,10 +5,10 @@ namespace Robin.Abstractions.Event.Message;
 
 public static class MessageExt
 {
-    public static SendMessageRequest NewMessageRequest(this MessageEvent e, MessageChain chain) => e switch
+    public static SendMessage NewMessageRequest(this MessageEvent e, MessageChain chain) => e switch
     {
-        PrivateMessageEvent { SourceId: var s } => new SendPrivateMessageRequest(s, chain),
-        GroupMessageEvent { SourceId: var s } => new SendGroupMessageRequest(s, chain),
+        PrivateMessageEvent { SourceId: var s } => new SendPrivateMessage(s, chain),
+        GroupMessageEvent { SourceId: var s } => new SendGroupMessage(s, chain),
         _ => throw new NotSupportedException()
     };
 }

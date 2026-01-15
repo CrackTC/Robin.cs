@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Robin.Abstractions.Entity;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Notice;
 using Robin.Implementations.OneBot.Converter;
@@ -15,6 +14,5 @@ internal class OneBotGroupUploadEvent : OneBotNoticeEvent
     [JsonPropertyName("user_id")] public long UserId { get; set; }
     [JsonPropertyName("file")] public required OneBotUploadFile File { get; set; }
 
-    public override BotEvent ToBotEvent(OneBotMessageConverter _) => new GroupUploadEvent(Time, GroupId, UserId,
-        new UploadFile(File.Id, File.Name, File.Size, File.BusId));
+    public override BotEvent ToBotEvent(OneBotMessageConverter _) => new GroupUploadEvent(Time, GroupId, UserId, File.ToUploadFile());
 }

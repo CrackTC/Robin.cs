@@ -87,15 +87,16 @@ internal partial class BotFunctionService(
     {
         if (@event is not HeartbeatEvent)
         {
-            LogReceivedEvent(
-                logger,
-                @event.GetType().Name,
-                JsonSerializer.Serialize(
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                var type = @event.GetType();
+                var eventString = JsonSerializer.Serialize(
                     @event,
-                    @event.GetType(),
+                    type,
                     _jsonSerializerOptions
-                )
-            );
+                );
+                LogReceivedEvent(logger, type, eventString);
+            }
         }
 
         var tasks = new List<Task>();
@@ -148,7 +149,7 @@ internal partial class BotFunctionService(
     private static partial void LogRegisteredFunction(ILogger logger, string name, string type);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Received {Type}: {Event}")]
-    private static partial void LogReceivedEvent(ILogger logger, string type, string @event);
+    private static partial void LogReceivedEvent(ILogger logger, Type type, string @event);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Error while creating function {Name}")]
     private static partial void LogCreateFunctionFailed(ILogger logger, string name, Exception exception);

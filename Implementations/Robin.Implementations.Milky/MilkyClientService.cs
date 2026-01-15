@@ -53,11 +53,11 @@ internal partial class MilkyClientService(
         _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
 
-    public async Task<TResp?> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
+    public async Task<TResp> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
     {
         switch (request)
         {
-            case DeleteMessageRequest deleteMsg:
+            case RecallMessage deleteMsg:
                 {
                     if (deleteMsg.MessageId.Split('|') is not ([var messageScene, var peerIdStr, var messageSeqStr]))
                         throw new InvalidOperationException("Invalid message ID format");
@@ -68,52 +68,40 @@ internal partial class MilkyClientService(
                     {
                         case "friend":
                             await client.Message.RecallPrivateMessageAsync(new(peerId, messageSeq), token);
-                            return Response.OK as TResp;
+                            return (Response.Shared as TResp)!;
                         case "group":
                             await client.Message.RecallGroupMessageAsync(new(peerId, messageSeq), token);
-                            return Response.OK as TResp;
+                            return (Response.Shared as TResp)!;
                         default:
                             throw new NotSupportedException($"Unsupported message scene: {messageScene}");
                     }
                 }
-            case GetFriendListRequest getFriendList:
+            case GetFriendList getFriendList:
                 {
                     var result = await client.System.GetFriendListAsync(new(false), token);
                     var resp = new GetFriendListResponse(
-                        true,
-                        0,
-                        null,
                         [.. result.Friends.Select(friend => new FriendInfo(friend.UserId, friend.Nickname, friend.Remark))]);
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case GetGroupInfoRequest getGroupInfo:
+            case GetGroupInfo getGroupInfo:
                 {
                     var result = await client.System.GetGroupInfoAsync(new(getGroupInfo.GroupId, getGroupInfo.NoCache), token);
                     var resp = new GetGroupInfoResponse(
-                        true,
-                        0,
-                        null,
                         new GroupInfo(result.Group.GroupId, result.Group.GroupName, result.Group.MemberCount, result.Group.MaxMemberCount)
                     );
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case GetGroupListRequest getGroupList:
+            case GetGroupList getGroupList:
                 {
                     var result = await client.System.GetGroupListAsync(new(false), token);
                     var resp = new GetGroupListResponse(
-                        true,
-                        0,
-                        null,
                         [.. result.Groups.Select(group => new GroupInfo(group.GroupId, group.GroupName, group.MemberCount, group.MaxMemberCount))]);
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case GetGroupMemberInfoRequest getGroupMemberInfo:
+            case GetGroupMemberInfo getGroupMemberInfo:
                 {
                     var result = await client.System.GetGroupMemberInfoAsync(new(getGroupMemberInfo.GroupId, getGroupMemberInfo.UserId, getGroupMemberInfo.NoCache), token);
                     var resp = new GetGroupMemberInfoResponse(
-                        true,
-                        0,
-                        null,
                         new GroupMemberInfo(
                             result.Member.GroupId,
                             result.Member.UserId,
@@ -132,16 +120,13 @@ internal partial class MilkyClientService(
                             null
                         )
                     );
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case GetGroupMemberListRequest getGroupMemberList:
+            case GetGroupMemberList getGroupMemberList:
                 {
                     var result = await client.System.GetGroupMemberListAsync(new(getGroupMemberList.GroupId, getGroupMemberList.NoCache), token);
-                    var resp = new GetGroupMemberListResponse(
-                        true,
-                        0,
-                        null,
-                        [.. result.Members.Select(member => new GroupMemberInfo(
+                    var resp = new GetGroupMemberListResponse([.. result.Members.Select(member =>
+                        new GroupMemberInfo(
                             member.GroupId,
                             member.UserId,
                             member.Nickname,
@@ -158,9 +143,9 @@ internal partial class MilkyClientService(
                             null,
                             null
                         ))]);
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case GetMessageRequest getMsg:
+            case GetMessage getMsg:
                 {
                     if (getMsg.MessageId.Split('|') is not ([var messageScene, var peerIdStr, var messageSeqStr]))
                         throw new InvalidOperationException("Invalid message ID format");
@@ -174,9 +159,6 @@ internal partial class MilkyClientService(
                         token
                     );
                     var resp = new GetMessageResponse(
-                        true,
-                        0,
-                        null,
                         new MessageInfo(
                             result.Message.Time.ToUnixTimeSeconds(),
                             GetMessageType(result.Message),
@@ -201,9 +183,9 @@ internal partial class MilkyClientService(
                             ConvertSegment(result.Message)
                         )
                     );
-                    return resp as TResp;
+                    return (resp as TResp)!;
                 }
-            case SendGroupForwardMessageRequest sendGroupForwardMsg:
+            case SendGroupForwardMessage sendGroupForwardMsg:
                 {
                     SendGroupMessageOutput result;
                     var triesRemain = options.SendMessageMaxRetry + 1;
@@ -234,11 +216,10 @@ internal partial class MilkyClientService(
                         }
                     }
 
-                    return new SendGroupForwardMessageResponse(true, 0, null,
-                        new ForwardResult(GenerateMessageId(MessageScene.Group, sendGroupForwardMsg.GroupId, result.MessageSeq), "")
-                    ) as TResp;
+                    return (new SendGroupForwardMessageResponse(new ForwardResult(GenerateMessageId(MessageScene.Group, sendGroupForwardMsg.GroupId, result.MessageSeq), "")
+                    ) as TResp)!;
                 }
-            case SendGroupMessageRequest sendGroupMsg:
+            case SendGroupMessage sendGroupMsg:
                 {
                     SendGroupMessageOutput result;
                     var triesRemain = options.SendMessageMaxRetry + 1;
@@ -268,16 +249,14 @@ internal partial class MilkyClientService(
                         }
                     }
 
-                    return new SendMessageResponse(true, 0, null,
-                        GenerateMessageId(MessageScene.Group, sendGroupMsg.GroupId, result.MessageSeq)
-                    ) as TResp;
+                    return (new SendMessageResponse(GenerateMessageId(MessageScene.Group, sendGroupMsg.GroupId, result.MessageSeq)) as TResp)!;
                 }
-            case SendGroupPokeRequest sendGroupPoke:
+            case SendGroupPoke sendGroupPoke:
                 {
                     await client.Group.SendGroupNudgeAsync(new SendGroupNudgeInput(sendGroupPoke.GroupId, sendGroupPoke.UserId), token);
-                    return Response.OK as TResp;
+                    return (Response.Shared as TResp)!;
                 }
-            case SendPrivateMessageRequest sendPrivateMsg:
+            case SendPrivateMessage sendPrivateMsg:
                 {
                     SendPrivateMessageOutput result;
                     var triesRemain = options.SendMessageMaxRetry + 1;
@@ -306,11 +285,9 @@ internal partial class MilkyClientService(
                             throw;
                         }
                     }
-                    return new SendMessageResponse(true, 0, null,
-                        GenerateMessageId(MessageScene.Friend, sendPrivateMsg.UserId, result.MessageSeq)
-                    ) as TResp;
+                    return (new SendMessageResponse(GenerateMessageId(MessageScene.Friend, sendPrivateMsg.UserId, result.MessageSeq)) as TResp)!;
                 }
-            case SetFriendAddRequestRequest setFriendAddReq:
+            case SetFriendAddRequest setFriendAddReq:
                 {
                     if (setFriendAddReq.Approve)
                     {
@@ -320,9 +297,9 @@ internal partial class MilkyClientService(
                     {
                         await client.Friend.RejectFriendRequestAsync(new(setFriendAddReq.Flag, false, setFriendAddReq.Remark), token);
                     }
-                    return Response.OK as TResp;
+                    return (Response.Shared as TResp)!;
                 }
-            case SetGroupReactionRequest setGroupReaction:
+            case SetGroupReaction setGroupReaction:
                 {
                     await client.Group.SendGroupMessageReactionAsync(new(
                         setGroupReaction.GroupId,
@@ -330,9 +307,9 @@ internal partial class MilkyClientService(
                         setGroupReaction.Code,
                         setGroupReaction.IsAdd
                     ), token);
-                    return Response.OK as TResp;
+                    return (Response.Shared as TResp)!;
                 }
-            case UploadGroupFileRequest uploadGroupFile:
+            case UploadGroupFile uploadGroupFile:
                 {
                     await client.File.UploadGroupFileAsync(new(
                         uploadGroupFile.GroupId,
@@ -340,7 +317,7 @@ internal partial class MilkyClientService(
                         new(uploadGroupFile.File),
                         uploadGroupFile.Name
                     ), token);
-                    return Response.OK as TResp;
+                    return (Response.Shared as TResp)!;
                 }
             default:
                 throw new NotSupportedException($"Unsupported request type: {request.GetType().Name}");

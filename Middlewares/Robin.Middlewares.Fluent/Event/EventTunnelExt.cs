@@ -99,13 +99,13 @@ public static class EventTunnelExt
             var (e, t) = eventSelector(data);
             try
             {
-                await new SetGroupReactionRequest(e.GroupId, e.MessageId, "128164", true).SendAsync(context, t);
-                await new SetGroupReactionRequest(e.GroupId, e.MessageId, await something(data) ? "10024" : "128293", true).SendAsync(context, t);
-                await new SetGroupReactionRequest(e.GroupId, e.MessageId, "128164", false).SendAsync(context, t);
+                await new SetGroupReaction(e.GroupId, e.MessageId, "128164", true).SendAsync(context, t);
+                await new SetGroupReaction(e.GroupId, e.MessageId, await something(data) ? "10024" : "128293", true).SendAsync(context, t);
+                await new SetGroupReaction(e.GroupId, e.MessageId, "128164", false).SendAsync(context, t);
             }
             catch
             {
-                await ((Task)new SetGroupReactionRequest(e.GroupId, e.MessageId, "128293", true)
+                await ((Task)new SetGroupReaction(e.GroupId, e.MessageId, "128293", true)
                     .SendAsync(context, t)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
                 throw;
             }

@@ -96,7 +96,7 @@ public partial class FluentFunction
             _stoppingCts.Token
         );
 
-        var options = new CronExpressionDescriptor.Options()
+        var options = new Options()
         {
             Use24HourTimeFormat = true,
             Locale = _context.Configuration.CronDescriptionLocale

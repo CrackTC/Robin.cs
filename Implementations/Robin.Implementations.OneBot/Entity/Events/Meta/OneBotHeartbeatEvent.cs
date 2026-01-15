@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Robin.Abstractions.Entity;
 using Robin.Abstractions.Event;
 using Robin.Abstractions.Event.Meta;
 using Robin.Implementations.OneBot.Converter;
@@ -15,5 +14,5 @@ internal class OneBotHeartbeatEvent : OneBotMetaEvent
     [JsonPropertyName("interval")] public long Interval { get; set; }
 
     public override BotEvent ToBotEvent(OneBotMessageConverter _) =>
-        new HeartbeatEvent(Time, new BotStatus(Status.Online, Status.Good), Interval);
+        new HeartbeatEvent(Time, Status.ToBotStatus(), Interval);
 }

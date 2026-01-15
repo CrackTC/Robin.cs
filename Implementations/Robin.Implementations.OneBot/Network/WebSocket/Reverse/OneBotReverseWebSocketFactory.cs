@@ -35,17 +35,13 @@ public partial class OneBotReverseWebSocketFactory(
 
     public async Task<IOperationProvider> GetOperationProviderAsync(IConfiguration config, CancellationToken token)
     {
-        LogGetOperationProvider(logger);
-        return await GetServiceAsync(config, token);
+        throw new NotSupportedException();
     }
 
     #region Log
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "GetBotEventInvoker")]
     private static partial void LogGetBotEventInvoker(ILogger logger);
-
-    [LoggerMessage(Level = LogLevel.Debug, Message = "GetOperationProvider")]
-    private static partial void LogGetOperationProvider(ILogger logger);
 
     #endregion
 }

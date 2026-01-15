@@ -1,11 +1,12 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
+using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Robin.Abstractions.Communication;
 using Robin.Abstractions.Operation;
 using Robin.Abstractions.Utility;
 using Robin.Implementations.OneBot.Converter;
+using Robin.Implementations.OneBot.Converter.Operation;
 using Robin.Implementations.OneBot.Entity.Operations;
 
 namespace Robin.Implementations.OneBot.Network.Http.Client;
@@ -21,29 +22,24 @@ internal partial class OneBotHttpClientService(
     private readonly OneBotMessageConverter _messageConverter =
         new(service.GetRequiredService<ILogger<OneBotMessageConverter>>());
 
-    private readonly OneBotOperationConverter _operationConverter =
-        new(service.GetRequiredService<ILogger<OneBotOperationConverter>>());
+    private readonly OneBotOperationConverterProvider _opConvProvider =
+        new(options.OneBotVariant, service.GetRequiredService<ILogger<OneBotOperationConverterProvider>>());
 
     private readonly HttpClient _client = new();
 
     private readonly SemaphoreSlim _semaphore = new(options.RequestParallelism, options.RequestParallelism);
 
-    public async Task<TResp?> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
+    public async Task<TResp> SendRequestAsync<TResp>(RequestFor<TResp> request, CancellationToken token) where TResp : Response
     {
-        if (_operationConverter.SerializeToJson(request, _messageConverter) is not { } pair)
+        var reqConverter = _opConvProvider.GetRequestConverter(request);
+        var respConverter = _opConvProvider.GetResponseConverter(request);
+        var obReq = reqConverter.ConvertToOneBotRequest(request, _messageConverter);
+
+        LogSendingData(_logger, obReq);
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/{obReq.Endpoint}")
         {
-            LogInvalidRequest(_logger, request.ToString());
-            return null;
-        }
-
-        var (endpoint, r, type) = pair;
-
-        var json = r!.ToJsonString();
-        LogSendingData(_logger, json);
-
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/{endpoint}")
-        {
-            Content = new StringContent(json, new MediaTypeHeaderValue("application/json"))
+            Content = JsonContent.Create(obReq.Params)
         };
 
         if (!string.IsNullOrEmpty(options.AccessToken))
@@ -55,38 +51,21 @@ internal partial class OneBotHttpClientService(
         if (!response.IsSuccessStatusCode)
         {
             LogSendFailed(_logger);
-            return null;
+            throw new();
         }
 
-        var oneBotResponse =
-            await JsonSerializer.DeserializeAsync<OneBotResponse>(await response.Content.ReadAsStreamAsync(token),
-                cancellationToken: token);
-
-        if (oneBotResponse is not null)
-            return _operationConverter.ParseResponse(type, oneBotResponse, _messageConverter) as TResp;
-
-        LogInvalidResponse(_logger, await response.Content.ReadAsStringAsync(token));
-        return null;
+        return await respConverter.ConvertFromResponseStream(await response.Content.ReadAsStreamAsync(token), _messageConverter, token);
     }
 
     public void Dispose() => _client.Dispose();
 
     #region Log
 
-    [LoggerMessage(Level = LogLevel.Debug, Message = "Receive message: {Message}")]
-    private static partial void LogReceiveMessage(ILogger logger, string message);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid request: {Request}")]
-    private static partial void LogInvalidRequest(ILogger logger, string request);
-
     [LoggerMessage(Level = LogLevel.Trace, Message = "Send: {Data}")]
-    private static partial void LogSendingData(ILogger logger, string data);
+    private static partial void LogSendingData(ILogger logger, OneBotRequest data);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Send data failed")]
     private static partial void LogSendFailed(ILogger logger);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Invalid response: {Response}")]
-    private static partial void LogInvalidResponse(ILogger logger, string response);
 
     #endregion
 }

@@ -17,8 +17,12 @@ internal class OneBotPrivateMessageEvent : OneBotMessageEvent
     {
         return new PrivateMessageEvent(Time, MessageId.ToString(), UserId,
             converter.ParseMessageChain(Message) ?? [], Font,
-            new MessageSender(Sender.UserId, Sender.Nickname,
-                Sender.Sex switch { "male" => UserSex.Male, "female" => UserSex.Female, _ => UserSex.Unknown },
-                Sender.Age));
+            new MessageSender(
+                Sender.UserId,
+                Sender.Nickname,
+                Sender.Sex.ToUserSex(),
+                Sender.Age
+            )
+        );
     }
 }
