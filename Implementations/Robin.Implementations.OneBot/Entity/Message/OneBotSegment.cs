@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace Robin.Implementations.OneBot.Entity.Message;
 
-[Serializable]
 internal class OneBotSegment
 {
     [JsonPropertyName("type")]

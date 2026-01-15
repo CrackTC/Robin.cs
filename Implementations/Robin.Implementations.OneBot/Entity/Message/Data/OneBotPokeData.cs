@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("poke", typeof(PokeData))]
 internal class OneBotPokeData : IOneBotSegmentData
 {

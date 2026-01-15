@@ -7,7 +7,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("location", typeof(LocationData))]
 internal class OneBotLocationData : IOneBotSegmentData
 {

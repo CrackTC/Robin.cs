@@ -5,7 +5,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Meta;
 
-[Serializable]
 [OneBotEventType("lifecycle")]
 internal class OneBotLifecycleEvent : OneBotMetaEvent
 {

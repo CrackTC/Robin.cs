@@ -1,6 +1,5 @@
 namespace Robin.Extensions.Gemini;
 
-[Serializable]
 public class GeminiOption
 {
     public required string ApiKey { get; set; }

@@ -5,7 +5,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Request;
 
-[Serializable]
 [OneBotEventType("friend")]
 internal class OneBotFriendRequestEvent : OneBotRequestEvent
 {

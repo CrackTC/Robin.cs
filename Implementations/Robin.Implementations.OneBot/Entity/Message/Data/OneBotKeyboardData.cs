@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("keyboard", typeof(KeyboardData))]
 internal class OneBotKeyboardData : IOneBotSegmentData
 {
@@ -62,21 +61,18 @@ internal class OneBotKeyboardData : IOneBotSegmentData
         throw new NotImplementedException();
 }
 
-[Serializable]
 internal class OneBotKeyboardContent
 {
     [JsonPropertyName("rows")]
     public required List<OneBotKeyboardRow> Rows { get; set; }
 }
 
-[Serializable]
 internal class OneBotKeyboardRow
 {
     [JsonPropertyName("buttons")]
     public required List<OneBotKeyboardButton> Buttons { get; set; }
 }
 
-[Serializable]
 internal class OneBotKeyboardButton
 {
     [JsonPropertyName("id")]
@@ -89,7 +85,6 @@ internal class OneBotKeyboardButton
     public required OneBotKeyboardAction Action { get; set; }
 }
 
-[Serializable]
 internal class OneBotKeyboardRenderData
 {
     [JsonPropertyName("label")]
@@ -102,7 +97,6 @@ internal class OneBotKeyboardRenderData
     public required int Style { get; set; }
 }
 
-[Serializable]
 internal class OneBotKeyboardAction
 {
     [JsonPropertyName("type")]
@@ -124,7 +118,6 @@ internal class OneBotKeyboardAction
     public bool? Enter { get; set; }
 }
 
-[Serializable]
 internal class OneBotKeyboardPermission
 {
     [JsonPropertyName("type")]

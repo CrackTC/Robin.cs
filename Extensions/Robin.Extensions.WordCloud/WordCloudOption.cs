@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace Robin.Extensions.WordCloud;
 
-[Serializable]
 public record CloudOption
 {
     // JsonPropertyName only used for serialization
@@ -44,7 +43,6 @@ public record CloudOption
     public required string Text { get; set; }
 }
 
-[Serializable]
 public class WordCloudOption
 {
     public required string ApiAddress { get; set; }

@@ -5,7 +5,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("dice", typeof(DiceData))]
 internal class OneBotDiceData : IOneBotSegmentData
 {

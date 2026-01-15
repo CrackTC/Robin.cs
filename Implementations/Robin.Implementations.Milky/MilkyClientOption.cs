@@ -1,6 +1,5 @@
 namespace Robin.Implementations.Milky;
 
-[Serializable]
 internal class MilkyClientOption
 {
     public required string Url { get; set; }

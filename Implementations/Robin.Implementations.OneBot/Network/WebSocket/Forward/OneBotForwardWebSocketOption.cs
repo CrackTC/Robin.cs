@@ -1,6 +1,5 @@
 namespace Robin.Implementations.OneBot.Network.WebSocket.Forward;
 
-[Serializable]
 internal class OneBotForwardWebSocketOption
 {
     public required string Url { get; set; }

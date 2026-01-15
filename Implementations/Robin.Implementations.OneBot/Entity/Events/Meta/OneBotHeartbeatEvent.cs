@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Entity.Common;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Meta;
 
-[Serializable]
 [OneBotEventType("heartbeat")]
 internal class OneBotHeartbeatEvent : OneBotMetaEvent
 {

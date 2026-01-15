@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("music", typeof(CustomMusicData), typeof(MusicData))]
 internal class OneBotMusicData : IOneBotSegmentData
 {

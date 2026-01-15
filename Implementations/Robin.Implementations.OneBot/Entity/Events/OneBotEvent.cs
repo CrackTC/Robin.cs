@@ -7,7 +7,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Events;
 
-[Serializable]
 internal abstract class OneBotEvent
 {
     [JsonPropertyName("time")]

@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Message.Data;
 
-[Serializable]
 [OneBotSegmentData("video", typeof(VideoData))]
 internal class OneBotVideoData : IOneBotSegmentData
 {

@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Entity.Common;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Message;
 
-[Serializable]
 [OneBotEventType("group")]
 internal class OneBotGroupMessageEvent : OneBotMessageEvent
 {

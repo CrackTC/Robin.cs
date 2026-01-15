@@ -5,7 +5,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Notice;
 
-[Serializable]
 [OneBotEventType("reaction")]
 internal class OneBotReactionEvent : OneBotNoticeEvent
 {

@@ -6,7 +6,6 @@ using Robin.Implementations.OneBot.Entity.Common;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Notice;
 
-[Serializable]
 [OneBotEventType("group_upload")]
 internal class OneBotGroupUploadEvent : OneBotNoticeEvent
 {

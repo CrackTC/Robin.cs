@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Message;
 
-[Serializable]
 [OneBotPostType("message")]
 internal abstract class OneBotMessageEvent : OneBotEvent
 {

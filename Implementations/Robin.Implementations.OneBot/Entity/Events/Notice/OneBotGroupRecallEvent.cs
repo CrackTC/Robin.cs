@@ -5,7 +5,6 @@ using Robin.Implementations.OneBot.Converter;
 
 namespace Robin.Implementations.OneBot.Entity.Events.Notice;
 
-[Serializable]
 [OneBotEventType("group_recall")]
 internal class OneBotGroupRecallEvent : OneBotNoticeEvent
 {
