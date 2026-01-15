@@ -19,10 +19,8 @@ public partial class OneBotHttpServerFactory(
     {
         var option = config.Get<OneBotHttpServerOption>()!;
 
-        if (_services.TryGetValue(option.Port, out var service))
-        {
+        if (_services.GetValueOrDefault(option.Port) is { } service)
             return service;
-        }
 
         service = new OneBotHttpServerService(provider, option);
         await service.StartAsync(token);

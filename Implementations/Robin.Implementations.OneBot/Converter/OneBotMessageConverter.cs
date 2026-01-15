@@ -95,7 +95,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
                 return null;
             }
 
-            if (!_typeNameToDataType.TryGetValue(segment.Type, out var dataType))
+            if (_typeNameToDataType.GetValueOrDefault(segment.Type) is not { } dataType)
             {
                 LogDataTypeNotFound(logger, segment.Type);
                 return null;
@@ -135,7 +135,7 @@ internal partial class OneBotMessageConverter(ILogger<OneBotMessageConverter> lo
             textStart = match.Index + match.Length;
 
             var type = match.Groups[1].Value;
-            if (!_typeNameToDataType.TryGetValue(type, out var dataType))
+            if (_typeNameToDataType.GetValueOrDefault(type) is not { } dataType)
             {
                 LogDataTypeNotFound(logger, type);
                 return null;

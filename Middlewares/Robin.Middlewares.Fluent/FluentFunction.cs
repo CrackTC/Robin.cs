@@ -36,7 +36,7 @@ public partial class FluentFunction(FunctionContext<FluentOption> context)
             {
                 if (tunnel.Priority == int.MinValue)
                     intrinsicTuns.Add(tunnel);
-                else if (!tunLists.TryGetValue(tunnel.Priority, out var list))
+                else if (tunLists.GetValueOrDefault(tunnel.Priority) is not { } list)
                     tunLists[tunnel.Priority] = [tunnel];
                 else
                     list.Add(tunnel);
@@ -119,8 +119,8 @@ public partial class FluentFunction
         foreach (var (funcName, function, tunnel) in tuples)
         {
             if (
-                !_context.Configuration.Crons.TryGetValue(funcName, out var funcCrons)
-                || !funcCrons.TryGetValue(tunnel.Name!, out string? cron)
+                _context.Configuration.Crons.GetValueOrDefault(funcName) is not { } funcCrons
+                || funcCrons.GetValueOrDefault(tunnel.Name!) is not { } cron
             )
                 cron = tunnel.Cron;
 

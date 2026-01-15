@@ -28,7 +28,10 @@ public partial class WelcomeFunction(FunctionContext<WelcomeOption> context)
         if (eventContext.Event is not GroupIncreaseEvent e)
             return;
 
-        if (!_context.Configuration.WelcomeTexts.TryGetValue(e.GroupId.ToString(), out var text))
+        if (
+            _context.Configuration.WelcomeTexts.GetValueOrDefault(e.GroupId.ToString())
+            is not { } text
+        )
             return;
 
         var parts = text.Split("{at}");

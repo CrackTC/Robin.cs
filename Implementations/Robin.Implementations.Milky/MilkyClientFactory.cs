@@ -17,10 +17,8 @@ public class MilkyClientFactory(IServiceProvider provider, ILogger<MilkyClientFa
     {
         var option = config.Get<MilkyClientOption>()!;
 
-        if (_services.TryGetValue(option.Url, out var service))
-        {
+        if (_services.GetValueOrDefault(option.Url) is { } service)
             return service;
-        }
 
         service = new MilkyClientService(provider, option);
         await service.StartAsync(token);

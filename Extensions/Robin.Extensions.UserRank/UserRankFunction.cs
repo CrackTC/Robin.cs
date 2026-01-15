@@ -83,7 +83,7 @@ public partial class UserRankFunction(FunctionContext<UserRankOption> context)
         if (userId is not null)
         {
             int index = currentRank.FindIndex(member => member.UserId == userId);
-            var name = dict.TryGetValue(userId.Value, out var value) ? value : userId.ToString();
+            var name = dict.GetValueOrDefault(userId.Value) ?? userId.ToString();
             if (index >= 0)
                 ranks.Add((index + 1, userId.Value, name!, currentRank[index].Count, delta[index]));
             else
@@ -96,9 +96,8 @@ public partial class UserRankFunction(FunctionContext<UserRankOption> context)
                 .Select(
                     (member, index) =>
                     {
-                        var name = dict.TryGetValue(member.UserId, out var value)
-                            ? value
-                            : member.UserId.ToString();
+                        var name =
+                            dict.GetValueOrDefault(member.UserId) ?? member.UserId.ToString();
                         return (index + 1, member.UserId, name!, member.Count, delta[index]);
                     }
                 )

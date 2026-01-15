@@ -10,33 +10,16 @@ public partial class OneBotReverseWebSocketFactory(
     ILogger<OneBotReverseWebSocketFactory> logger
 ) : IBackendFactory
 {
-    private static readonly Dictionary<int, OneBotReverseWebSocketService> _services = [];
-
-    private async Task<OneBotReverseWebSocketService> GetServiceAsync(
-        IConfiguration config,
-        CancellationToken token
-    )
-    {
-        var option = config.Get<OneBotReverseWebSocketOption>()!;
-
-        if (_services.TryGetValue(option.Port, out var service))
-        {
-            return service;
-        }
-
-        service = new OneBotReverseWebSocketService(provider, option);
-        await service.StartAsync(token);
-        _services[option.Port] = service;
-        return service;
-    }
-
     public async Task<IBotEventInvoker> GetBotEventInvokerAsync(
         IConfiguration config,
         CancellationToken token
     )
     {
         LogGetBotEventInvoker(logger);
-        return await GetServiceAsync(config, token);
+        var option = config.Get<OneBotReverseWebSocketOption>()!;
+        var service = new OneBotReverseWebSocketService(provider, option);
+        await service.StartAsync(token);
+        return service;
     }
 
     public async Task<IOperationProvider> GetOperationProviderAsync(

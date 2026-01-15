@@ -49,7 +49,7 @@ internal partial class BotFunctionService(
                 {
                     if (!eventType.IsAssignableTo(typeof(BotEvent)))
                         continue;
-                    if (_eventToFunctions.TryGetValue(eventType, out var eventFunctions))
+                    if (_eventToFunctions.GetValueOrDefault(eventType) is { } eventFunctions)
                         eventFunctions.Add(function);
                     else
                         _eventToFunctions[eventType] = [function];
@@ -101,7 +101,7 @@ internal partial class BotFunctionService(
 
         for (var type = @event.GetType(); type.BaseType is not null; type = type.BaseType)
         {
-            if (!_eventToFunctions.TryGetValue(type, out var eventFunctions))
+            if (_eventToFunctions.GetValueOrDefault(type) is not { } eventFunctions)
                 continue;
             tasks.AddRange(
                 eventFunctions

@@ -16,10 +16,8 @@ public partial class OneBotHttpClientFactory(
     {
         var option = config.Get<OneBotHttpClientOption>()!;
 
-        if (_services.TryGetValue(option.Url, out var service))
-        {
+        if (_services.GetValueOrDefault(option.Url) is { } service)
             return service;
-        }
 
         service = new OneBotHttpClientService(provider, option);
         _services[option.Url] = service;

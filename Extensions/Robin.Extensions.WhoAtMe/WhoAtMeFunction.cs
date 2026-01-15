@@ -76,8 +76,8 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
                     {
                         var (e, t) = tuple;
                         if (
-                            !_latestAt!.TryGetValue(e.GroupId, out var ats)
-                            || !ats.ContainsKey(e.Sender.UserId)
+                            _latestAt?.GetValueOrDefault(e.GroupId) is not { } ats
+                            || ats.GetValueOrDefault(e.Sender.UserId) is not { } msgId
                         )
                         {
                             await e.NewMessageRequest([
@@ -88,10 +88,7 @@ public class WhoAtMeFunction(FunctionContext context) : BotFunction(context), IF
                             return;
                         }
 
-                        await e.NewMessageRequest([
-                                new ReplyData(_latestAt[e.GroupId][e.Sender.UserId]),
-                                new TextData("这里这里"),
-                            ])
+                        await e.NewMessageRequest([new ReplyData(msgId), new TextData("这里这里")])
                             .SendAsync(_context, t);
 
                         _latestAt[e.GroupId].Remove(e.Sender.UserId);
