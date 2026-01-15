@@ -3,15 +3,16 @@ namespace Robin.Implementations.OneBot.Entity.Common;
 using System.Text.Json.Serialization;
 using Robin.Abstractions.Entity;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 internal enum OneBotSex
 {
-    [JsonPropertyName("male")]
+    [JsonStringEnumMemberName("male")]
     Male,
 
-    [JsonPropertyName("female")]
+    [JsonStringEnumMemberName("female")]
     Female,
 
-    [JsonPropertyName("unknown")]
+    [JsonStringEnumMemberName("unknown")]
     Unknown,
 }
 

@@ -3,15 +3,16 @@ using Robin.Abstractions.Entity;
 
 namespace Robin.Implementations.OneBot.Entity.Common;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 internal enum OneBotGroupRole
 {
-    [JsonPropertyName("member")]
+    [JsonStringEnumMemberName("member")]
     Member,
 
-    [JsonPropertyName("admin")]
+    [JsonStringEnumMemberName("admin")]
     Admin,
 
-    [JsonPropertyName("owner")]
+    [JsonStringEnumMemberName("owner")]
     Owner,
 }
 

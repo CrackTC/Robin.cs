@@ -12,7 +12,7 @@ internal class OneBotMessageSender
     public required string Nickname { get; set; }
 
     [JsonPropertyName("sex")]
-    public required OneBotSex Sex { get; set; }
+    public OneBotSex Sex { get; set; } = OneBotSex.Unknown;
 
     [JsonPropertyName("age")]
     public int Age { get; set; }

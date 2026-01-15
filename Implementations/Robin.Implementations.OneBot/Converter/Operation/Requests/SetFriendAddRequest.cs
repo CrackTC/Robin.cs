@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class SetFriendAddRequest
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.SetFriendAddRequest>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.SetFriendAddRequest>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.SetFriendAddRequest request,
         OneBotMessageConverter _
     ) =>

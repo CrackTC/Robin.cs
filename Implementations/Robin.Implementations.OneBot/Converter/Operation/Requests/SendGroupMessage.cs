@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class SendGroupMessage
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.SendGroupMessage>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.SendGroupMessage>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.SendGroupMessage request,
         OneBotMessageConverter converter
     ) =>

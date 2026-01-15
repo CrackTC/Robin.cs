@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class UploadGroupFile
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.UploadGroupFile>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.UploadGroupFile>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.UploadGroupFile request,
         OneBotMessageConverter _
     ) =>

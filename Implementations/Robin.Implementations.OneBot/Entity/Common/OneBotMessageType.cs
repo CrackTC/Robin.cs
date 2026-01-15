@@ -3,15 +3,16 @@ using Robin.Abstractions.Entity;
 
 namespace Robin.Implementations.OneBot.Entity.Common;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 internal enum OneBotMessageType
 {
-    [JsonPropertyName("private")]
+    [JsonStringEnumMemberName("private")]
     Private,
 
-    [JsonPropertyName("group")]
+    [JsonStringEnumMemberName("group")]
     Group,
 
-    [JsonPropertyName("temp")]
+    [JsonStringEnumMemberName("temp")]
     Temp,
 }
 

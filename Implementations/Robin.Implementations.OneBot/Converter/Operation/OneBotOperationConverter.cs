@@ -20,8 +20,10 @@ internal partial class OneBotOperationConverterProvider
     {
         _logger = logger;
 
+        var types = typeof(OneBotOperationConverterProvider).Assembly.GetTypes();
+
         Dictionary<Type, Type> respTypeToConverterType = [];
-        foreach (var type in typeof(OneBotOperationConverterProvider).Assembly.GetTypes())
+        foreach (var type in types)
         {
             if (!type.IsAssignableTo(typeof(IOneBotResponseConverter)))
                 continue;
@@ -44,30 +46,39 @@ internal partial class OneBotOperationConverterProvider
         }
 
         Dictionary<Type, (Type, Type)> reqTypeToConverterTypes = [];
-        foreach (var type in typeof(OneBotOperationConverterProvider).Assembly.GetTypes())
+        foreach (var type in types)
         {
             if (!type.IsAssignableTo(typeof(IOneBotRequestConverter)))
                 continue;
-            if (
-                type.GetInterfaces()
-                    .FirstOrDefault(i =>
-                        i.IsGenericType
-                        && i.GetGenericTypeDefinition() == typeof(IOneBotRequestConverter<>)
-                    )
-                    ?.GetGenericArguments()[0]
-                is not { } reqType
-            )
+
+            Type? reqType = null;
+            for (var t = type; t != null; t = t.BaseType)
+            {
+                if (!t.IsGenericType)
+                    continue;
+                if (t.GetGenericTypeDefinition() == typeof(OneBotRequestConverter<>))
+                {
+                    reqType = t.GetGenericArguments()[0];
+                    break;
+                }
+            }
+
+            if (reqType is null)
                 continue;
 
-            if (
-                reqType
-                    .GetInterfaces()
-                    .FirstOrDefault(i =>
-                        i.IsGenericType && i.GetGenericTypeDefinition() == typeof(RequestFor<>)
-                    )
-                    ?.GetGenericArguments()[0]
-                is not { } respType
-            )
+            Type? respType = null;
+            for (var t = reqType; t != null; t = t.BaseType)
+            {
+                if (!t.IsGenericType)
+                    continue;
+                if (t.GetGenericTypeDefinition() == typeof(RequestFor<>))
+                {
+                    respType = t.GetGenericArguments()[0];
+                    break;
+                }
+            }
+
+            if (respType is null)
                 continue;
 
             if (respTypeToConverterType.GetValueOrDefault(respType) is not { } respConverterType)
@@ -90,12 +101,11 @@ internal partial class OneBotOperationConverterProvider
         );
     }
 
-    public IOneBotRequestConverter<TReq> GetRequestConverter<TReq>(TReq request)
-        where TReq : Request
+    public IOneBotRequestConverter GetRequestConverter(Request request)
     {
         if (
             _reqTypeToConverters.GetValueOrDefault(request.GetType()) is
-            (IOneBotRequestConverter<TReq> reqConverter, _)
+            (IOneBotRequestConverter reqConverter, _)
         )
             return reqConverter;
 

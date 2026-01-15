@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class GetGroupMemberInfo
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.GetGroupMemberInfo>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.GetGroupMemberInfo>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.GetGroupMemberInfo request,
         OneBotMessageConverter _
     ) =>

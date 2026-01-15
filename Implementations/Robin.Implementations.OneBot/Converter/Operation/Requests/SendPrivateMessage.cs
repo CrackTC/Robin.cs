@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class SendPrivateMessage
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.SendPrivateMessage>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.SendPrivateMessage>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.SendPrivateMessage request,
         OneBotMessageConverter converter
     ) =>

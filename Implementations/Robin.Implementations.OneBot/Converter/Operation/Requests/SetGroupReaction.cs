@@ -3,9 +3,9 @@ using Robin.Implementations.OneBot.Entity.Operations;
 namespace Robin.Implementations.OneBot.Converter.Operation.Requests;
 
 internal class SetGroupReaction
-    : IOneBotRequestConverter<Abstractions.Operation.Requests.SetGroupReaction>
+    : OneBotRequestConverter<Abstractions.Operation.Requests.SetGroupReaction>
 {
-    public OneBotRequest ConvertToOneBotRequest(
+    public override OneBotRequest ConvertToOneBotRequest(
         Abstractions.Operation.Requests.SetGroupReaction request,
         OneBotMessageConverter _
     ) =>

@@ -5,13 +5,13 @@ namespace Robin.Abstractions.Operation;
 
 public static partial class RequestExt
 {
-    public static Task<Response?> SendAsync(
+    public static Task<Response> SendAsync(
         this RequestFor<Response> request,
         FunctionContext context,
         CancellationToken token
     ) => SendAsync<Response>(request, context, token);
 
-    public static async Task<TResp?> SendAsync<TResp>(
+    public static async Task<TResp> SendAsync<TResp>(
         this RequestFor<TResp> request,
         FunctionContext context,
         CancellationToken token
@@ -27,7 +27,7 @@ public static partial class RequestExt
         catch (Exception e)
         {
             LogSendException(context.Logger, request, e);
-            return null;
+            throw;
         }
     }
 

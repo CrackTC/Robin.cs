@@ -3,12 +3,23 @@ using Robin.Implementations.OneBot.Entity.Operations;
 
 namespace Robin.Implementations.OneBot.Converter.Operation;
 
-internal interface IOneBotRequestConverter;
+internal interface IOneBotRequestConverter
+{
+    OneBotRequest ConvertToOneBotRequest(Request request, OneBotMessageConverter converter);
+}
 
-internal interface IOneBotRequestConverter<TReq> : IOneBotRequestConverter
+internal abstract class OneBotRequestConverter<TReq> : IOneBotRequestConverter
     where TReq : Request
 {
-    OneBotRequest ConvertToOneBotRequest(TReq request, OneBotMessageConverter converter);
+    public abstract OneBotRequest ConvertToOneBotRequest(
+        TReq request,
+        OneBotMessageConverter converter
+    );
+
+    public OneBotRequest ConvertToOneBotRequest(
+        Request request,
+        OneBotMessageConverter converter
+    ) => ConvertToOneBotRequest((TReq)request, converter);
 }
 
 internal interface IOneBotResponseConverter;
