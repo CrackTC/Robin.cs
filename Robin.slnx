@@ -14,6 +14,7 @@
     <Project Path="Extensions/Robin.Extensions.Help/Robin.Extensions.Help.csproj" />
     <Project Path="Extensions/Robin.Extensions.PokeBack/Robin.Extensions.PokeBack.csproj" />
     <Project Path="Extensions/Robin.Extensions.RandReply/Robin.Extensions.RandReply.csproj" />
+    <Project Path="Extensions/Robin.Extensions.Reaction/Robin.Extensions.Reaction.csproj" />
     <Project Path="Extensions/Robin.Extensions.ReplyAction/Robin.Extensions.ReplyAction.csproj" />
     <Project Path="Extensions/Robin.Extensions.SauceNao/Robin.Extensions.SauceNao.csproj" />
     <Project Path="Extensions/Robin.Extensions.Status/Robin.Extensions.Status.csproj" />
