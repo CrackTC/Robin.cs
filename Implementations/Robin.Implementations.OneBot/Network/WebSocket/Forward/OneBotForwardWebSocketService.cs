@@ -57,6 +57,8 @@ internal partial class OneBotForwardWebSocketService(
         if (@event is not HeartbeatEvent e)
             return;
 
+        LogHeartbeatReceived(_logger, e.Interval);
+
         var alive = false;
         Func<BotEvent, CancellationToken, Task> setAlive = null!;
 
@@ -72,7 +74,10 @@ internal partial class OneBotForwardWebSocketService(
         await Task.Delay(TimeSpan.FromMilliseconds(e.Interval * 3), token);
 
         if (!alive)
+        {
+            LogHeartbeatTimeout(_logger);
             _websocket!.Abort();
+        }
     }
 
     private async Task ReceiveLoop(CancellationToken token)
@@ -189,6 +194,18 @@ internal partial class OneBotForwardWebSocketService(
         Message = "Exception occured while dispatching message: {Message}"
     )]
     private static partial void LogDispatchException(ILogger logger, string message, Exception e);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Heartbeat received, interval: {Interval} ms"
+    )]
+    private static partial void LogHeartbeatReceived(ILogger logger, long interval);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Heartbeat timeout, connection will be closed"
+    )]
+    private static partial void LogHeartbeatTimeout(ILogger logger);
 
     #endregion
 }
