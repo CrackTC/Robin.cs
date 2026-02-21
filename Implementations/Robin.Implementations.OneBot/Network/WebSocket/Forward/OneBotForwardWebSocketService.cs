@@ -148,6 +148,12 @@ internal partial class OneBotForwardWebSocketService(
             {
                 break;
             }
+            catch (OperationCanceledException)
+            {
+                LogReconnect(_logger, options.ReconnectInterval);
+                var interval = TimeSpan.FromSeconds(options.ReconnectInterval);
+                await Task.Delay(interval, token);
+            }
             catch (WebSocketException e)
             {
                 LogWebSocketException(_logger, e);
